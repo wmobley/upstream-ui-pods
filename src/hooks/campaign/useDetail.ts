@@ -16,6 +16,14 @@ interface Measurement {
   geometry: string;
 }
 
+interface MeasurementPoint {
+  measurementvalue: number;
+  collectiontime: string;
+  variablename: string;
+  latitude: number;
+  longitude: number;
+}
+
 interface SensorData {
   sensor: Sensor;
   measurement: Measurement[];
@@ -64,14 +72,20 @@ export const useDetail = () => {
   }, []); // Empty dependency array means this effect runs once on mount
 
   // Add coordinates transformation
-  const coordinates =
+  const measurements: MeasurementPoint[] =
     sensorData?.measurement
-      .map((m) => parseGeometry(m.geometry))
-      .filter((coord): coord is [number, number] => coord !== null) ?? [];
+      .map((m) => ({
+        measurementvalue: m.measurementvalue,
+        collectiontime: m.collectiontime,
+        variablename: m.variablename,
+        latitude: parseGeometry(m.geometry)?.[0],
+        longitude: parseGeometry(m.geometry)?.[1],
+      }))
+      .filter((coord): coord is MeasurementPoint => !!coord) ?? [];
 
   return {
     sensorData,
-    coordinates, // Add coordinates to the return object
+    measurements, // Add coordinates to the return object
     loading,
     error,
   };

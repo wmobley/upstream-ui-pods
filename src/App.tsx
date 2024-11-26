@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
-import RouterMap from './app/RouterMap';
+import HeatMap from './app/HeatMap';
 
 export default function App() {
-  return <RouterMap />;
+  return <HeatMap />;
 }

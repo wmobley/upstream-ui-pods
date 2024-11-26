@@ -4,13 +4,15 @@ import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
 
 export default function RouterMap() {
-  const { coordinates } = useDetail();
+  const { measurements } = useDetail();
+  const coordinates = measurements.map((m) => [m.latitude, m.longitude]);
+
   // Calculate the center of the coordinates
   const getCenter = (): LatLngExpression | undefined => {
-    if (!coordinates.length) return undefined;
+    if (!measurements.length) return undefined;
 
-    const lats = coordinates.map((coord) => coord[0]);
-    const lngs = coordinates.map((coord) => coord[1]);
+    const lats = measurements.map((coord) => coord.latitude);
+    const lngs = measurements.map((coord) => coord.longitude);
 
     const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
     const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
@@ -27,7 +29,7 @@ export default function RouterMap() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Polyline
-          positions={coordinates}
+          positions={coordinates as LatLngExpression[]}
           pathOptions={{ color: 'blue', weight: 3 }}
         />
       </MapContainer>
