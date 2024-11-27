@@ -71,7 +71,7 @@ export const useDetail = () => {
     loadData();
   }, []); // Empty dependency array means this effect runs once on mount
 
-  // Add coordinates transformation
+  // Add coordinates transformation and calculate max/min values
   const measurements: MeasurementPoint[] =
     sensorData?.measurement
       .map((m) => ({
@@ -83,10 +83,16 @@ export const useDetail = () => {
       }))
       .filter((coord): coord is MeasurementPoint => !!coord) ?? [];
 
+  // Calculate max and min values
+  const maxValue = Math.max(...measurements.map((m) => m.measurementvalue));
+  const minValue = Math.min(...measurements.map((m) => m.measurementvalue));
+
   return {
     sensorData,
-    measurements, // Add coordinates to the return object
+    measurements,
     loading,
     error,
+    maxValue,
+    minValue,
   };
 };
