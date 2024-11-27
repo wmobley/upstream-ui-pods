@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
 import { Interval } from '../../hooks/campaign/useDetail';
+import { useState } from 'react';
 
 const getIntervalByValue = (value: number, intervals: Interval[]) => {
   return intervals.find(
@@ -44,6 +45,11 @@ function Legend({ intervals }: { intervals: Interval[] }) {
 
 export default function HeatMap() {
   const { measurements, intervals } = useDetail();
+  const [selectedPoint, setSelectedPoint] = useState<{
+    value: number;
+    percentile: number;
+    position: LatLngExpression;
+  } | null>(null);
   const coordinates = measurements.map((m) => [m.latitude, m.longitude]);
 
   // Function to get a subset of points
@@ -80,21 +86,49 @@ export default function HeatMap() {
           positions={coordinates as LatLngExpression[]}
           pathOptions={{ color: 'blue', weight: 2, opacity: 0.6 }}
         />
-        {getReducedPoints().map((coord, index, array) => (
-          <CircleMarker
-            key={index}
-            center={coord as LatLngExpression}
-            radius={3}
-            pathOptions={{
-              color: getColorByValue(
-                measurements[index].measurementvalue,
-                intervals,
-              ),
-              fillOpacity: 1,
-              weight: 1,
+        {getReducedPoints().map((coord, index, array) => {
+          const value = measurements[index].measurementvalue;
+          const interval = getIntervalByValue(value, intervals);
+
+          return (
+            <CircleMarker
+              key={index}
+              center={coord as LatLngExpression}
+              radius={3}
+              pathOptions={{
+                color: getColorByValue(value, intervals),
+                fillOpacity: 1,
+                weight: 1,
+              }}
+              eventHandlers={{
+                click: () => {
+                  setSelectedPoint({
+                    value,
+                    percentile: interval?.minPercentile || 0,
+                    position: coord as LatLngExpression,
+                  });
+                },
+              }}
+            />
+          );
+        })}
+
+        {selectedPoint && (
+          <div
+            className="absolute z-[1001] bg-white p-2 rounded-md shadow-md"
+            style={{
+              left: '50%',
+              top: '10px',
+              transform: 'translateX(-50%)',
             }}
-          />
-        ))}
+          >
+            <p className="text-sm">
+              Value: {selectedPoint.value.toFixed(2)}
+              <br />
+              Percentile: {selectedPoint.percentile}%
+            </p>
+          </div>
+        )}
       </MapContainer>
       <Legend intervals={intervals} />
     </div>
