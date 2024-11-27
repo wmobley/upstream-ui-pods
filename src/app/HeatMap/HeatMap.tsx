@@ -1,9 +1,18 @@
-import { MapContainer, TileLayer, Polyline, CircleMarker } from 'react-leaflet';
+import {
+  MapContainer,
+  TileLayer,
+  Polyline,
+  CircleMarker,
+  Marker,
+  Popup,
+  Tooltip,
+} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
 import { Interval } from '../../hooks/campaign/useDetail';
 import { useState } from 'react';
+import { heatMapColorRanges } from '../constants/colors';
 
 const getIntervalByValue = (value: number, intervals: Interval[]) => {
   return intervals.find(
@@ -11,13 +20,27 @@ const getIntervalByValue = (value: number, intervals: Interval[]) => {
   );
 };
 
-const getColorByValue = (value: number, intervals: Interval[]) => {
-  const interval = getIntervalByValue(value, intervals);
-  return interval ? getColorByPercentile(interval.minPercentile) : 'blue';
+const getIntervalIndexByPercentile = (
+  percentile: number,
+  intervals: Interval[],
+): number => {
+  return intervals.findIndex(
+    (interval) =>
+      percentile >= interval.minPercentile &&
+      percentile <= interval.maxPercentile,
+  );
 };
 
-const getColorByPercentile = (percentile: number) => {
-  return `hsl(${(percentile * 360) / 100}, 100%, 50%)`;
+const getColorByValue = (value: number, intervals: Interval[]) => {
+  const interval = getIntervalByValue(value, intervals);
+  return interval
+    ? getColorByPercentile(interval.minPercentile, intervals)
+    : 'blue';
+};
+
+const getColorByPercentile = (percentile: number, intervals: Interval[]) => {
+  const index = getIntervalIndexByPercentile(percentile, intervals);
+  return heatMapColorRanges[index].color;
 };
 
 function Legend({ intervals }: { intervals: Interval[] }) {
@@ -25,12 +48,15 @@ function Legend({ intervals }: { intervals: Interval[] }) {
     <div className="absolute bottom-8 right-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
       <h3 className="font-semibold mb-2">Time Intervals</h3>
       <div className="space-y-2">
-        {intervals.map((interval, index, array) => (
+        {intervals.map((interval, index) => (
           <div key={index} className="flex items-center gap-2">
             <div
               className="w-4 h-4 rounded-full"
               style={{
-                backgroundColor: getColorByPercentile(interval.minPercentile),
+                backgroundColor: getColorByPercentile(
+                  interval.minPercentile,
+                  intervals,
+                ),
               }}
             />
             <span className="text-sm">
@@ -86,7 +112,7 @@ export default function HeatMap() {
           positions={coordinates as LatLngExpression[]}
           pathOptions={{ color: 'blue', weight: 2, opacity: 0.6 }}
         />
-        {getReducedPoints().map((coord, index, array) => {
+        {getReducedPoints().map((coord, index) => {
           const value = measurements[index].measurementvalue;
           const interval = getIntervalByValue(value, intervals);
 
@@ -94,7 +120,7 @@ export default function HeatMap() {
             <CircleMarker
               key={index}
               center={coord as LatLngExpression}
-              radius={3}
+              radius={6}
               pathOptions={{
                 color: getColorByValue(value, intervals),
                 fillOpacity: 1,
@@ -114,20 +140,11 @@ export default function HeatMap() {
         })}
 
         {selectedPoint && (
-          <div
-            className="absolute z-[1001] bg-white p-2 rounded-md shadow-md"
-            style={{
-              left: '50%',
-              top: '10px',
-              transform: 'translateX(-50%)',
-            }}
-          >
-            <p className="text-sm">
+          <Marker position={selectedPoint.position}>
+            <Tooltip direction="bottom" offset={[0, 20]} opacity={1} permanent>
               Value: {selectedPoint.value.toFixed(2)}
-              <br />
-              Percentile: {selectedPoint.percentile}%
-            </p>
-          </div>
+            </Tooltip>
+          </Marker>
         )}
       </MapContainer>
       <Legend intervals={intervals} />
