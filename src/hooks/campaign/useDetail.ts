@@ -27,6 +27,14 @@ interface MeasurementPoint {
 interface SensorData {
   sensor: Sensor;
   measurement: Measurement[];
+  intervals: Interval[];
+}
+
+export interface Interval {
+  minPercentile: number;
+  maxPercentile: number;
+  minValue: number;
+  maxValue: number;
 }
 
 // Add this helper function to parse geometry string
@@ -94,5 +102,6 @@ export const useDetail = () => {
     error,
     maxValue,
     minValue,
+    intervals: sensorData?.intervals,
   };
 };
