@@ -4,7 +4,6 @@ import {
   Polyline,
   CircleMarker,
   Marker,
-  Popup,
   Tooltip,
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -43,15 +42,41 @@ const getColorByPercentile = (percentile: number, intervals: Interval[]) => {
   return heatMapColorRanges[index].color;
 };
 
-function Legend({ intervals }: { intervals: Interval[] }) {
+function Legend({
+  intervals,
+  selectedInterval,
+  onIntervalSelect,
+}: {
+  intervals: Interval[];
+  selectedInterval: Interval | null;
+  onIntervalSelect: (interval: Interval | null) => void;
+}) {
   return (
     <div className="absolute bottom-8 right-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
-      <h3 className="font-semibold mb-2">Time Intervals</h3>
+      <h3 className="font-semibold mb-2">
+        C<sub>3</sub>H<sub>4</sub>OH<sup>+</sup> Concentration
+      </h3>
       <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            className={`text-sm px-2 py-1 rounded ${
+              !selectedInterval ? 'bg-blue-500 text-white' : 'bg-gray-200'
+            }`}
+            onClick={() => onIntervalSelect(null)}
+          >
+            Show All Intervals
+          </button>
+        </div>
         {intervals.map((interval, index) => (
-          <div key={index} className="flex items-center gap-2">
+          <div
+            key={index}
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => onIntervalSelect(interval)}
+          >
             <div
-              className="w-4 h-4 rounded-full"
+              className={`w-4 h-4 rounded-full ${
+                selectedInterval === interval ? 'ring-2 ring-blue-500' : ''
+              }`}
               style={{
                 backgroundColor: getColorByPercentile(
                   interval.minPercentile,
@@ -60,7 +85,8 @@ function Legend({ intervals }: { intervals: Interval[] }) {
               }}
             />
             <span className="text-sm">
-              {interval.minPercentile}% - {interval.maxPercentile}%
+              {interval.minPercentile}% - {interval.maxPercentile}% (
+              {interval.minValue.toFixed(2)} - {interval.maxValue.toFixed(2)})
             </span>
           </div>
         ))}
@@ -71,28 +97,45 @@ function Legend({ intervals }: { intervals: Interval[] }) {
 
 export default function HeatMap() {
   const { measurements, intervals } = useDetail();
+  const [selectedInterval, setSelectedInterval] = useState<Interval | null>(
+    null,
+  );
   const [selectedPoint, setSelectedPoint] = useState<{
     value: number;
     percentile: number;
     position: LatLngExpression;
   } | null>(null);
+
+  // Filter measurements based on selected interval
+  const filteredMeasurements = selectedInterval
+    ? measurements.filter(
+        (m) =>
+          m.measurementvalue >= selectedInterval.minValue &&
+          m.measurementvalue <= selectedInterval.maxValue,
+      )
+    : measurements;
+
   const coordinates = measurements.map((m) => [m.latitude, m.longitude]);
+  const filteredCoordinates = filteredMeasurements.map((m) => [
+    m.latitude,
+    m.longitude,
+  ]);
 
   // Function to get a subset of points
   const getReducedPoints = () => {
     const maxPoints = 10000; // Adjust this number based on performance
-    if (coordinates.length <= maxPoints) return coordinates;
+    if (filteredCoordinates.length <= maxPoints) return filteredCoordinates;
 
-    const step = Math.ceil(coordinates.length / maxPoints);
-    return coordinates.filter((_, index) => index % step === 0);
+    const step = Math.ceil(filteredCoordinates.length / maxPoints);
+    return filteredCoordinates.filter((_, index) => index % step === 0);
   };
 
   // Calculate the center of the coordinates
   const getCenter = (): LatLngExpression | undefined => {
-    if (!coordinates.length) return undefined;
+    if (!filteredCoordinates.length) return undefined;
 
-    const lats = coordinates.map((coord) => coord[0]);
-    const lngs = coordinates.map((coord) => coord[1]);
+    const lats = filteredCoordinates.map((coord) => coord[0]);
+    const lngs = filteredCoordinates.map((coord) => coord[1]);
 
     const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
     const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
@@ -113,7 +156,7 @@ export default function HeatMap() {
           pathOptions={{ color: 'blue', weight: 2, opacity: 0.6 }}
         />
         {getReducedPoints().map((coord, index) => {
-          const value = measurements[index].measurementvalue;
+          const value = filteredMeasurements[index].measurementvalue;
           const interval = getIntervalByValue(value, intervals);
 
           return (
@@ -147,7 +190,11 @@ export default function HeatMap() {
           </Marker>
         )}
       </MapContainer>
-      <Legend intervals={intervals} />
+      <Legend
+        intervals={intervals}
+        selectedInterval={selectedInterval}
+        onIntervalSelect={setSelectedInterval}
+      />
     </div>
   );
 }
