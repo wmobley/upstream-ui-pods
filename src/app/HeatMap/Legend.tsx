@@ -7,7 +7,7 @@ function Legend({
   selectedInterval,
   onIntervalSelect,
 }: {
-  text: React.ReactNode;
+  text: string;
   intervals: Interval[];
   selectedInterval: Interval | null;
   onIntervalSelect: (interval: Interval | null) => void;
