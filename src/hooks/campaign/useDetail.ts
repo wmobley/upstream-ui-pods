@@ -16,7 +16,7 @@ interface Measurement {
   geometry: string;
 }
 
-export interface MeasurementPoint {
+interface MeasurementPoint {
   measurementvalue: number;
   collectiontime: string;
   variablename: string;
