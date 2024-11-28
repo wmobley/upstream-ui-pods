@@ -6,65 +6,9 @@ import { Interval } from '../../app/common/types';
 import { useState } from 'react';
 import Tile from '../common/Tile/Tile';
 import CarLine from '../common/CarLine/CarLine';
-import {
-  getColorByPercentile,
-  getColorByValue,
-  getIntervalByValue,
-} from '../common/Intervals';
+import { getColorByValue, getIntervalByValue } from '../common/Intervals';
 import { createGoogleStreetViewUrl } from '../common/GoogleMaps/GoogleMapsStreet';
-
-function Legend({
-  intervals,
-  selectedInterval,
-  onIntervalSelect,
-}: {
-  intervals: Interval[];
-  selectedInterval: Interval | null;
-  onIntervalSelect: (interval: Interval | null) => void;
-}) {
-  return (
-    <div className="absolute bottom-8 right-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
-      <h3 className="font-semibold mb-2">
-        C<sub>3</sub>H<sub>4</sub>OH<sup>+</sup> Concentration
-      </h3>
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <button
-            className={`text-sm px-2 py-1 rounded ${
-              !selectedInterval ? 'bg-blue-500 text-white' : 'bg-gray-200'
-            }`}
-            onClick={() => onIntervalSelect(null)}
-          >
-            Show All Intervals
-          </button>
-        </div>
-        {intervals.map((interval, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => onIntervalSelect(interval)}
-          >
-            <div
-              className={`w-4 h-4 rounded-full ${
-                selectedInterval === interval ? 'ring-2 ring-blue-500' : ''
-              }`}
-              style={{
-                backgroundColor: getColorByPercentile(
-                  interval.minPercentile,
-                  intervals,
-                ),
-              }}
-            />
-            <span className="text-sm">
-              {interval.minPercentile}% - {interval.maxPercentile}% (
-              {interval.minValue.toFixed(2)} - {interval.maxValue.toFixed(2)})
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+import Legend from '../common/Legend/Legend';
 
 export default function HeatMap() {
   const { measurements, intervals } = useDetail();
@@ -86,6 +30,11 @@ export default function HeatMap() {
       )
     : measurements;
 
+  const title = (
+    <>
+      C<sub>3</sub>H<sub>4</sub>OH<sup>+</sup> Concentration
+    </>
+  );
   // Function to get a subset of points
   const getReducedPoints = () => {
     const maxPoints = 10000; // Adjust this number based on performance
@@ -163,6 +112,7 @@ export default function HeatMap() {
         )}
       </MapContainer>
       <Legend
+        title={title}
         intervals={intervals}
         selectedInterval={selectedInterval}
         onIntervalSelect={setSelectedInterval}
