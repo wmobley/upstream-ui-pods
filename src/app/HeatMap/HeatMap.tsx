@@ -111,9 +111,17 @@ export default function HeatMap() {
   if (!measurements || !intervals) return null;
   return (
     <div className="h-screen w-full relative">
-      <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
-        <button onClick={() => setSelectedPoint(null)}>Clear Selection</button>
-      </div>
+      {selectedPoint && (
+        <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
+          <a
+            href={createGoogleStreetViewUrl({
+              position: selectedPoint?.position as LatLngExpression,
+            })}
+          >
+            View on Google Maps Street View
+          </a>
+        </div>
+      )}
       <MapContainer center={getCenter()} zoom={10} className="h-full w-full">
         <Tile />
         <CarLine measurements={measurements} />
@@ -150,15 +158,6 @@ export default function HeatMap() {
               Value: {selectedPoint.value.toFixed(2)}
               <br />
               Position: {selectedPoint.position.toString()}
-              <br />
-              <a
-                href={createGoogleStreetViewUrl({
-                  latitude: selectedPoint.position[0],
-                  longitude: selectedPoint.position[1],
-                })}
-              >
-                View on Google Maps
-              </a>
             </Tooltip>
           </Marker>
         )}
