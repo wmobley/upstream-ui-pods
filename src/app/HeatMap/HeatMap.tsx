@@ -11,6 +11,7 @@ import {
   getColorByValue,
   getIntervalByValue,
 } from '../common/Intervals';
+import { createGoogleStreetViewLink } from '../common/GoogleMaps/GoogleMapsStreet';
 
 function Legend({
   intervals,
@@ -85,27 +86,21 @@ export default function HeatMap() {
       )
     : measurements;
 
-  const coordinates = measurements.map((m) => [m.latitude, m.longitude]);
-  const filteredCoordinates = filteredMeasurements.map((m) => [
-    m.latitude,
-    m.longitude,
-  ]);
-
   // Function to get a subset of points
   const getReducedPoints = () => {
     const maxPoints = 10000; // Adjust this number based on performance
-    if (filteredCoordinates.length <= maxPoints) return filteredCoordinates;
+    if (filteredMeasurements.length <= maxPoints) return filteredMeasurements;
 
-    const step = Math.ceil(filteredCoordinates.length / maxPoints);
-    return filteredCoordinates.filter((_, index) => index % step === 0);
+    const step = Math.ceil(filteredMeasurements.length / maxPoints);
+    return filteredMeasurements.filter((_, index) => index % step === 0);
   };
 
   // Calculate the center of the coordinates
   const getCenter = (): LatLngExpression | undefined => {
-    if (!filteredCoordinates.length) return undefined;
+    if (!filteredMeasurements.length) return undefined;
 
-    const lats = filteredCoordinates.map((coord) => coord[0]);
-    const lngs = filteredCoordinates.map((coord) => coord[1]);
+    const lats = filteredMeasurements.map((m) => m.latitude);
+    const lngs = filteredMeasurements.map((m) => m.longitude);
 
     const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
     const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
@@ -116,17 +111,28 @@ export default function HeatMap() {
   if (!measurements || !intervals) return null;
   return (
     <div className="h-screen w-full relative">
+      <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
+        <button onClick={() => setSelectedPoint(null)}>Clear Selection</button>
+        <a
+          href={createGoogleStreetViewLink({
+            latitude: selectedPoint?.position[0],
+            longitude: selectedPoint?.position[1],
+          })}
+        >
+          View on Google Maps
+        </a>
+      </div>
       <MapContainer center={getCenter()} zoom={10} className="h-full w-full">
         <Tile />
-        <CarLine coordinates={coordinates as LatLngExpression[]} />
-        {getReducedPoints().map((coord, index) => {
-          const value = filteredMeasurements[index].measurementvalue;
+        <CarLine measurements={measurements} />
+        {getReducedPoints().map((m, index) => {
+          const value = m.measurementvalue;
           const interval = getIntervalByValue(value, intervals);
 
           return (
             <CircleMarker
               key={index}
-              center={coord as LatLngExpression}
+              center={[m.latitude, m.longitude]}
               radius={6}
               pathOptions={{
                 color: getColorByValue(value, intervals),
@@ -138,7 +144,7 @@ export default function HeatMap() {
                   setSelectedPoint({
                     value,
                     percentile: interval?.minPercentile || 0,
-                    position: coord as LatLngExpression,
+                    position: [m.latitude, m.longitude] as LatLngExpression,
                   });
                 },
               }}
@@ -147,9 +153,20 @@ export default function HeatMap() {
         })}
 
         {selectedPoint && (
-          <Marker position={selectedPoint.position}>
+          <Marker position={selectedPoint.position as LatLngExpression}>
             <Tooltip direction="bottom" offset={[0, 20]} opacity={1} permanent>
               Value: {selectedPoint.value.toFixed(2)}
+              <br />
+              Position: {selectedPoint.position.toString()}
+              <br />
+              <a
+                href={createGoogleStreetViewLink({
+                  latitude: selectedPoint.position[0],
+                  longitude: selectedPoint.position[1],
+                })}
+              >
+                View on Google Maps
+              </a>
             </Tooltip>
           </Marker>
         )}

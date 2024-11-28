@@ -1,14 +1,14 @@
 import { Polyline } from 'react-leaflet';
-import { LatLngExpression } from 'leaflet';
+import { MeasurementPoint } from '../types';
 
 export default function CarLine({
-  coordinates,
+  measurements,
 }: {
-  coordinates: LatLngExpression[];
+  measurements: MeasurementPoint[];
 }) {
   return (
     <Polyline
-      positions={coordinates}
+      positions={measurements.map((m) => [m.latitude, m.longitude])}
       pathOptions={{ color: 'blue', weight: 2, opacity: 0.6 }}
     />
   );
