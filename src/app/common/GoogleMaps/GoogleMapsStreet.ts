@@ -11,7 +11,7 @@ export const createGoogleStreetViewUrl = (params: {
 };
 
 // Example usage:
-// const link = createGoogleStreetViewLink({
+// const link = createGoogleStreetViewUrl({
 //     latitude: -32.9278015,
 //     longitude: -71.5181699,
 //     heading: 90,

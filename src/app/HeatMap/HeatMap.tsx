@@ -113,14 +113,6 @@ export default function HeatMap() {
     <div className="h-screen w-full relative">
       <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
         <button onClick={() => setSelectedPoint(null)}>Clear Selection</button>
-        <a
-          href={createGoogleStreetViewUrl({
-            latitude: selectedPoint?.position[0],
-            longitude: selectedPoint?.position[1],
-          })}
-        >
-          View on Google Maps
-        </a>
       </div>
       <MapContainer center={getCenter()} zoom={10} className="h-full w-full">
         <Tile />
