@@ -5,7 +5,7 @@ import { useDetail } from '../../hooks/campaign/useDetail';
 import { Interval } from '../../hooks/campaign/useDetail';
 import { useState } from 'react';
 import Legend from './Legend';
-import Tile from './Tile';
+import Tile from '../common/Tile/Tile';
 import CarLine from '../common/CarLine/CarLine';
 import { HeatMapDataPoint } from './types';
 import MeasurementMarkers from './MeasurementMarkers';
@@ -55,6 +55,12 @@ export default function HeatMap() {
     return [centerLat, centerLng];
   };
 
+  const title = (
+    <>
+      C<sub>3</sub>H<sub>4</sub>OH<sup>+</sup> Concentration
+    </>
+  );
+
   if (!measurements || !intervals) return null;
   return (
     <div className="h-screen w-full relative">
@@ -70,7 +76,7 @@ export default function HeatMap() {
         />
       </MapContainer>
       <Legend
-        text="C<sub>3</sub>H<sub>4</sub>OH<sup>+</sup> Concentration"
+        text={title}
         intervals={intervals}
         selectedInterval={selectedInterval}
         onIntervalSelect={setSelectedInterval}
