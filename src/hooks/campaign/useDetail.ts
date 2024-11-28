@@ -1,41 +1,6 @@
 import { useState, useEffect } from 'react';
-
-interface Sensor {
-  alias: number;
-  BestGuessFormula: string;
-  postprocess: boolean;
-  postprocessscript: string | null;
-  units: string;
-  datatype: number;
-}
-
-interface Measurement {
-  measurementvalue: number;
-  collectiontime: string;
-  variablename: string;
-  geometry: string;
-}
-
-interface MeasurementPoint {
-  measurementvalue: number;
-  collectiontime: string;
-  variablename: string;
-  latitude: number;
-  longitude: number;
-}
-
-interface SensorData {
-  sensor: Sensor;
-  measurement: Measurement[];
-  intervals: Interval[];
-}
-
-export interface Interval {
-  minPercentile: number;
-  maxPercentile: number;
-  minValue: number;
-  maxValue: number;
-}
+import { MeasurementPoint } from '../../app/common/types';
+import { SensorData } from '../../app/common/types';
 
 // Add this helper function to parse geometry string
 const parseGeometry = (geometry: string): [number, number] | null => {

@@ -1,15 +1,8 @@
-import {
-  MapContainer,
-  TileLayer,
-  Polyline,
-  CircleMarker,
-  Marker,
-  Tooltip,
-} from 'react-leaflet';
+import { MapContainer, CircleMarker, Marker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
-import { Interval } from '../../hooks/campaign/useDetail';
+import { Interval } from '../../app/common/types';
 import { useState } from 'react';
 import { heatMapColorRanges } from '../constants/colors';
 import Tile from '../common/Tile/Tile';
