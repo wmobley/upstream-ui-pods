@@ -4,38 +4,13 @@ import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
 import { Interval } from '../../app/common/types';
 import { useState } from 'react';
-import { heatMapColorRanges } from '../constants/colors';
 import Tile from '../common/Tile/Tile';
 import CarLine from '../common/CarLine/CarLine';
-
-const getIntervalByValue = (value: number, intervals: Interval[]) => {
-  return intervals.find(
-    (interval) => value >= interval.minValue && value <= interval.maxValue,
-  );
-};
-
-const getIntervalIndexByPercentile = (
-  percentile: number,
-  intervals: Interval[],
-): number => {
-  return intervals.findIndex(
-    (interval) =>
-      percentile >= interval.minPercentile &&
-      percentile <= interval.maxPercentile,
-  );
-};
-
-const getColorByValue = (value: number, intervals: Interval[]) => {
-  const interval = getIntervalByValue(value, intervals);
-  return interval
-    ? getColorByPercentile(interval.minPercentile, intervals)
-    : 'blue';
-};
-
-const getColorByPercentile = (percentile: number, intervals: Interval[]) => {
-  const index = getIntervalIndexByPercentile(percentile, intervals);
-  return heatMapColorRanges[index].color;
-};
+import {
+  getColorByPercentile,
+  getColorByValue,
+  getIntervalByValue,
+} from '../common/Intervals/Intervals';
 
 function Legend({
   intervals,
