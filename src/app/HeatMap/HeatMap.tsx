@@ -11,7 +11,7 @@ import {
   getColorByValue,
   getIntervalByValue,
 } from '../common/Intervals';
-import { createGoogleStreetViewLink } from '../common/GoogleMaps/GoogleMapsStreet';
+import { createGoogleStreetViewUrl } from '../common/GoogleMaps/GoogleMapsStreet';
 
 function Legend({
   intervals,
@@ -114,7 +114,7 @@ export default function HeatMap() {
       <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
         <button onClick={() => setSelectedPoint(null)}>Clear Selection</button>
         <a
-          href={createGoogleStreetViewLink({
+          href={createGoogleStreetViewUrl({
             latitude: selectedPoint?.position[0],
             longitude: selectedPoint?.position[1],
           })}
@@ -160,7 +160,7 @@ export default function HeatMap() {
               Position: {selectedPoint.position.toString()}
               <br />
               <a
-                href={createGoogleStreetViewLink({
+                href={createGoogleStreetViewUrl({
                   latitude: selectedPoint.position[0],
                   longitude: selectedPoint.position[1],
                 })}
