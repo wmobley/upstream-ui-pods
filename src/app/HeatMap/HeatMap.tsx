@@ -10,7 +10,7 @@ import {
   getColorByPercentile,
   getColorByValue,
   getIntervalByValue,
-} from '../common/Intervals/Intervals';
+} from '../common/Intervals';
 
 function Legend({
   intervals,
