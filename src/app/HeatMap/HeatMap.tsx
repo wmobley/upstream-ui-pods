@@ -12,6 +12,8 @@ import { useDetail } from '../../hooks/campaign/useDetail';
 import { Interval } from '../../hooks/campaign/useDetail';
 import { useState } from 'react';
 import { heatMapColorRanges } from '../constants/colors';
+import Tile from '../common/Tile/Tile';
+import CarLine from '../common/CarLine/CarLine';
 
 const getIntervalByValue = (value: number, intervals: Interval[]) => {
   return intervals.find(
@@ -147,14 +149,8 @@ export default function HeatMap() {
   return (
     <div className="h-screen w-full relative">
       <MapContainer center={getCenter()} zoom={10} className="h-full w-full">
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Polyline
-          positions={coordinates as LatLngExpression[]}
-          pathOptions={{ color: 'blue', weight: 2, opacity: 0.6 }}
-        />
+        <Tile />
+        <CarLine coordinates={coordinates as LatLngExpression[]} />
         {getReducedPoints().map((coord, index) => {
           const value = filteredMeasurements[index].measurementvalue;
           const interval = getIntervalByValue(value, intervals);
