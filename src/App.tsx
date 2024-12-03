@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
-import HeatMap from './app/HeatMap';
+import Layout from './app/_Layout/Layout';
 
 export default function App() {
-  return <HeatMap />;
+  return <Layout />;
 }
