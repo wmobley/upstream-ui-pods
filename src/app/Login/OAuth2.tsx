@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
-import useTapisConfig from '../../hooks/authenticator/useTapisConfig';
+import { useTapisConfig } from '@tapis/tapisui-hooks';
+
 const OAuth2: React.FC = () => {
   const { setAccessToken } = useTapisConfig();
-  const navigate = useHistory();
 
   const queryString = window.location.href;
   const access_token = queryString.substring(
@@ -14,13 +13,9 @@ const OAuth2: React.FC = () => {
   const expires_in = 14400;
 
   useEffect(() => {
-    console.log('access_token', access_token);
-    console.log('expires_at', expires_at);
-    console.log('expires_in', expires_in);
     setAccessToken({ access_token, expires_at, expires_in });
-    navigate.push(`/`);
-    // eslint-disable-next-line
-  }, []);
+    window.location.href = '/';
+  }, [access_token, expires_at, expires_in, setAccessToken]);
 
   return <div>OAuth2</div>;
 };

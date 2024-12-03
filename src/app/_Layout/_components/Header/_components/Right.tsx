@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import useTapisConfig from '../../../../../hooks/authenticator/useTapisConfig';
+import { useTapisConfig } from '@tapis/tapisui-hooks';
 import { Authenticator } from '@tapis/tapisui-hooks';
 
 interface RightProps {
@@ -7,7 +6,7 @@ interface RightProps {
 }
 
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
-  const { accessToken, username } = useTapisConfig();
+  const { accessToken } = useTapisConfig();
   const { logout } = Authenticator.useLogin();
 
   return (
@@ -15,12 +14,6 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
       {accessToken ? (
         <div className="sm:flex sm:gap-4">
           <div className="flex items-center gap-4 text-primary-600">
-            <a
-              href="/reservations"
-              className="block rounded-md bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700"
-            >
-              {username}
-            </a>
             <button
               onClick={() => logout()}
               className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
@@ -31,19 +24,26 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
         </div>
       ) : (
         <div className="sm:flex sm:gap-4">
-          <Link
+          <button
             className="block rounded-md bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700"
-            to="/login"
+            onClick={() => {
+              const callbackUrl = `${window.location.origin}/oauth2/callback`;
+              const oauthClientId = 'vite-react-dev';
+              const targetUrl = `https://portals.tapis.io/v3/oauth2/login?redirect_uri=${encodeURIComponent(
+                callbackUrl,
+              )}&response_type=token&client_id=${oauthClientId}`;
+              window.location.href = targetUrl;
+            }}
           >
-            Iniciar sesión
-          </Link>
+            Log in
+          </button>
 
-          <Link
+          <a
             className="hidden rounded-md bg-secondary-100 px-5 py-2.5 text-sm font-medium text-primary-600 transition hover:text-primary-600/75 sm:block"
-            to="/signup"
+            href="https://accounts.tacc.utexas.edu/register"
           >
-            Registrarse
-          </Link>
+            Sign up
+          </a>
         </div>
       )}
 
