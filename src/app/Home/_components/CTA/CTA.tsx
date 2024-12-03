@@ -4,7 +4,7 @@ import 'react-lazy-load-image-component/src/effects/opacity.css'; // optional fa
 
 const cta = () => {
   return (
-    <div className="mx-auto max-w-screen-xl px-4 lg:px-8 min-h-screen">
+    <div className="mx-auto max-w-screen-xl px-4 lg:px-8 ">
       <section className="sm:grid sm:grid-cols-2 sm:items-center ">
         <div className=" p-8 md:p-12 lg:px-16 lg:py-24 lg:h-full flex items-center">
           <div className="mx-auto max-w-xl text-center ltr:sm:text-left rtl:sm:text-right">

@@ -1,3 +1,12 @@
+export interface Campaign {
+  id: string;
+  name: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  budget: number;
+}
+
 export interface Sensor {
   alias: number;
   BestGuessFormula: string;
