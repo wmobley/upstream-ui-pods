@@ -1,9 +1,11 @@
+import { Link } from 'react-router-dom';
+
 interface RightProps {
   toggleMenu: () => void;
 }
 
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
-  const authStatus = 'authenticated';
+  const authStatus: string = 'unauthenticated';
   const signOut = () => {};
   return (
     <div className="flex items-center gap-4">
@@ -26,19 +28,19 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
         </div>
       ) : (
         <div className="sm:flex sm:gap-4">
-          <a
+          <Link
             className="block rounded-md bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700"
-            href="/signin"
+            to="/login"
           >
             Iniciar sesión
-          </a>
+          </Link>
 
-          <a
+          <Link
             className="hidden rounded-md bg-secondary-100 px-5 py-2.5 text-sm font-medium text-primary-600 transition hover:text-primary-600/75 sm:block"
-            href="/signup"
+            to="/signup"
           >
             Registrarse
-          </a>
+          </Link>
         </div>
       )}
 
