@@ -1,7 +1,6 @@
 import TypingEffect from '../TypingEffect/TypingEffect';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css'; // optional fade effect
-import { Link } from 'react-router-dom';
 
 const cta = () => {
   return (
