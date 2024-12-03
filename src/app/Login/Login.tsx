@@ -1,36 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
-import Cookies from 'js-cookie';
-
 export default function Login() {
-  const history = useHistory();
-  const [isLoggedin, setIsLoggedin] = useState(false);
-
   const handleClick = () => {
-    const callbackUrl = `${window.location.origin}`;
-    const oauthClientId = 'ckan-test6';
+    const callbackUrl = `${window.location.origin}/oauth2/callback`;
+    const oauthClientId = 'vite-react-dev';
     const targetUrl = `https://portals.tapis.io/v3/oauth2/login?redirect_uri=${encodeURIComponent(
       callbackUrl,
     )}&response_type=token&client_id=${oauthClientId}`;
     window.location.href = targetUrl;
   };
-
-  useEffect(() => {
-    const accessTokenRegex = /access_token=([^&]+)/;
-    const isMatch = window.location.href.match(accessTokenRegex);
-
-    if (isMatch) {
-      const accessToken = isMatch[1];
-      Cookies.set('access_token', accessToken);
-      setIsLoggedin(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isLoggedin) {
-      history.push('/secure');
-    }
-  }, [isLoggedin, history]);
 
   return (
     <div className="root">

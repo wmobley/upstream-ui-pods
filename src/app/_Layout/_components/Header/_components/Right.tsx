@@ -1,25 +1,28 @@
 import { Link } from 'react-router-dom';
+import useTapisConfig from '../../../../../hooks/authenticator/useTapisConfig';
+import { Authenticator } from '@tapis/tapisui-hooks';
 
 interface RightProps {
   toggleMenu: () => void;
 }
 
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
-  const authStatus: string = 'unauthenticated';
-  const signOut = () => {};
+  const { accessToken, username } = useTapisConfig();
+  const { logout } = Authenticator.useLogin();
+
   return (
     <div className="flex items-center gap-4">
-      {authStatus === 'authenticated' ? (
+      {accessToken ? (
         <div className="sm:flex sm:gap-4">
           <div className="flex items-center gap-4 text-primary-600">
             <a
               href="/reservations"
               className="block rounded-md bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700"
             >
-              Mis reservas
+              {username}
             </a>
             <button
-              onClick={() => signOut()}
+              onClick={() => logout()}
               className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
             >
               Cerrar sesión
