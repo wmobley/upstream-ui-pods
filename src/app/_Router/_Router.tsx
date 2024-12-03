@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import Home from '../Home';
-import Login from '../Login/Login';
+import OAuth2 from '../Login/OAuth2';
 
 const Router: React.FC = () => {
   return (
@@ -9,8 +9,8 @@ const Router: React.FC = () => {
       <Route exact path="/">
         <Home />
       </Route>
-      <Route path="/login">
-        <Login />
+      <Route path="/oauth2/callback">
+        <OAuth2 />
       </Route>
     </Switch>
   );
