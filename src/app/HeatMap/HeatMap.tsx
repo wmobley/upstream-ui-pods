@@ -9,9 +9,14 @@ import CarLine from '../common/CarLine/CarLine';
 import { getColorByValue, getIntervalByValue } from '../common/Intervals';
 import { createGoogleStreetViewUrl } from '../common/GoogleMaps/GoogleMapsStreet';
 import Legend from '../common/Legend/Legend';
+import QueryWrapper from '../common/QueryWrapper/QueryWrapper';
 
-export default function HeatMap() {
-  const { measurements, intervals } = useDetail();
+interface HeatMapProps {
+  campaignId: string;
+}
+
+export default function HeatMap({ campaignId }: HeatMapProps) {
+  const { measurements, intervals, isLoading, error } = useDetail(campaignId);
   const [selectedInterval, setSelectedInterval] = useState<Interval | null>(
     null,
   );
@@ -59,64 +64,71 @@ export default function HeatMap() {
 
   if (!measurements || !intervals) return null;
   return (
-    <div className="h-screen w-full relative">
-      {selectedPoint && (
-        <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
-          <a
-            href={createGoogleStreetViewUrl({
-              position: selectedPoint?.position as LatLngExpression,
-            })}
-          >
-            View on Google Maps Street View
-          </a>
-        </div>
-      )}
-      <MapContainer center={getCenter()} zoom={10} className="h-full w-full">
-        <Tile />
-        <CarLine measurements={measurements} />
-        {getReducedPoints().map((m, index) => {
-          const value = m.measurementvalue;
-          const interval = getIntervalByValue(value, intervals);
-
-          return (
-            <CircleMarker
-              key={index}
-              center={[m.latitude, m.longitude]}
-              radius={6}
-              pathOptions={{
-                color: getColorByValue(value, intervals),
-                fillOpacity: 1,
-                weight: 1,
-              }}
-              eventHandlers={{
-                click: () => {
-                  setSelectedPoint({
-                    value,
-                    percentile: interval?.minPercentile || 0,
-                    position: [m.latitude, m.longitude] as LatLngExpression,
-                  });
-                },
-              }}
-            />
-          );
-        })}
-
+    <QueryWrapper isLoading={isLoading} error={error}>
+      <div className="h-[500px] w-full relative">
         {selectedPoint && (
-          <Marker position={selectedPoint.position as LatLngExpression}>
-            <Tooltip direction="bottom" offset={[0, 20]} opacity={1} permanent>
-              Value: {selectedPoint.value.toFixed(2)}
-              <br />
-              Position: {selectedPoint.position.toString()}
-            </Tooltip>
-          </Marker>
+          <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
+            <a
+              href={createGoogleStreetViewUrl({
+                position: selectedPoint?.position as LatLngExpression,
+              })}
+            >
+              Google Maps Street View
+            </a>
+          </div>
         )}
-      </MapContainer>
-      <Legend
-        title={title}
-        intervals={intervals}
-        selectedInterval={selectedInterval}
-        onIntervalSelect={setSelectedInterval}
-      />
-    </div>
+        <MapContainer center={getCenter()} zoom={9} className="h-full w-full">
+          <Tile />
+          <CarLine measurements={measurements} />
+          {getReducedPoints().map((m, index) => {
+            const value = m.measurementvalue;
+            const interval = getIntervalByValue(value, intervals);
+
+            return (
+              <CircleMarker
+                key={index}
+                center={[m.latitude, m.longitude]}
+                radius={6}
+                pathOptions={{
+                  color: getColorByValue(value, intervals),
+                  fillOpacity: 1,
+                  weight: 1,
+                }}
+                eventHandlers={{
+                  click: () => {
+                    setSelectedPoint({
+                      value,
+                      percentile: interval?.minPercentile || 0,
+                      position: [m.latitude, m.longitude] as LatLngExpression,
+                    });
+                  },
+                }}
+              />
+            );
+          })}
+
+          {selectedPoint && (
+            <Marker position={selectedPoint.position as LatLngExpression}>
+              <Tooltip
+                direction="bottom"
+                offset={[0, 20]}
+                opacity={1}
+                permanent
+              >
+                Value: {selectedPoint.value.toFixed(2)}
+                <br />
+                Position: {selectedPoint.position.toString()}
+              </Tooltip>
+            </Marker>
+          )}
+        </MapContainer>
+        <Legend
+          title={title}
+          intervals={intervals}
+          selectedInterval={selectedInterval}
+          onIntervalSelect={setSelectedInterval}
+        />
+      </div>
+    </QueryWrapper>
   );
 }

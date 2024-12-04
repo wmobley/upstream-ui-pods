@@ -3,8 +3,8 @@ import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
 
-export default function RouterMap() {
-  const { measurements } = useDetail();
+export default function RouterMap({ campaignId }: { campaignId: string }) {
+  const { measurements } = useDetail(campaignId);
   const coordinates = measurements.map((m) => [m.latitude, m.longitude]);
 
   // Calculate the center of the coordinates
