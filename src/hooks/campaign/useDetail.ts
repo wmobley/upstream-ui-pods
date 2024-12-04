@@ -19,16 +19,16 @@ const parseGeometry = (geometry: string): [number, number] | null => {
   }
 };
 
-export const useDetail = () => {
+export const useDetail = (campaignId: string) => {
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true);
-        const response = await fetch('/data.json');
+        setIsLoading(true);
+        const response = await fetch(`/campaigns/${campaignId}.json`);
         const data = await response.json();
         setSensorData(data);
       } catch (err) {
@@ -37,7 +37,7 @@ export const useDetail = () => {
         );
         console.error('Error loading sensor data:', err);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -63,7 +63,7 @@ export const useDetail = () => {
   return {
     sensorData,
     measurements,
-    loading,
+    isLoading,
     error,
     maxValue,
     minValue,

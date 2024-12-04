@@ -13,6 +13,9 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
           <h2 className="mt-4 text-xl font-medium sm:text-2xl">
             {campaign.name}
           </h2>
+          <p className="text-sm text-gray-500">
+            {campaign.startDate} - {campaign.endDate}
+          </p>
         </div>
       </div>
     </Link>

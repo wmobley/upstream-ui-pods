@@ -3,19 +3,21 @@ import Loading from '../Loading/Loading';
 
 interface QueryWrapperProps {
   isLoading: boolean;
+  loadingMessage?: string;
   error: any;
   children: React.ReactNode;
 }
 
 const QueryWrapper: React.FC<QueryWrapperProps> = ({
   isLoading,
+  loadingMessage = 'Loading...',
   error,
   children,
 }) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
-        <Loading loadingMessage="Cargando..." />
+        <Loading loadingMessage={loadingMessage} />
       </div>
     );
   }
