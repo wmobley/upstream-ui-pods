@@ -1,5 +1,6 @@
 import { useTapisConfig } from '@tapis/tapisui-hooks';
 import { Authenticator } from '@tapis/tapisui-hooks';
+import { useHistory } from 'react-router-dom';
 
 interface RightProps {
   toggleMenu: () => void;
@@ -8,6 +9,7 @@ interface RightProps {
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
   const { accessToken } = useTapisConfig();
   const { logout } = Authenticator.useLogin();
+  const history = useHistory();
 
   return (
     <div className="flex items-center gap-4">
@@ -27,12 +29,7 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
           <button
             className="block rounded-md bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700"
             onClick={() => {
-              const callbackUrl = `${window.location.origin}/oauth2/callback`;
-              const oauthClientId = 'vite-react-dev';
-              const targetUrl = `https://portals.tapis.io/v3/oauth2/login?redirect_uri=${encodeURIComponent(
-                callbackUrl,
-              )}&response_type=token&client_id=${oauthClientId}`;
-              window.location.href = targetUrl;
+              history.push('/login');
             }}
           >
             Log in
