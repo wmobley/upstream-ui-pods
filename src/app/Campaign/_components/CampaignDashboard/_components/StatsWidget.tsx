@@ -9,7 +9,7 @@ interface StatsWidgetProps {
   campaignId: string;
 }
 
-const StatsWidget: React.FC<StatsWidgetProps> = ({ campaignId }) => {
+const StatsWidget: React.FC<StatsWidgetProps> = () => {
   // Mock data - replace with actual API calls later
   const stats = {
     totalDistance: '127.5 km',

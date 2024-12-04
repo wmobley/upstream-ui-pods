@@ -1,5 +1,4 @@
 import HeatMap from '../../../HeatMap';
-import ExportButton from './_components/ExportButton';
 import StatsWidget from './_components/StatsWidget';
 // import { MapWidget, StatsWidget } from './widgets';
 // import { Navigation, ExportButton, FilterControls } from './controls';

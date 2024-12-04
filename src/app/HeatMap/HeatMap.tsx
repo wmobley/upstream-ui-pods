@@ -3,7 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
 import { Interval } from '../../app/common/types';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Tile from '../common/Tile/Tile';
 import CarLine from '../common/CarLine/CarLine';
 import { getColorByValue, getIntervalByValue } from '../common/Intervals';
