@@ -10,7 +10,7 @@ const Login: React.FC = () => {
       window.location.href = '/';
     } else {
       const callbackUrl = `${window.location.origin}/oauth2/callback`;
-      const oauthClientId = 'dso-tacc-netlify';
+      const oauthClientId = 'dso-tacc-netlify2';
       const targetUrl = `https://portals.tapis.io/v3/oauth2/login?redirect_uri=${encodeURIComponent(
         callbackUrl,
       )}&response_type=token&client_id=${oauthClientId}`;
