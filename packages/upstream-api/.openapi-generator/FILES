@@ -1,4 +1,3 @@
-.openapi-generator-ignore
 apis/AuthApi.ts
 apis/CampaignsApi.ts
 apis/MeasurementsApi.ts
@@ -12,6 +11,8 @@ models/GetCampaignResponse.ts
 models/HTTPValidationError.ts
 models/ListCampaignsResponseItem.ts
 models/Location.ts
+models/SensorSummaryForStations.ts
+models/StationsListResponseItem.ts
 models/SummaryGetCampaign.ts
 models/SummaryListCampaigns.ts
 models/ValidationError.ts

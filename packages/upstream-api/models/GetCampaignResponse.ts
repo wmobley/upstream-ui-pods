@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { StationsListResponseItem } from './StationsListResponseItem';
+import {
+    StationsListResponseItemFromJSON,
+    StationsListResponseItemFromJSONTyped,
+    StationsListResponseItemToJSON,
+    StationsListResponseItemToJSONTyped,
+} from './StationsListResponseItem';
 import type { SummaryGetCampaign } from './SummaryGetCampaign';
 import {
     SummaryGetCampaignFromJSON,
@@ -94,6 +101,12 @@ export interface GetCampaignResponse {
      * @memberof GetCampaignResponse
      */
     summary: SummaryGetCampaign;
+    /**
+     * 
+     * @type {Array<StationsListResponseItem>}
+     * @memberof GetCampaignResponse
+     */
+    stations?: Array<StationsListResponseItem>;
 }
 
 /**
@@ -127,6 +140,7 @@ export function GetCampaignResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'allocation': json['allocation'],
         'location': json['location'] == null ? undefined : LocationFromJSON(json['location']),
         'summary': SummaryGetCampaignFromJSON(json['summary']),
+        'stations': json['stations'] == null ? undefined : ((json['stations'] as Array<any>).map(StationsListResponseItemFromJSON)),
     };
 }
 
@@ -151,6 +165,7 @@ export function GetCampaignResponseToJSONTyped(value?: GetCampaignResponse | nul
         'allocation': value['allocation'],
         'location': LocationToJSON(value['location']),
         'summary': SummaryGetCampaignToJSON(value['summary']),
+        'stations': value['stations'] == null ? undefined : ((value['stations'] as Array<any>).map(StationsListResponseItemToJSON)),
     };
 }
 
