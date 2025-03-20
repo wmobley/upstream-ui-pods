@@ -12,17 +12,6 @@ const Router: React.FC = () => {
   return (
     <Switch>
       <Route
-        exact
-        path={`/campaigns/:campaignId/stations`}
-        render={({
-          match: {
-            params: { campaignId },
-          },
-        }: RouteComponentProps<{ campaignId: string }>) => {
-          return <h1>Station Dashboard</h1>;
-        }}
-      />
-      <Route
         path={`/campaigns/:campaignId/stations/:stationId`}
         render={({
           match: {

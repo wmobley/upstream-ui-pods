@@ -8,9 +8,12 @@ apis/index.ts
 index.ts
 models/CampaignPagination.ts
 models/GetCampaignResponse.ts
+models/GetStationResponse.ts
 models/HTTPValidationError.ts
 models/ListCampaignsResponseItem.ts
 models/Location.ts
+models/MeasurementOut.ts
+models/SensorItem.ts
 models/SensorSummaryForStations.ts
 models/StationsListResponseItem.ts
 models/SummaryGetCampaign.ts

@@ -2,9 +2,12 @@
 /* eslint-disable */
 export * from './CampaignPagination';
 export * from './GetCampaignResponse';
+export * from './GetStationResponse';
 export * from './HTTPValidationError';
 export * from './ListCampaignsResponseItem';
 export * from './Location';
+export * from './MeasurementOut';
+export * from './SensorItem';
 export * from './SensorSummaryForStations';
 export * from './StationsListResponseItem';
 export * from './SummaryGetCampaign';

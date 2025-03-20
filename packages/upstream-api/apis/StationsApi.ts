@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  GetStationResponse,
   HTTPValidationError,
 } from '../models/index';
 import {
+    GetStationResponseFromJSON,
+    GetStationResponseToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
 } from '../models/index';
@@ -41,7 +44,7 @@ export class StationsApi extends runtime.BaseAPI {
     /**
      * Get Station
      */
-    async getStationApiV1CampaignsCampaignIdStationsStationIdGetRaw(requestParameters: GetStationApiV1CampaignsCampaignIdStationsStationIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getStationApiV1CampaignsCampaignIdStationsStationIdGetRaw(requestParameters: GetStationApiV1CampaignsCampaignIdStationsStationIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetStationResponse>> {
         if (requestParameters['stationId'] == null) {
             throw new runtime.RequiredError(
                 'stationId',
@@ -72,17 +75,13 @@ export class StationsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetStationResponseFromJSON(jsonValue));
     }
 
     /**
      * Get Station
      */
-    async getStationApiV1CampaignsCampaignIdStationsStationIdGet(requestParameters: GetStationApiV1CampaignsCampaignIdStationsStationIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getStationApiV1CampaignsCampaignIdStationsStationIdGet(requestParameters: GetStationApiV1CampaignsCampaignIdStationsStationIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetStationResponse> {
         const response = await this.getStationApiV1CampaignsCampaignIdStationsStationIdGetRaw(requestParameters, initOverrides);
         return await response.value();
     }

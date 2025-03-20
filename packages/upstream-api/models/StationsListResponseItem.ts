@@ -74,7 +74,7 @@ export interface StationsListResponseItem {
      * @type {Array<SensorSummaryForStations>}
      * @memberof StationsListResponseItem
      */
-    sensors: Array<SensorSummaryForStations>;
+    sensors?: Array<SensorSummaryForStations>;
 }
 
 /**
@@ -84,7 +84,6 @@ export function instanceOfStationsListResponseItem(value: object): value is Stat
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('startDate' in value) || value['startDate'] === undefined) return false;
-    if (!('sensors' in value) || value['sensors'] === undefined) return false;
     return true;
 }
 
@@ -105,7 +104,7 @@ export function StationsListResponseItemFromJSONTyped(json: any, ignoreDiscrimin
         'contactEmail': json['contact_email'] == null ? undefined : json['contact_email'],
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': (new Date(json['start_date'])),
-        'sensors': ((json['sensors'] as Array<any>).map(SensorSummaryForStationsFromJSON)),
+        'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorSummaryForStationsFromJSON)),
     };
 }
 
@@ -127,7 +126,7 @@ export function StationsListResponseItemToJSONTyped(value?: StationsListResponse
         'contact_email': value['contactEmail'],
         'active': value['active'],
         'start_date': ((value['startDate']).toISOString()),
-        'sensors': ((value['sensors'] as Array<any>).map(SensorSummaryForStationsToJSON)),
+        'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorSummaryForStationsToJSON)),
     };
 }
 
