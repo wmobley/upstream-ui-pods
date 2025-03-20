@@ -6,6 +6,8 @@ import Campaign from '../Campaign';
 import ProtectedRoute from '../common/ProtectedRoute';
 import { useTapisConfig } from '@tapis/tapisui-hooks';
 import Login from '../Login/Login';
+import StationDashboard from '../Station/_components/StationDashboard';
+import Station from '../Station';
 
 const Router: React.FC = () => {
   const { accessToken } = useTapisConfig();

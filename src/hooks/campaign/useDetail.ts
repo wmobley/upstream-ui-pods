@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { MeasurementPoint } from '../../app/common/types';
-import { SensorData } from '../../app/common/types';
+import {
+  CampaignsApi,
+  Configuration,
+  GetCampaignResponse,
+} from '@upstream/upstream-api';
 
 // Add this helper function to parse geometry string
 const parseGeometry = (geometry: string): [number, number] | null => {
@@ -19,8 +22,13 @@ const parseGeometry = (geometry: string): [number, number] | null => {
   }
 };
 
+const basePath = 'http://localhost:8000';
+const accessToken = 'Bearer ' + localStorage.getItem('access_token');
+const config = new Configuration({ basePath, accessToken });
+const campaignsApi = new CampaignsApi(config);
+
 export const useDetail = (campaignId: string) => {
-  const [sensorData, setSensorData] = useState<SensorData | null>(null);
+  const [campaign, setCampaign] = useState<GetCampaignResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -28,9 +36,11 @@ export const useDetail = (campaignId: string) => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/campaigns/${campaignId}.json`);
-        const data = await response.json();
-        setSensorData(data);
+        const response =
+          await campaignsApi.getCampaignApiV1CampaignsCampaignIdGet({
+            campaignId: parseInt(campaignId),
+          });
+        setCampaign(response);
       } catch (err) {
         setError(
           err instanceof Error ? err : new Error('Failed to load sensor data'),
@@ -44,29 +54,9 @@ export const useDetail = (campaignId: string) => {
     loadData();
   }, []); // Empty dependency array means this effect runs once on mount
 
-  // Add coordinates transformation and calculate max/min values
-  const measurements: MeasurementPoint[] =
-    sensorData?.measurement
-      .map((m) => ({
-        measurementvalue: m.measurementvalue,
-        collectiontime: m.collectiontime,
-        variablename: m.variablename,
-        latitude: parseGeometry(m.geometry)?.[0],
-        longitude: parseGeometry(m.geometry)?.[1],
-      }))
-      .filter((coord): coord is MeasurementPoint => !!coord) ?? [];
-
-  // Calculate max and min values
-  const maxValue = Math.max(...measurements.map((m) => m.measurementvalue));
-  const minValue = Math.min(...measurements.map((m) => m.measurementvalue));
-
   return {
-    sensorData,
-    measurements,
+    campaign,
     isLoading,
     error,
-    maxValue,
-    minValue,
-    intervals: sensorData?.intervals,
   };
 };
