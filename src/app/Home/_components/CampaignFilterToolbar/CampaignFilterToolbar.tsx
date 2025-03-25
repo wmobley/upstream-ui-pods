@@ -2,30 +2,15 @@ import React from 'react';
 import FilteringMapButton from '../FilteringMapButton/FilteringMapButton';
 import { LatLngBounds } from 'leaflet';
 
-// Mock data for filters
-export const MOCK_AREAS = [
-  { id: 'coastal', name: 'Coastal' },
-  { id: 'marine', name: 'Marine' },
-  { id: 'terrestrial', name: 'Terrestrial' },
-  { id: 'atmospheric', name: 'Atmospheric' },
-];
-
-export const MOCK_INSTRUMENTS = [
-  { id: 'camera', name: 'Camera' },
-  { id: 'sensor', name: 'Sensor' },
-  { id: 'drone', name: 'Drone' },
-  { id: 'satellite', name: 'Satellite' },
-];
-
 interface CampaignFilterToolbarProps {
   selectedArea: string;
   selectedInstrument: string;
   startDate: string;
   endDate: string;
-  onAreaChange: (area: string) => void;
-  onInstrumentChange: (instrument: string) => void;
   onStartDateChange: (date: string) => void;
   onEndDateChange: (date: string) => void;
+  minDate: Date | undefined;
+  maxDate: Date | undefined;
 }
 
 const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
@@ -33,65 +18,77 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
   selectedInstrument,
   startDate,
   endDate,
-  onAreaChange,
-  onInstrumentChange,
   onStartDateChange,
   onEndDateChange,
+  minDate,
+  maxDate,
 }) => {
-  const today = new Date().toISOString().split('T')[0]; // Gets current date in YYYY-MM-DD format
+  const today = new Date();
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    onStartDateChange(newStartDate);
+
+    // If end date becomes invalid with new start date, update it
+    if (endDate && new Date(endDate) < new Date(newStartDate)) {
+      onEndDateChange(newStartDate);
+    }
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndDate = e.target.value;
+    // Only allow end date changes if it's after or equal to start date
+    if (!startDate || new Date(newEndDate) >= new Date(startDate)) {
+      onEndDateChange(newEndDate);
+    }
+  };
 
   const handleBoundingBoxSelect = (bounds: LatLngBounds) => {
     console.log(bounds);
   };
 
   return (
-    <div className="flex gap-4 flex-wrap">
-      {/* <select
-        className="p-2 border rounded-md"
-        value={selectedArea}
-        onChange={(e) => onAreaChange(e.target.value)}
-      >
-        <option value="">All Areas</option>
-        {MOCK_AREAS.map((area) => (
-          <option key={area.id} value={area.id}>
-            {area.name}
-          </option>
-        ))}
-      </select> */}
+    <div className="flex flex-col gap-4">
+      <h2 className="text-xl font-semibold text-gray-800">Campaign Filters</h2>
+      <div className="flex gap-4 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="start-date" className="text-sm text-gray-600">
+            Start Date
+          </label>
+          <input
+            id="start-date"
+            type="date"
+            className="p-2 border border-gray-300 rounded-md"
+            value={startDate}
+            onChange={handleStartDateChange}
+            min={minDate?.toISOString().split('T')[0]}
+            max={endDate || today.toISOString().split('T')[0]}
+          />
+        </div>
 
-      {/* <select
-        className="p-2 border rounded-md"
-        value={selectedInstrument}
-        onChange={(e) => onInstrumentChange(e.target.value)}
-      >
-        <option value="">All Instruments</option>
-        {MOCK_INSTRUMENTS.map((instrument) => (
-          <option key={instrument.id} value={instrument.id}>
-            {instrument.name}
-          </option>
-        ))}
-      </select> */}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="end-date" className="text-sm text-gray-600">
+            End Date
+          </label>
+          <input
+            id="end-date"
+            type="date"
+            className="p-2 border border-gray-300 rounded-md"
+            value={endDate}
+            onChange={handleEndDateChange}
+            min={startDate}
+            max={
+              maxDate
+                ? today > maxDate
+                  ? today.toISOString().split('T')[0]
+                  : maxDate.toISOString().split('T')[0]
+                : today.toISOString().split('T')[0]
+            }
+          />
+        </div>
 
-      <input
-        type="date"
-        className="p-2 border rounded-md"
-        value={startDate}
-        onChange={(e) => onStartDateChange(e.target.value)}
-        placeholder="Start Date"
-        min="2020-01-01"
-        max={today}
-      />
-
-      <input
-        type="date"
-        className="p-2 border rounded-md"
-        value={endDate}
-        onChange={(e) => onEndDateChange(e.target.value)}
-        placeholder="End Date"
-        min={startDate || '2020-01-01'}
-        max={today}
-      />
-      <FilteringMapButton onBoundingBoxSelect={handleBoundingBoxSelect} />
+        <FilteringMapButton onBoundingBoxSelect={handleBoundingBoxSelect} />
+      </div>
     </div>
   );
 };

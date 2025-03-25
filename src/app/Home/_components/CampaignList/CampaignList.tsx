@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CampaignCard from '../CampaignCard/CampaignCard';
 import QueryWrapper from '../../../common/QueryWrapper';
 import { useList } from '../../../../hooks/campaign/useList';
@@ -7,21 +7,55 @@ import CampaignFilterToolbar from '../CampaignFilterToolbar';
 const CampaignList: React.FC = () => {
   const [selectedArea, setSelectedArea] = useState<string>('');
   const [selectedInstrument, setSelectedInstrument] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('2020-01-01');
-  const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split('T')[0],
-  );
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [minDate, setMinDate] = useState<Date>();
+  const [maxDate, setMaxDate] = useState<Date>();
 
   const { data: campaigns, isLoading, error } = useList();
 
-  const filteredCampaigns = campaigns;
-  // Filter campaigns based on selections
-  // const filteredCampaigns = campaigns?.filter((campaign) => {
-  //   const areaMatch = !selectedArea || campaign.area === selectedArea;
-  //   const instrumentMatch =
-  //     !selectedInstrument || campaign.instrument === selectedInstrument;
-  //   return areaMatch && instrumentMatch;
-  // });
+  // Set initial dates based on available campaigns
+  useEffect(() => {
+    if (campaigns?.length) {
+      // Find earliest and latest dates from campaigns
+      const dates = campaigns.map((campaign) => ({
+        start: campaign.startDate ? new Date(campaign.startDate) : new Date(),
+        end: campaign.endDate ? new Date(campaign.endDate) : new Date(),
+      }));
+
+      const earliestDate = new Date(
+        Math.min(...dates.map((d) => d.start.getTime())),
+      );
+      const latestDate = new Date(
+        Math.max(...dates.map((d) => d.end.getTime())),
+      );
+
+      // Set initial dates if not already set
+      if (!startDate) {
+        setStartDate(earliestDate.toISOString().split('T')[0]);
+        setMinDate(earliestDate);
+      }
+      if (!endDate) {
+        setEndDate(latestDate.toISOString().split('T')[0]);
+        setMaxDate(latestDate);
+      }
+    }
+  }, [campaigns]);
+
+  // Filter campaigns based on date range only
+  const filteredCampaigns = campaigns?.filter((campaign) => {
+    if (!campaign.startDate || !campaign.endDate) return true;
+
+    const campaignStart = new Date(campaign.startDate);
+    const campaignEnd = new Date(campaign.endDate);
+    const filterStart = startDate ? new Date(startDate) : null;
+    const filterEnd = endDate ? new Date(endDate) : null;
+
+    return (
+      (!filterStart || campaignEnd >= filterStart) &&
+      (!filterEnd || campaignStart <= filterEnd)
+    );
+  });
 
   return (
     <div
@@ -42,6 +76,8 @@ const CampaignList: React.FC = () => {
           endDate={endDate}
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
+          minDate={minDate}
+          maxDate={maxDate}
         />
 
         <QueryWrapper isLoading={isLoading} error={error}>
