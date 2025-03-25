@@ -9,6 +9,8 @@ const CampaignList: React.FC = () => {
   const [selectedInstrument, setSelectedInstrument] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [minDate, setMinDate] = useState<Date>();
+  const [maxDate, setMaxDate] = useState<Date>();
 
   const { data: campaigns, isLoading, error } = useList();
 
@@ -31,9 +33,11 @@ const CampaignList: React.FC = () => {
       // Set initial dates if not already set
       if (!startDate) {
         setStartDate(earliestDate.toISOString().split('T')[0]);
+        setMinDate(earliestDate);
       }
       if (!endDate) {
         setEndDate(latestDate.toISOString().split('T')[0]);
+        setMaxDate(latestDate);
       }
     }
   }, [campaigns]);
@@ -72,6 +76,8 @@ const CampaignList: React.FC = () => {
           endDate={endDate}
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
+          minDate={minDate}
+          maxDate={maxDate}
         />
 
         <QueryWrapper isLoading={isLoading} error={error}>
