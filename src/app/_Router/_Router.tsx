@@ -1,16 +1,12 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import Home from '../Home';
-import OAuth2 from '../Login/OAuth2';
 import Campaign from '../Campaign';
 import ProtectedRoute from '../common/ProtectedRoute';
-import { useTapisConfig } from '@tapis/tapisui-hooks';
 import Login from '../Login/Login';
-import StationDashboard from '../Station/_components/StationDashboard';
-import Station from '../Station';
-
+import useAccessToken from '../../hooks/auth/useAccessToken';
 const Router: React.FC = () => {
-  const { accessToken } = useTapisConfig();
+  const { accessToken } = useAccessToken();
   return (
     <Switch>
       <Route exact path="/">
@@ -19,10 +15,7 @@ const Router: React.FC = () => {
       <Route path="/login">
         <Login />
       </Route>
-      <Route path="/oauth2/callback">
-        <OAuth2 />
-      </Route>
-      <ProtectedRoute accessToken={accessToken?.access_token} path="/campaigns">
+      <ProtectedRoute accessToken={accessToken} path="/campaigns">
         <Campaign />
       </ProtectedRoute>
     </Switch>

@@ -1,15 +1,13 @@
-import { useTapisConfig } from '@tapis/tapisui-hooks';
-import { Authenticator } from '@tapis/tapisui-hooks';
 import { useHistory } from 'react-router-dom';
+import useAccessToken from '../../../../../hooks/auth/useAccessToken';
 
 interface RightProps {
   toggleMenu: () => void;
 }
 
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
-  const { accessToken } = useTapisConfig();
-  const { logout } = Authenticator.useLogin();
   const history = useHistory();
+  const { accessToken } = useAccessToken();
 
   return (
     <div className="flex items-center gap-4">
@@ -17,7 +15,10 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
         <div className="sm:flex sm:gap-4">
           <div className="flex items-center gap-4 text-primary-600">
             <button
-              onClick={() => logout()}
+              onClick={() => {
+                localStorage.removeItem('access_token');
+                window.location.href = '/login';
+              }}
               className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
             >
               Logout
