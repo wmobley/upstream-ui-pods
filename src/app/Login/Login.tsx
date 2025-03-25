@@ -1,38 +1,84 @@
-import React, { useEffect } from 'react';
-import { useTapisConfig } from '@tapis/tapisui-hooks';
-import Loading from '../common/Loading/Loading';
+import React from 'react';
+import useLogin from '../../hooks/auth/useLogin';
+import { useHistory } from 'react-router-dom';
+import useAccessToken from '../../hooks/auth/useAccessToken';
 
 const Login: React.FC = () => {
-  const { accessToken } = useTapisConfig();
+  const { accessToken } = useAccessToken();
+  const { login, email, setEmail, password, setPassword, isLoading, error } =
+    useLogin();
+  const history = useHistory();
 
-  useEffect(() => {
-    if (accessToken?.access_token) {
-      window.location.href = '/';
-    } else {
-      const callbackUrl = `${window.location.origin}/oauth2/callback`;
-      const oauthClientId = import.meta.env.VITE_OAUTH_CLIENT_ID;
-      const loginUrl = import.meta.env.VITE_TAPIS_LOGIN_URL;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await login();
+    window.location.href = '/';
+  };
 
-      if (!oauthClientId) {
-        throw new Error(
-          'VITE_OAUTH_CLIENT_ID is required in environment variables',
-        );
-      }
+  if (accessToken) {
+    history.push('/');
+  }
 
-      if (!loginUrl) {
-        throw new Error(
-          'VITE_TAPIS_LOGIN_URL is required in environment variables',
-        );
-      }
+  return (
+    <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="text-red-600 text-sm text-center">
+              {error.message}
+            </div>
+          )}
+          <div className="rounded-md shadow-sm space-y-4">
+            <div>
+              <label htmlFor="username" className="sr-only">
+                Username
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="text"
+                required
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
 
-      const targetUrl = `${loginUrl}?redirect_uri=${encodeURIComponent(
-        callbackUrl,
-      )}&response_type=token&client_id=${oauthClientId}`;
-      window.location.href = targetUrl;
-    }
-  }, [accessToken]);
-
-  return <Loading loadingMessage="Logging in..." />;
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50"
+            >
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default Login;
