@@ -4,6 +4,7 @@ import {
   Configuration,
   ListCampaignsResponseItem,
 } from '@upstream/upstream-api';
+import useConfiguration from '../api/useConfiguration';
 
 interface UseListReturn {
   data: ListCampaignsResponseItem[];
@@ -11,11 +12,9 @@ interface UseListReturn {
   error: Error | null;
 }
 
-const basePath = 'http://localhost:8000';
-const accessToken = 'Bearer ' + localStorage.getItem('access_token');
-const config = new Configuration({ basePath, accessToken });
-const campaignsApi = new CampaignsApi(config);
 export const useList = (): UseListReturn => {
+  const config = useConfiguration();
+  const campaignsApi = new CampaignsApi(config);
   const [data, setData] = useState<ListCampaignsResponseItem[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

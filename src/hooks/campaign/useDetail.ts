@@ -4,6 +4,7 @@ import {
   Configuration,
   GetCampaignResponse,
 } from '@upstream/upstream-api';
+import useConfiguration from '../api/useConfiguration';
 
 // Add this helper function to parse geometry string
 const parseGeometry = (geometry: string): [number, number] | null => {
@@ -22,15 +23,12 @@ const parseGeometry = (geometry: string): [number, number] | null => {
   }
 };
 
-const basePath = 'http://localhost:8000';
-const accessToken = 'Bearer ' + localStorage.getItem('access_token');
-const config = new Configuration({ basePath, accessToken });
-const campaignsApi = new CampaignsApi(config);
-
 export const useDetail = (campaignId: string) => {
   const [campaign, setCampaign] = useState<GetCampaignResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const config = useConfiguration();
+  const campaignsApi = new CampaignsApi(config);
 
   useEffect(() => {
     const loadData = async () => {

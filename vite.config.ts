@@ -7,15 +7,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   // Validate required environment variables
-  if (!env.VITE_OAUTH_CLIENT_ID) {
+  if (!env.VITE_UPSTREAM_API_URL) {
     throw new Error(
-      'VITE_OAUTH_CLIENT_ID is required in environment variables',
-    );
-  }
-
-  if (!env.VITE_TAPIS_LOGIN_URL) {
-    throw new Error(
-      'VITE_TAPIS_LOGIN_URL is required in environment variables',
+      'VITE_UPSTREAM_API_URL is required in environment variables',
     );
   }
 

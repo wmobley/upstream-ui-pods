@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { AuthApi, Configuration } from '@upstream/upstream-api';
-
-const basePath = 'https://upstream-dso.tacc.utexas.edu';
-const config = new Configuration({ basePath });
-const authApi = new AuthApi(config);
+import { AuthApi } from '@upstream/upstream-api';
+import useConfiguration from '../api/useConfiguration';
 
 interface LoginResponse {
   access_token: string;
@@ -15,6 +12,8 @@ const useLogin = () => {
   const [error, setError] = useState<Error | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const config = useConfiguration();
+  const authApi = new AuthApi(config);
 
   const login = async () => {
     try {

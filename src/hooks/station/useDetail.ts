@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react';
-import {
-  Configuration,
-  StationsApi,
-  GetStationResponse,
-} from '@upstream/upstream-api';
-
-const basePath = 'http://localhost:8000';
-const accessToken = 'Bearer ' + localStorage.getItem('access_token');
-const config = new Configuration({ basePath, accessToken });
-const stationsApi = new StationsApi(config);
+import { StationsApi, GetStationResponse } from '@upstream/upstream-api';
+import useConfiguration from '../api/useConfiguration';
 
 export const useDetail = (campaignId: string, stationId: string) => {
   const [station, setStation] = useState<GetStationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const config = useConfiguration();
+  const stationsApi = new StationsApi(config);
 
   useEffect(() => {
     const loadData = async () => {
