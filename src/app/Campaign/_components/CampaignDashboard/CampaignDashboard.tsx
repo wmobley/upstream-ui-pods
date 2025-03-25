@@ -1,4 +1,5 @@
 import { useDetail } from '../../../../hooks/campaign/useDetail';
+import BoundingBoxMap from '../../../common/BoundingBoxMap';
 import QueryWrapper from '../../../common/QueryWrapper';
 import StationCard from '../../../Station/_components/StationCard';
 import StatsWidget from './_components/StatsWidget';
@@ -29,8 +30,20 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Campaign Route</h2>
-            {/* <MapWidget campaignId={campaignId} /> */}
+            <h2 className="text-xl font-semibold mb-4">Campaign Coverage</h2>
+            {campaign &&
+              campaign.location &&
+              campaign.location.bboxWest &&
+              campaign.location.bboxEast &&
+              campaign.location.bboxSouth &&
+              campaign.location.bboxNorth && (
+                <BoundingBoxMap
+                  west={campaign.location?.bboxWest}
+                  east={campaign.location?.bboxEast}
+                  south={campaign.location?.bboxSouth}
+                  north={campaign.location?.bboxNorth}
+                />
+              )}
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -38,6 +51,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
             <StatsWidget campaignId={campaignId} />
           </div>
         </section>
+
         <section className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold">Stations</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

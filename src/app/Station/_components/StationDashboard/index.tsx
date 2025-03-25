@@ -3,6 +3,7 @@ import QueryWrapper from '../../../common/QueryWrapper';
 import { useDetail as useCampaignDetail } from '../../../../hooks/campaign/useDetail';
 import React, { useState } from 'react';
 import { SensorItem } from '@upstream/upstream-api';
+import StatsSection from './StatsSection';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -35,6 +36,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             <p className="text-gray-600">{station?.name}</p>
           </div>
         </header>
+
+        <section className="h-[400px] grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {station && <StatsSection station={station} />}
+        </section>
 
         <div className="flex gap-8">
           {/* Left Sidebar */}

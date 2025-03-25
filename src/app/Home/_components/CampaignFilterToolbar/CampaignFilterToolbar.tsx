@@ -1,4 +1,6 @@
 import React from 'react';
+import FilteringMapButton from '../FilteringMapButton/FilteringMapButton';
+import { LatLngBounds } from 'leaflet';
 
 // Mock data for filters
 export const MOCK_AREAS = [
@@ -38,9 +40,13 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
 }) => {
   const today = new Date().toISOString().split('T')[0]; // Gets current date in YYYY-MM-DD format
 
+  const handleBoundingBoxSelect = (bounds: LatLngBounds) => {
+    console.log(bounds);
+  };
+
   return (
     <div className="flex gap-4 flex-wrap">
-      <select
+      {/* <select
         className="p-2 border rounded-md"
         value={selectedArea}
         onChange={(e) => onAreaChange(e.target.value)}
@@ -51,9 +57,9 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
             {area.name}
           </option>
         ))}
-      </select>
+      </select> */}
 
-      <select
+      {/* <select
         className="p-2 border rounded-md"
         value={selectedInstrument}
         onChange={(e) => onInstrumentChange(e.target.value)}
@@ -64,7 +70,7 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
             {instrument.name}
           </option>
         ))}
-      </select>
+      </select> */}
 
       <input
         type="date"
@@ -85,6 +91,7 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
         min={startDate || '2020-01-01'}
         max={today}
       />
+      <FilteringMapButton onBoundingBoxSelect={handleBoundingBoxSelect} />
     </div>
   );
 };

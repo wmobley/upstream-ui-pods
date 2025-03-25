@@ -26,7 +26,7 @@ const Card: React.FC<CardProps> = ({
         {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
         {tags && (
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
+            {tags.slice(0, 5).map((tag) => (
               <span
                 key={tag}
                 className="rounded-full bg-gray-100 px-2 py-1 text-sm text-gray-700"
