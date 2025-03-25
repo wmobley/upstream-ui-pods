@@ -49,6 +49,7 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
+      <h2 className="text-xl font-semibold text-gray-800">Campaign Filters</h2>
       <div className="flex gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
           <label htmlFor="start-date" className="text-sm text-gray-600">
