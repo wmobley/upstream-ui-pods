@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { GetStationResponseGeometry } from './GetStationResponseGeometry';
+import {
+    GetStationResponseGeometryFromJSON,
+    GetStationResponseGeometryFromJSONTyped,
+    GetStationResponseGeometryToJSON,
+    GetStationResponseGeometryToJSONTyped,
+} from './GetStationResponseGeometry';
 import type { SensorItem } from './SensorItem';
 import {
     SensorItemFromJSON,
@@ -71,6 +78,12 @@ export interface GetStationResponse {
     startDate?: Date | null;
     /**
      * 
+     * @type {GetStationResponseGeometry}
+     * @memberof GetStationResponse
+     */
+    geometry?: GetStationResponseGeometry | null;
+    /**
+     * 
      * @type {Array<SensorItem>}
      * @memberof GetStationResponse
      */
@@ -103,6 +116,7 @@ export function GetStationResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'contactEmail': json['contact_email'] == null ? undefined : json['contact_email'],
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
+        'geometry': json['geometry'] == null ? undefined : GetStationResponseGeometryFromJSON(json['geometry']),
         'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorItemFromJSON)),
     };
 }
@@ -125,6 +139,7 @@ export function GetStationResponseToJSONTyped(value?: GetStationResponse | null,
         'contact_email': value['contactEmail'],
         'active': value['active'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
+        'geometry': GetStationResponseGeometryToJSON(value['geometry']),
         'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorItemToJSON)),
     };
 }
