@@ -48,6 +48,7 @@ export interface ListCampaignsApiV1CampaignsGetRequest {
     bbox?: string | null;
     startDate?: Date | null;
     endDate?: Date | null;
+    sensorVariables?: Array<string> | null;
 }
 
 /**
@@ -158,6 +159,10 @@ export class CampaignsApi extends runtime.BaseAPI {
 
         if (requestParameters['endDate'] != null) {
             queryParameters['end_date'] = (requestParameters['endDate'] as any).toISOString();
+        }
+
+        if (requestParameters['sensorVariables'] != null) {
+            queryParameters['sensor_variables'] = requestParameters['sensorVariables'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
