@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { GetCampaignResponseGeometry } from './GetCampaignResponseGeometry';
+import {
+    GetCampaignResponseGeometryFromJSON,
+    GetCampaignResponseGeometryFromJSONTyped,
+    GetCampaignResponseGeometryToJSON,
+    GetCampaignResponseGeometryToJSONTyped,
+} from './GetCampaignResponseGeometry';
 import type { SummaryListCampaigns } from './SummaryListCampaigns';
 import {
     SummaryListCampaignsFromJSON,
@@ -94,6 +101,12 @@ export interface ListCampaignsResponseItem {
      * @memberof ListCampaignsResponseItem
      */
     summary: SummaryListCampaigns;
+    /**
+     * 
+     * @type {GetCampaignResponseGeometry}
+     * @memberof ListCampaignsResponseItem
+     */
+    geometry?: GetCampaignResponseGeometry | null;
 }
 
 /**
@@ -126,6 +139,7 @@ export function ListCampaignsResponseItemFromJSONTyped(json: any, ignoreDiscrimi
         'endDate': json['end_date'] == null ? undefined : (new Date(json['end_date'])),
         'allocation': json['allocation'] == null ? undefined : json['allocation'],
         'summary': SummaryListCampaignsFromJSON(json['summary']),
+        'geometry': json['geometry'] == null ? undefined : GetCampaignResponseGeometryFromJSON(json['geometry']),
     };
 }
 
@@ -150,6 +164,7 @@ export function ListCampaignsResponseItemToJSONTyped(value?: ListCampaignsRespon
         'end_date': value['endDate'] == null ? undefined : ((value['endDate'] as any).toISOString()),
         'allocation': value['allocation'],
         'summary': SummaryListCampaignsToJSON(value['summary']),
+        'geometry': GetCampaignResponseGeometryToJSON(value['geometry']),
     };
 }
 

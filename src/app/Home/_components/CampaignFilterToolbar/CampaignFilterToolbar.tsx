@@ -1,37 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FilteringMapButton from '../FilteringMapButton/FilteringMapButton';
 import { LatLngBounds } from 'leaflet';
 
 interface CampaignFilterToolbarProps {
-  selectedArea: string;
-  selectedInstrument: string;
-  startDate: string;
-  endDate: string;
-  onStartDateChange: (date: string) => void;
-  onEndDateChange: (date: string) => void;
-  minDate: Date | undefined;
-  maxDate: Date | undefined;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+  onStartDateChange: (date: Date) => void;
+  onEndDateChange: (date: Date) => void;
+  onBoundsChange: (bounds: LatLngBounds | null) => void;
 }
 
 const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
-  selectedArea,
-  selectedInstrument,
   startDate,
   endDate,
   onStartDateChange,
   onEndDateChange,
-  minDate,
-  maxDate,
+  onBoundsChange,
 }) => {
-  const today = new Date();
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value;
-    onStartDateChange(newStartDate);
+    onStartDateChange(new Date(newStartDate));
 
     // If end date becomes invalid with new start date, update it
     if (endDate && new Date(endDate) < new Date(newStartDate)) {
-      onEndDateChange(newStartDate);
+      onEndDateChange(new Date(newStartDate));
     }
   };
 
@@ -39,12 +33,13 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
     const newEndDate = e.target.value;
     // Only allow end date changes if it's after or equal to start date
     if (!startDate || new Date(newEndDate) >= new Date(startDate)) {
-      onEndDateChange(newEndDate);
+      onEndDateChange(new Date(newEndDate));
     }
   };
 
-  const handleBoundingBoxSelect = (bounds: LatLngBounds) => {
-    console.log(bounds);
+  const handleBoundingBoxSelect = (bounds: LatLngBounds | null) => {
+    setBounds(bounds);
+    onBoundsChange(bounds);
   };
 
   return (
@@ -59,10 +54,8 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
             id="start-date"
             type="date"
             className="p-2 border border-gray-300 rounded-md"
-            value={startDate}
+            value={startDate ? startDate.toISOString().split('T')[0] : ''}
             onChange={handleStartDateChange}
-            min={minDate?.toISOString().split('T')[0]}
-            max={endDate || today.toISOString().split('T')[0]}
           />
         </div>
 
@@ -74,20 +67,15 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
             id="end-date"
             type="date"
             className="p-2 border border-gray-300 rounded-md"
-            value={endDate}
+            value={endDate ? endDate.toISOString().split('T')[0] : ''}
             onChange={handleEndDateChange}
-            min={startDate}
-            max={
-              maxDate
-                ? today > maxDate
-                  ? today.toISOString().split('T')[0]
-                  : maxDate.toISOString().split('T')[0]
-                : today.toISOString().split('T')[0]
-            }
           />
         </div>
 
-        <FilteringMapButton onBoundingBoxSelect={handleBoundingBoxSelect} />
+        <FilteringMapButton
+          onBoundingBoxSelect={handleBoundingBoxSelect}
+          bounds={bounds}
+        />
       </div>
     </div>
   );

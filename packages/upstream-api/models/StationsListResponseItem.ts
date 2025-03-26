@@ -13,13 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
-import type { GetStationResponseGeometry } from './GetStationResponseGeometry';
+import type { GetCampaignResponseGeometry } from './GetCampaignResponseGeometry';
 import {
-    GetStationResponseGeometryFromJSON,
-    GetStationResponseGeometryFromJSONTyped,
-    GetStationResponseGeometryToJSON,
-    GetStationResponseGeometryToJSONTyped,
-} from './GetStationResponseGeometry';
+    GetCampaignResponseGeometryFromJSON,
+    GetCampaignResponseGeometryFromJSONTyped,
+    GetCampaignResponseGeometryToJSON,
+    GetCampaignResponseGeometryToJSONTyped,
+} from './GetCampaignResponseGeometry';
 import type { SensorSummaryForStations } from './SensorSummaryForStations';
 import {
     SensorSummaryForStationsFromJSON,
@@ -78,10 +78,10 @@ export interface StationsListResponseItem {
     startDate: Date;
     /**
      * 
-     * @type {GetStationResponseGeometry}
+     * @type {GetCampaignResponseGeometry}
      * @memberof StationsListResponseItem
      */
-    geometry?: GetStationResponseGeometry | null;
+    geometry?: GetCampaignResponseGeometry | null;
     /**
      * 
      * @type {Array<SensorSummaryForStations>}
@@ -117,7 +117,7 @@ export function StationsListResponseItemFromJSONTyped(json: any, ignoreDiscrimin
         'contactEmail': json['contact_email'] == null ? undefined : json['contact_email'],
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': (new Date(json['start_date'])),
-        'geometry': json['geometry'] == null ? undefined : GetStationResponseGeometryFromJSON(json['geometry']),
+        'geometry': json['geometry'] == null ? undefined : GetCampaignResponseGeometryFromJSON(json['geometry']),
         'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorSummaryForStationsFromJSON)),
     };
 }
@@ -140,7 +140,7 @@ export function StationsListResponseItemToJSONTyped(value?: StationsListResponse
         'contact_email': value['contactEmail'],
         'active': value['active'],
         'start_date': ((value['startDate']).toISOString()),
-        'geometry': GetStationResponseGeometryToJSON(value['geometry']),
+        'geometry': GetCampaignResponseGeometryToJSON(value['geometry']),
         'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorSummaryForStationsToJSON)),
     };
 }

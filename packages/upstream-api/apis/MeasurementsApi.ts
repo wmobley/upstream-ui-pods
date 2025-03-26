@@ -16,10 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   HTTPValidationError,
+  ListMeasurementsResponsePagination,
 } from '../models/index';
 import {
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
+    ListMeasurementsResponsePaginationFromJSON,
+    ListMeasurementsResponsePaginationToJSON,
 } from '../models/index';
 
 export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest {
@@ -29,6 +32,7 @@ export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdS
     startDate?: Date | null;
     endDate?: Date | null;
     minMeasurementValue?: number | null;
+    maxMeasurementValue?: number | null;
     limit?: number;
     page?: number;
 }
@@ -41,7 +45,7 @@ export class MeasurementsApi extends runtime.BaseAPI {
     /**
      * Get Sensor Measurements
      */
-    async getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRaw(requestParameters: GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRaw(requestParameters: GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListMeasurementsResponsePagination>> {
         if (requestParameters['campaignId'] == null) {
             throw new runtime.RequiredError(
                 'campaignId',
@@ -77,6 +81,10 @@ export class MeasurementsApi extends runtime.BaseAPI {
             queryParameters['min_measurement_value'] = requestParameters['minMeasurementValue'];
         }
 
+        if (requestParameters['maxMeasurementValue'] != null) {
+            queryParameters['max_measurement_value'] = requestParameters['maxMeasurementValue'];
+        }
+
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
         }
@@ -99,17 +107,13 @@ export class MeasurementsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListMeasurementsResponsePaginationFromJSON(jsonValue));
     }
 
     /**
      * Get Sensor Measurements
      */
-    async getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(requestParameters: GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(requestParameters: GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListMeasurementsResponsePagination> {
         const response = await this.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRaw(requestParameters, initOverrides);
         return await response.value();
     }

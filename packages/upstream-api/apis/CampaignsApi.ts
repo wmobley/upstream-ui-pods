@@ -15,18 +15,28 @@
 
 import * as runtime from '../runtime';
 import type {
-  CampaignPagination,
+  CampaignCreateResponse,
+  CampaignsIn,
   GetCampaignResponse,
   HTTPValidationError,
+  ListCampaignsResponsePagination,
 } from '../models/index';
 import {
-    CampaignPaginationFromJSON,
-    CampaignPaginationToJSON,
+    CampaignCreateResponseFromJSON,
+    CampaignCreateResponseToJSON,
+    CampaignsInFromJSON,
+    CampaignsInToJSON,
     GetCampaignResponseFromJSON,
     GetCampaignResponseToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
+    ListCampaignsResponsePaginationFromJSON,
+    ListCampaignsResponsePaginationToJSON,
 } from '../models/index';
+
+export interface CreateCampaignApiV1CampaignsPostRequest {
+    campaignsIn: CampaignsIn;
+}
 
 export interface GetCampaignApiV1CampaignsCampaignIdGetRequest {
     campaignId: number;
@@ -35,7 +45,7 @@ export interface GetCampaignApiV1CampaignsCampaignIdGetRequest {
 export interface ListCampaignsApiV1CampaignsGetRequest {
     page?: number;
     limit?: number;
-    bbox?: string;
+    bbox?: string | null;
     startDate?: Date | null;
     endDate?: Date | null;
 }
@@ -44,6 +54,47 @@ export interface ListCampaignsApiV1CampaignsGetRequest {
  * 
  */
 export class CampaignsApi extends runtime.BaseAPI {
+
+    /**
+     * Create Campaign
+     */
+    async createCampaignApiV1CampaignsPostRaw(requestParameters: CreateCampaignApiV1CampaignsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CampaignCreateResponse>> {
+        if (requestParameters['campaignsIn'] == null) {
+            throw new runtime.RequiredError(
+                'campaignsIn',
+                'Required parameter "campaignsIn" was null or undefined when calling createCampaignApiV1CampaignsPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CampaignsInToJSON(requestParameters['campaignsIn']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CampaignCreateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Create Campaign
+     */
+    async createCampaignApiV1CampaignsPost(requestParameters: CreateCampaignApiV1CampaignsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignCreateResponse> {
+        const response = await this.createCampaignApiV1CampaignsPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Get Campaign
@@ -86,7 +137,7 @@ export class CampaignsApi extends runtime.BaseAPI {
     /**
      * List Campaigns
      */
-    async listCampaignsApiV1CampaignsGetRaw(requestParameters: ListCampaignsApiV1CampaignsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CampaignPagination>> {
+    async listCampaignsApiV1CampaignsGetRaw(requestParameters: ListCampaignsApiV1CampaignsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListCampaignsResponsePagination>> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -123,13 +174,13 @@ export class CampaignsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CampaignPaginationFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListCampaignsResponsePaginationFromJSON(jsonValue));
     }
 
     /**
      * List Campaigns
      */
-    async listCampaignsApiV1CampaignsGet(requestParameters: ListCampaignsApiV1CampaignsGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignPagination> {
+    async listCampaignsApiV1CampaignsGet(requestParameters: ListCampaignsApiV1CampaignsGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListCampaignsResponsePagination> {
         const response = await this.listCampaignsApiV1CampaignsGetRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, FeatureGroup } from 'react-leaflet';
-import { EditControl } from 'react-leaflet-draw';
-import { LatLngBounds, LatLngTuple } from 'leaflet';
+import React, { useState } from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
+import { LatLngBounds, LatLngTuple, PM } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import Modal from '../../../common/Modal';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+import DrawLayer from './DrawLayer';
 
 interface FilteringModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBoundingBoxSelect: (bounds: LatLngBounds) => void;
+  onBoundingBoxSelect: (bounds: LatLngBounds | null) => void;
 }
 
 const FilteringMapModal: React.FC<FilteringModalProps> = ({
@@ -17,44 +17,26 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
   onClose,
   onBoundingBoxSelect,
 }) => {
-  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
-  const [featureGroup, setFeatureGroup] = useState<typeof FeatureGroup | null>(
-    null,
-  );
-  //use ref to get the feature group
-  const featureGroupRef = useRef<typeof FeatureGroup>(null);
-
-  useEffect(() => {
-    if (featureGroupRef.current) {
-      setFeatureGroup(featureGroupRef.current);
-    }
-  }, [featureGroupRef]);
-
   // Default center position and zoom level Austin, TX
   const center: LatLngTuple = [30.2672, -97.7431];
   const zoom = 13;
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
-  const handleCreated = (e: any) => {
-    const layer = e.layer;
-    if (layer) {
-      setBounds(layer.getBounds());
+  const handleCreate = (e: PM.CreateEventHandler) => {
+    if (e.shape === 'Rectangle') {
+      const bounds = e.layer.getBounds();
+      setBounds(bounds);
     }
   };
 
-  const handleEdited = (e: any) => {
-    const layers = e.layers;
-    layers.eachLayer((layer: any) => {
-      setBounds(layer.getBounds());
-    });
-  };
-
-  const handleDeleted = () => {
-    setBounds(null);
+  const handleChange = (e: PM.ChangeEventHandler) => {
+    console.log(e);
   };
 
   const handleApply = () => {
     if (bounds) {
       onBoundingBoxSelect(bounds);
+      setBounds(null);
       onClose();
     }
   };
@@ -72,26 +54,12 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <FeatureGroup
-            ref={(featureGroupRef) => {
-              setFeatureGroup(featureGroupRef);
-            }}
-          >
-            <EditControl
-              position="topright"
-              onCreated={handleCreated}
-              onEdited={handleEdited}
-              onDeleted={handleDeleted}
-              draw={{
-                rectangle: true,
-                circle: false,
-                circlemarker: false,
-                marker: false,
-                polyline: false,
-                polygon: false,
-              }}
-            />
-          </FeatureGroup>
+          <DrawLayer
+            onCreate={handleCreate}
+            onChange={handleChange}
+            bounds={bounds}
+            setBounds={setBounds}
+          />
         </MapContainer>
       </div>
 
@@ -99,9 +67,24 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
         Use the drawing tools to create or edit the bounding box
       </div>
 
+      <div className="mt-2 text-sm text-gray-600">
+        {bounds ? (
+          <p>
+            North West: {bounds.getNorthWest().lat}, {bounds.getNorthWest().lng}
+            <br />
+            South East: {bounds.getSouthEast().lat}, {bounds.getSouthEast().lng}
+          </p>
+        ) : (
+          <p>No bounds selected</p>
+        )}
+      </div>
+
       <div className="mt-4 flex justify-end gap-2">
         <button
-          onClick={onClose}
+          onClick={() => {
+            onBoundingBoxSelect(null);
+            onClose();
+          }}
           className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-100"
         >
           Cancel

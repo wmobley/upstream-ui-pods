@@ -15,11 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  GetSensorResponse,
   HTTPValidationError,
+  ListSensorsResponsePagination,
 } from '../models/index';
 import {
+    GetSensorResponseFromJSON,
+    GetSensorResponseToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
+    ListSensorsResponsePaginationFromJSON,
+    ListSensorsResponsePaginationToJSON,
 } from '../models/index';
 
 export interface GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRequest {
@@ -28,7 +34,7 @@ export interface GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensor
     campaignId: number;
 }
 
-export interface GetSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest {
+export interface ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest {
     campaignId: number;
     stationId: number;
     page?: number;
@@ -43,7 +49,7 @@ export class SensorsApi extends runtime.BaseAPI {
     /**
      * Get Sensor
      */
-    async getSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRaw(requestParameters: GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRaw(requestParameters: GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetSensorResponse>> {
         if (requestParameters['stationId'] == null) {
             throw new runtime.RequiredError(
                 'stationId',
@@ -81,36 +87,32 @@ export class SensorsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetSensorResponseFromJSON(jsonValue));
     }
 
     /**
      * Get Sensor
      */
-    async getSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGet(requestParameters: GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGet(requestParameters: GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetSensorResponse> {
         const response = await this.getSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Get Sensors
+     * List Sensors
      */
-    async getSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRaw(requestParameters: GetSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async listSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRaw(requestParameters: ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListSensorsResponsePagination>> {
         if (requestParameters['campaignId'] == null) {
             throw new runtime.RequiredError(
                 'campaignId',
-                'Required parameter "campaignId" was null or undefined when calling getSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet().'
+                'Required parameter "campaignId" was null or undefined when calling listSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet().'
             );
         }
 
         if (requestParameters['stationId'] == null) {
             throw new runtime.RequiredError(
                 'stationId',
-                'Required parameter "stationId" was null or undefined when calling getSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet().'
+                'Required parameter "stationId" was null or undefined when calling listSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet().'
             );
         }
 
@@ -138,18 +140,14 @@ export class SensorsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListSensorsResponsePaginationFromJSON(jsonValue));
     }
 
     /**
-     * Get Sensors
+     * List Sensors
      */
-    async getSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet(requestParameters: GetSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
-        const response = await this.getSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRaw(requestParameters, initOverrides);
+    async listSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet(requestParameters: ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListSensorsResponsePagination> {
+        const response = await this.listSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
