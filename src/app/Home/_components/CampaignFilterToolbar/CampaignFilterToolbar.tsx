@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FilteringMapButton from '../FilteringMapButton/FilteringMapButton';
 import { LatLngBounds } from 'leaflet';
 
@@ -25,6 +25,8 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
 }) => {
   const today = new Date();
 
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
+
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value;
     onStartDateChange(newStartDate);
@@ -43,8 +45,8 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
     }
   };
 
-  const handleBoundingBoxSelect = (bounds: LatLngBounds) => {
-    console.log(bounds);
+  const handleBoundingBoxSelect = (bounds: LatLngBounds | null) => {
+    setBounds(bounds);
   };
 
   return (
@@ -87,7 +89,10 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
           />
         </div>
 
-        <FilteringMapButton onBoundingBoxSelect={handleBoundingBoxSelect} />
+        <FilteringMapButton
+          onBoundingBoxSelect={handleBoundingBoxSelect}
+          bounds={bounds}
+        />
       </div>
     </div>
   );

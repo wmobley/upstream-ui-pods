@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { MapContainer, TileLayer, FeatureGroup } from 'react-leaflet';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import { LatLngBounds, LatLngTuple, PM } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Modal from '../../../common/Modal';
-import { GeomanControls } from 'react-leaflet-geoman-v2';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+import DrawLayer from './DrawLayer';
 
 interface FilteringModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBoundingBoxSelect: (bounds: LatLngBounds) => void;
+  onBoundingBoxSelect: (bounds: LatLngBounds | null) => void;
 }
 
 const FilteringMapModal: React.FC<FilteringModalProps> = ({
@@ -17,26 +17,26 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
   onClose,
   onBoundingBoxSelect,
 }) => {
-  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   // Default center position and zoom level Austin, TX
   const center: LatLngTuple = [30.2672, -97.7431];
   const zoom = 13;
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
-  interface CreateEventHandler {
-    shape: PM.SUPPORTED_SHAPES;
-    layer: L.Layer;
-  }
-
-  const handleCreate = ({ shape, layer }: CreateEventHandler) => {
-    if (shape === 'Rectangle') {
-      const bounds = layer.getBounds();
+  const handleCreate = (e: PM.CreateEventHandler) => {
+    if (e.shape === 'Rectangle') {
+      const bounds = e.layer.getBounds();
       setBounds(bounds);
     }
+  };
+
+  const handleChange = (e: PM.ChangeEventHandler) => {
+    console.log(e);
   };
 
   const handleApply = () => {
     if (bounds) {
       onBoundingBoxSelect(bounds);
+      setBounds(null);
       onClose();
     }
   };
@@ -54,25 +54,12 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <FeatureGroup>
-            <GeomanControls
-              onCreate={handleCreate}
-              options={{
-                drawRectangle: true,
-                drawCircle: false,
-                drawCircleMarker: false,
-                drawMarker: false,
-                drawPolyline: false,
-                drawPolygon: false,
-                drawText: false,
-                cutPolygon: false,
-                removalMode: false,
-                rotateMode: false,
-                editMode: false,
-                dragMode: false,
-              }}
-            />
-          </FeatureGroup>
+          <DrawLayer
+            onCreate={handleCreate}
+            onChange={handleChange}
+            bounds={bounds}
+            setBounds={setBounds}
+          />
         </MapContainer>
       </div>
 
@@ -80,15 +67,24 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
         Use the drawing tools to create or edit the bounding box
       </div>
 
-      {bounds && (
-        <div className="mt-2 text-sm text-gray-600">
-          Bounds: {bounds.toBBoxString()}
-        </div>
-      )}
+      <div className="mt-2 text-sm text-gray-600">
+        {bounds ? (
+          <p>
+            North West: {bounds.getNorthWest().lat}, {bounds.getNorthWest().lng}
+            <br />
+            South East: {bounds.getSouthEast().lat}, {bounds.getSouthEast().lng}
+          </p>
+        ) : (
+          <p>No bounds selected</p>
+        )}
+      </div>
 
       <div className="mt-4 flex justify-end gap-2">
         <button
-          onClick={onClose}
+          onClick={() => {
+            onBoundingBoxSelect(null);
+            onClose();
+          }}
           className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-100"
         >
           Cancel

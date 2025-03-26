@@ -4,11 +4,13 @@ import FilteringMapModal from '../FilteringMapModal/FilteringMapModal';
 import { FaMapMarkedAlt } from 'react-icons/fa';
 
 interface FilteringMapButtonProps {
-  onBoundingBoxSelect: (bounds: LatLngBounds) => void;
+  onBoundingBoxSelect: (bounds: LatLngBounds | null) => void;
+  bounds: LatLngBounds | null;
 }
 
 const FilteringMapButton: React.FC<FilteringMapButtonProps> = ({
   onBoundingBoxSelect,
+  bounds,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -22,7 +24,7 @@ const FilteringMapButton: React.FC<FilteringMapButtonProps> = ({
         className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 bg-white hover:bg-gray-100"
       >
         <FaMapMarkedAlt className="text-black-500 text-xl" />
-        Select
+        {bounds ? 'Edit selected area' : 'Select area'}
       </button>
 
       <FilteringMapModal
