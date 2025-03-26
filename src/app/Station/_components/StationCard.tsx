@@ -12,7 +12,8 @@ const StationCard: React.FC<StationCardProps> = ({ station, to }) => {
       title={station.name}
       subtitle={station.description ?? ''} // Assuming station has a location property
       to={to ?? `/stations/${station.id}`}
-      tags={station.sensors.map((sensor) => sensor.variableName ?? '')} // Assuming station has parameters that can be used as tags
+      tags={station.sensors?.map((sensor) => sensor.variableName ?? '')} // Assuming station has parameters that can be used as tags
+      maxTags={10}
     />
   );
 };

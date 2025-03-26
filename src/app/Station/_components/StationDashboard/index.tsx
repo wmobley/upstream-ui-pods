@@ -32,8 +32,8 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
         {/* Header Section */}
         <header className="mb-8">
           <div className="mt-6">
-            <h1 className="text-3xl font-bold">{campaign?.name}</h1>
-            <p className="text-gray-600">{station?.name}</p>
+            <h1 className="text-3xl font-bold">{station?.name}</h1>
+            <p className="text-gray-600">{station?.description}</p>
           </div>
         </header>
 
