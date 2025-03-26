@@ -9,6 +9,7 @@ const CampaignList: React.FC = () => {
   const [startDate, setStartDate] = useState<Date>(new Date('2020-01-01'));
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
+  const [sensorVariables, setSensorVariables] = useState<string[]>([]);
 
   const filters = useMemo(
     () => ({
@@ -22,8 +23,9 @@ const CampaignList: React.FC = () => {
             bounds?.getSouthWest().lng,
           ].join(',')
         : undefined,
+      sensorVariables: sensorVariables.length > 0 ? sensorVariables : undefined,
     }),
-    [startDate, endDate, bounds],
+    [startDate, endDate, bounds, sensorVariables],
   );
 
   const {
@@ -50,6 +52,8 @@ const CampaignList: React.FC = () => {
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
           onBoundsChange={setBounds}
+          sensorVariables={sensorVariables}
+          setSensorVariables={setSensorVariables}
         />
 
         <QueryWrapper isLoading={isLoading} error={error}>
