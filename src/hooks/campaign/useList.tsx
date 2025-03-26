@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   CampaignsApi,
-  Configuration,
+  ListCampaignsApiV1CampaignsGetRequest,
   ListCampaignsResponseItem,
 } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
@@ -12,7 +12,11 @@ interface UseListReturn {
   error: Error | null;
 }
 
-export const useList = (): UseListReturn => {
+interface UseListProps {
+  filters: ListCampaignsApiV1CampaignsGetRequest;
+}
+
+export const useList = ({ filters }: UseListProps): UseListReturn => {
   const config = useConfiguration();
   const campaignsApi = new CampaignsApi(config);
   const [data, setData] = useState<ListCampaignsResponseItem[]>([]);
@@ -22,7 +26,8 @@ export const useList = (): UseListReturn => {
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
-        const response = await campaignsApi.listCampaignsApiV1CampaignsGet();
+        const response =
+          await campaignsApi.listCampaignsApiV1CampaignsGet(filters);
         setData(response.items);
       } catch (err) {
         setError(
@@ -33,7 +38,7 @@ export const useList = (): UseListReturn => {
       }
     };
     fetchCampaigns();
-  }, []);
+  }, [filters]);
 
   return { data, isLoading, error };
 };
