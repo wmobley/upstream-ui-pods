@@ -45,7 +45,7 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Select Area"
+      title="Select Variables"
       className="max-w-2xl"
     >
       <div className="space-y-2">
@@ -78,9 +78,10 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
           </button>
           <button
             onClick={handleSubmit}
-            className="rounded-md bg-primary-500 px-4 py-2 text-white hover:bg-primary-600"
+            disabled={localSelectedVariables.length === 0}
+            className="rounded-md bg-primary-500 px-4 py-2 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit
+            Apply
           </button>
         </div>
       </div>
