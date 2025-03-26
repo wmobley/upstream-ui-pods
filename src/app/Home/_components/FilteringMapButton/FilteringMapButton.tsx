@@ -16,16 +16,33 @@ const FilteringMapButton: React.FC<FilteringMapButtonProps> = ({
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor="map-filter" className="text-sm text-gray-600">
-        Filter by area
-      </label>
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 bg-white hover:bg-gray-100"
-      >
-        <FaMapMarkedAlt className="text-black-500 text-xl" />
-        {bounds ? 'Edit selected area' : 'Select area'}
-      </button>
+      {!bounds ? (
+        <div>
+          <label htmlFor="map-filter" className="text-sm text-gray-600">
+            Filter by area
+          </label>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 bg-white hover:bg-gray-100"
+          >
+            <FaMapMarkedAlt className="text-black-500 text-xl" />
+            {bounds ? 'Edit selected area' : 'Select area'}
+          </button>
+        </div>
+      ) : (
+        <div>
+          <label htmlFor="map-filter" className="text-sm text-gray-600">
+            Filter by area
+          </label>
+          <button
+            onClick={() => onBoundingBoxSelect(null)}
+            className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 bg-white hover:bg-gray-100"
+          >
+            <FaMapMarkedAlt className="text-black-500 text-xl" />
+            Clear area
+          </button>
+        </div>
+      )}
 
       <FilteringMapModal
         isOpen={isModalOpen}

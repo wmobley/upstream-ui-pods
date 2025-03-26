@@ -3,17 +3,27 @@ import CampaignCard from '../CampaignCard/CampaignCard';
 import QueryWrapper from '../../../common/QueryWrapper';
 import { useList } from '../../../../hooks/campaign/useList';
 import CampaignFilterToolbar from '../CampaignFilterToolbar';
+import { LatLngBounds } from 'leaflet';
 
 const CampaignList: React.FC = () => {
   const [startDate, setStartDate] = useState<Date>(new Date('2020-01-01'));
   const [endDate, setEndDate] = useState<Date>(new Date());
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const filters = useMemo(
     () => ({
       startDate,
       endDate,
+      bbox: bounds
+        ? [
+            bounds?.getNorthEast().lat,
+            bounds?.getNorthEast().lng,
+            bounds?.getSouthWest().lat,
+            bounds?.getSouthWest().lng,
+          ].join(',')
+        : undefined,
     }),
-    [startDate, endDate],
+    [startDate, endDate, bounds],
   );
 
   const {
@@ -39,6 +49,7 @@ const CampaignList: React.FC = () => {
           endDate={endDate}
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
+          onBoundsChange={setBounds}
         />
 
         <QueryWrapper isLoading={isLoading} error={error}>

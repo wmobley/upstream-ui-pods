@@ -7,6 +7,7 @@ interface CampaignFilterToolbarProps {
   endDate: Date | undefined;
   onStartDateChange: (date: Date) => void;
   onEndDateChange: (date: Date) => void;
+  onBoundsChange: (bounds: LatLngBounds | null) => void;
 }
 
 const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
@@ -14,6 +15,7 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
   endDate,
   onStartDateChange,
   onEndDateChange,
+  onBoundsChange,
 }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
@@ -37,6 +39,7 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
 
   const handleBoundingBoxSelect = (bounds: LatLngBounds | null) => {
     setBounds(bounds);
+    onBoundsChange(bounds);
   };
 
   return (

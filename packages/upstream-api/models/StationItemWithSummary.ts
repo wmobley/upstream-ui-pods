@@ -20,90 +20,98 @@ import {
     GetCampaignResponseGeometryToJSON,
     GetCampaignResponseGeometryToJSONTyped,
 } from './GetCampaignResponseGeometry';
-import type { SensorItem } from './SensorItem';
-import {
-    SensorItemFromJSON,
-    SensorItemFromJSONTyped,
-    SensorItemToJSON,
-    SensorItemToJSONTyped,
-} from './SensorItem';
 
 /**
  * 
  * @export
- * @interface GetStationResponse
+ * @interface StationItemWithSummary
  */
-export interface GetStationResponse {
+export interface StationItemWithSummary {
     /**
      * 
      * @type {number}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     id: number;
     /**
      * 
      * @type {string}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     name: string;
     /**
      * 
      * @type {string}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     description?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     contactName?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     contactEmail?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     active?: boolean | null;
     /**
      * 
      * @type {Date}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     startDate?: Date | null;
     /**
      * 
      * @type {GetCampaignResponseGeometry}
-     * @memberof GetStationResponse
+     * @memberof StationItemWithSummary
      */
     geometry?: GetCampaignResponseGeometry | null;
     /**
      * 
-     * @type {Array<SensorItem>}
-     * @memberof GetStationResponse
+     * @type {number}
+     * @memberof StationItemWithSummary
      */
-    sensors?: Array<SensorItem> | null;
+    sensorCount: number;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof StationItemWithSummary
+     */
+    sensorTypes: Array<string>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof StationItemWithSummary
+     */
+    sensorVariables: Array<string>;
 }
 
 /**
- * Check if a given object implements the GetStationResponse interface.
+ * Check if a given object implements the StationItemWithSummary interface.
  */
-export function instanceOfGetStationResponse(value: object): value is GetStationResponse {
+export function instanceOfStationItemWithSummary(value: object): value is StationItemWithSummary {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('sensorCount' in value) || value['sensorCount'] === undefined) return false;
+    if (!('sensorTypes' in value) || value['sensorTypes'] === undefined) return false;
+    if (!('sensorVariables' in value) || value['sensorVariables'] === undefined) return false;
     return true;
 }
 
-export function GetStationResponseFromJSON(json: any): GetStationResponse {
-    return GetStationResponseFromJSONTyped(json, false);
+export function StationItemWithSummaryFromJSON(json: any): StationItemWithSummary {
+    return StationItemWithSummaryFromJSONTyped(json, false);
 }
 
-export function GetStationResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetStationResponse {
+export function StationItemWithSummaryFromJSONTyped(json: any, ignoreDiscriminator: boolean): StationItemWithSummary {
     if (json == null) {
         return json;
     }
@@ -117,15 +125,17 @@ export function GetStationResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'geometry': json['geometry'] == null ? undefined : GetCampaignResponseGeometryFromJSON(json['geometry']),
-        'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorItemFromJSON)),
+        'sensorCount': json['sensor_count'],
+        'sensorTypes': json['sensor_types'],
+        'sensorVariables': json['sensor_variables'],
     };
 }
 
-export function GetStationResponseToJSON(json: any): GetStationResponse {
-    return GetStationResponseToJSONTyped(json, false);
+export function StationItemWithSummaryToJSON(json: any): StationItemWithSummary {
+    return StationItemWithSummaryToJSONTyped(json, false);
 }
 
-export function GetStationResponseToJSONTyped(value?: GetStationResponse | null, ignoreDiscriminator: boolean = false): any {
+export function StationItemWithSummaryToJSONTyped(value?: StationItemWithSummary | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -140,7 +150,9 @@ export function GetStationResponseToJSONTyped(value?: GetStationResponse | null,
         'active': value['active'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'geometry': GetCampaignResponseGeometryToJSON(value['geometry']),
-        'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorItemToJSON)),
+        'sensor_count': value['sensorCount'],
+        'sensor_types': value['sensorTypes'],
+        'sensor_variables': value['sensorVariables'],
     };
 }
 

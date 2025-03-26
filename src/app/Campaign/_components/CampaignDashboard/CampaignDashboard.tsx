@@ -1,8 +1,10 @@
+import { MapContainer, TileLayer } from 'react-leaflet';
 import { useDetail } from '../../../../hooks/campaign/useDetail';
-import BoundingBoxMap from '../../../common/BoundingBoxMap';
 import QueryWrapper from '../../../common/QueryWrapper';
 import StationCard from '../../../Station/_components/StationCard';
 import StatsWidget from './_components/StatsWidget';
+import { GeoJSON } from 'react-leaflet';
+import GeometryMap from '../../../common/GeometryMap/GeometryMap';
 
 interface CampaignDashboardProps {
   campaignId: string;
@@ -12,6 +14,10 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   campaignId,
 }) => {
   const { campaign, isLoading, error } = useDetail(campaignId);
+
+  if (!campaign) {
+    return null;
+  }
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
@@ -28,22 +34,14 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
           </div>
         </header>
 
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 h-96">
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Campaign Coverage</h2>
-            {campaign &&
-              campaign.location &&
-              campaign.location.bboxWest &&
-              campaign.location.bboxEast &&
-              campaign.location.bboxSouth &&
-              campaign.location.bboxNorth && (
-                <BoundingBoxMap
-                  west={campaign.location?.bboxWest}
-                  east={campaign.location?.bboxEast}
-                  south={campaign.location?.bboxSouth}
-                  north={campaign.location?.bboxNorth}
-                />
+            <div className="h-3/4 w-full">
+              {campaign && campaign.geometry && (
+                <GeometryMap geoJSON={campaign.geometry as GeoJSON.Geometry} />
               )}
+            </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">

@@ -17,13 +17,27 @@ import * as runtime from '../runtime';
 import type {
   GetStationResponse,
   HTTPValidationError,
+  ListStationsResponsePagination,
+  StationCreate,
+  StationCreateResponse,
 } from '../models/index';
 import {
     GetStationResponseFromJSON,
     GetStationResponseToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
+    ListStationsResponsePaginationFromJSON,
+    ListStationsResponsePaginationToJSON,
+    StationCreateFromJSON,
+    StationCreateToJSON,
+    StationCreateResponseFromJSON,
+    StationCreateResponseToJSON,
 } from '../models/index';
+
+export interface CreateStationApiV1CampaignsCampaignIdStationsPostRequest {
+    campaignId: number;
+    stationCreate: StationCreate;
+}
 
 export interface GetStationApiV1CampaignsCampaignIdStationsStationIdGetRequest {
     stationId: number;
@@ -40,6 +54,54 @@ export interface ListStationsApiV1CampaignsCampaignIdStationsGetRequest {
  * 
  */
 export class StationsApi extends runtime.BaseAPI {
+
+    /**
+     * Create Station
+     */
+    async createStationApiV1CampaignsCampaignIdStationsPostRaw(requestParameters: CreateStationApiV1CampaignsCampaignIdStationsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StationCreateResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling createStationApiV1CampaignsCampaignIdStationsPost().'
+            );
+        }
+
+        if (requestParameters['stationCreate'] == null) {
+            throw new runtime.RequiredError(
+                'stationCreate',
+                'Required parameter "stationCreate" was null or undefined when calling createStationApiV1CampaignsCampaignIdStationsPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: StationCreateToJSON(requestParameters['stationCreate']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => StationCreateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Create Station
+     */
+    async createStationApiV1CampaignsCampaignIdStationsPost(requestParameters: CreateStationApiV1CampaignsCampaignIdStationsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StationCreateResponse> {
+        const response = await this.createStationApiV1CampaignsCampaignIdStationsPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Get Station
@@ -89,7 +151,7 @@ export class StationsApi extends runtime.BaseAPI {
     /**
      * List Stations
      */
-    async listStationsApiV1CampaignsCampaignIdStationsGetRaw(requestParameters: ListStationsApiV1CampaignsCampaignIdStationsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async listStationsApiV1CampaignsCampaignIdStationsGetRaw(requestParameters: ListStationsApiV1CampaignsCampaignIdStationsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListStationsResponsePagination>> {
         if (requestParameters['campaignId'] == null) {
             throw new runtime.RequiredError(
                 'campaignId',
@@ -121,17 +183,13 @@ export class StationsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListStationsResponsePaginationFromJSON(jsonValue));
     }
 
     /**
      * List Stations
      */
-    async listStationsApiV1CampaignsCampaignIdStationsGet(requestParameters: ListStationsApiV1CampaignsCampaignIdStationsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async listStationsApiV1CampaignsCampaignIdStationsGet(requestParameters: ListStationsApiV1CampaignsCampaignIdStationsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListStationsResponsePagination> {
         const response = await this.listStationsApiV1CampaignsCampaignIdStationsGetRaw(requestParameters, initOverrides);
         return await response.value();
     }

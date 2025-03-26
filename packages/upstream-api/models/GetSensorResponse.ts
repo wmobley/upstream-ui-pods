@@ -16,66 +16,66 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface SensorItem
+ * @interface GetSensorResponse
  */
-export interface SensorItem {
+export interface GetSensorResponse {
     /**
      * 
      * @type {number}
-     * @memberof SensorItem
+     * @memberof GetSensorResponse
      */
     id: number;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof GetSensorResponse
      */
     alias?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof GetSensorResponse
      */
     description?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof SensorItem
+     * @memberof GetSensorResponse
      */
     postprocess?: boolean | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof GetSensorResponse
      */
     postprocessscript?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof GetSensorResponse
      */
     units?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof GetSensorResponse
      */
     variablename?: string | null;
 }
 
 /**
- * Check if a given object implements the SensorItem interface.
+ * Check if a given object implements the GetSensorResponse interface.
  */
-export function instanceOfSensorItem(value: object): value is SensorItem {
+export function instanceOfGetSensorResponse(value: object): value is GetSensorResponse {
     if (!('id' in value) || value['id'] === undefined) return false;
     return true;
 }
 
-export function SensorItemFromJSON(json: any): SensorItem {
-    return SensorItemFromJSONTyped(json, false);
+export function GetSensorResponseFromJSON(json: any): GetSensorResponse {
+    return GetSensorResponseFromJSONTyped(json, false);
 }
 
-export function SensorItemFromJSONTyped(json: any, ignoreDiscriminator: boolean): SensorItem {
+export function GetSensorResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetSensorResponse {
     if (json == null) {
         return json;
     }
@@ -91,11 +91,11 @@ export function SensorItemFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     };
 }
 
-export function SensorItemToJSON(json: any): SensorItem {
-    return SensorItemToJSONTyped(json, false);
+export function GetSensorResponseToJSON(json: any): GetSensorResponse {
+    return GetSensorResponseToJSONTyped(json, false);
 }
 
-export function SensorItemToJSONTyped(value?: SensorItem | null, ignoreDiscriminator: boolean = false): any {
+export function GetSensorResponseToJSONTyped(value?: GetSensorResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
