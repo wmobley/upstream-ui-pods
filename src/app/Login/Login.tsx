@@ -1,23 +1,23 @@
-import React from 'react';
-import useLogin from '../../hooks/auth/useLogin';
+import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import useAccessToken from '../../hooks/auth/useAccessToken';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Login: React.FC = () => {
-  const { accessToken } = useAccessToken();
-  const { login, email, setEmail, password, setPassword, isLoading, error } =
-    useLogin();
+  const { login, isLoading, error } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const history = useHistory();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login();
-    window.location.href = '/';
+    try {
+      await login(email, password);
+      history.push('/');
+    } catch (err) {
+      // Error is already handled in the AuthContext
+      console.error('Login failed:', err);
+    }
   };
-
-  if (accessToken) {
-    history.push('/');
-  }
 
   return (
     <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
