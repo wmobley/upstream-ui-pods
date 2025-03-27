@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
 import { AuthApi } from '@upstream/upstream-api';
 import useConfiguration from '../hooks/api/useConfiguration';
 
@@ -18,10 +24,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const config = useConfiguration();
   const authApi = new AuthApi(config);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          // You might want to add an API call here to validate the token
+          // For now, we'll just check if it exists
+          setIsAuthenticated(true);
+        } catch (err) {
+          localStorage.removeItem('access_token');
+          setIsAuthenticated(false);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
