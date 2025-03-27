@@ -1,6 +1,7 @@
 apis/AuthApi.ts
 apis/CampaignsApi.ts
 apis/MeasurementsApi.ts
+apis/SensorVariablesApi.ts
 apis/SensorsApi.ts
 apis/StationsApi.ts
 apis/UploadfileApi.ts

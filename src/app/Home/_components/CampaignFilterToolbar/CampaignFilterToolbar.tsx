@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import FilteringMapButton from '../FilteringMapButton/FilteringMapButton';
+import FilteringMapButton from './_components/FilteringMapButton/FilteringMapButton';
 import { LatLngBounds } from 'leaflet';
-
+import { FilteringVariablesButton } from './_components/FilteringVariables';
 interface CampaignFilterToolbarProps {
   startDate: Date | undefined;
   endDate: Date | undefined;
   onStartDateChange: (date: Date) => void;
   onEndDateChange: (date: Date) => void;
   onBoundsChange: (bounds: LatLngBounds | null) => void;
+  sensorVariables: string[];
+  setSensorVariables: (variables: string[]) => void;
 }
 
 const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
@@ -16,6 +18,8 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
   onStartDateChange,
   onEndDateChange,
   onBoundsChange,
+  sensorVariables,
+  setSensorVariables,
 }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
@@ -75,6 +79,12 @@ const CampaignFilterToolbar: React.FC<CampaignFilterToolbarProps> = ({
         <FilteringMapButton
           onBoundingBoxSelect={handleBoundingBoxSelect}
           bounds={bounds}
+        />
+
+        <FilteringVariablesButton
+          sensorVariables={sensorVariables}
+          onSubmit={setSensorVariables}
+          onClear={() => setSensorVariables([])}
         />
       </div>
     </div>
