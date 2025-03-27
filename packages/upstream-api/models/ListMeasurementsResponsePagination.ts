@@ -57,6 +57,24 @@ export interface ListMeasurementsResponsePagination {
      * @memberof ListMeasurementsResponsePagination
      */
     pages: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ListMeasurementsResponsePagination
+     */
+    minValue: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ListMeasurementsResponsePagination
+     */
+    maxValue: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ListMeasurementsResponsePagination
+     */
+    averageValue: number;
 }
 
 /**
@@ -68,6 +86,9 @@ export function instanceOfListMeasurementsResponsePagination(value: object): val
     if (!('page' in value) || value['page'] === undefined) return false;
     if (!('size' in value) || value['size'] === undefined) return false;
     if (!('pages' in value) || value['pages'] === undefined) return false;
+    if (!('minValue' in value) || value['minValue'] === undefined) return false;
+    if (!('maxValue' in value) || value['maxValue'] === undefined) return false;
+    if (!('averageValue' in value) || value['averageValue'] === undefined) return false;
     return true;
 }
 
@@ -86,6 +107,9 @@ export function ListMeasurementsResponsePaginationFromJSONTyped(json: any, ignor
         'page': json['page'],
         'size': json['size'],
         'pages': json['pages'],
+        'minValue': json['min_value'],
+        'maxValue': json['max_value'],
+        'averageValue': json['average_value'],
     };
 }
 
@@ -105,6 +129,9 @@ export function ListMeasurementsResponsePaginationToJSONTyped(value?: ListMeasur
         'page': value['page'],
         'size': value['size'],
         'pages': value['pages'],
+        'min_value': value['minValue'],
+        'max_value': value['maxValue'],
+        'average_value': value['averageValue'],
     };
 }
 

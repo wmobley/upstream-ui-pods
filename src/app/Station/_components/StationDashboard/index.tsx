@@ -4,6 +4,7 @@ import { useDetail as useCampaignDetail } from '../../../../hooks/campaign/useDe
 import React, { useState } from 'react';
 import { SensorItem } from '@upstream/upstream-api';
 import StatsSection from './StatsSection';
+import SensorDetails from '../../../Sensor/SensorDetails/SensorDetails';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -57,7 +58,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
                         : 'hover:bg-gray-50 text-gray-600'
                     }`}
                   >
-                    {sensor.alias}
+                    {sensor.variablename}
                   </button>
                 ))}
               </div>
@@ -66,34 +67,14 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
 
           {/* Right Content Area */}
           <div className="flex-1">
-            <section className="bg-white rounded-lg shadow-md p-6">
-              {selectedSensor ? (
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">
-                    {selectedSensor.alias}
-                  </h2>
-                  <div className="space-y-4">
-                    {/* Add sensor details here */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Sensor ID</p>
-                        <p className="font-medium">{selectedSensor.id}</p>
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Status</p>
-                        <p className="font-medium">
-                          {selectedSensor.variablename}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-gray-500 text-center py-8">
-                  Select a sensor from the list to view details
-                </div>
-              )}
-            </section>
+            {selectedSensor && (
+              <SensorDetails
+                key={selectedSensor.id}
+                campaignId={campaignId}
+                stationId={stationId}
+                sensorId={selectedSensor.id.toString()}
+              />
+            )}
           </div>
         </div>
       </div>

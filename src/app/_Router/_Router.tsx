@@ -12,7 +12,7 @@ const Router: React.FC = () => {
       <Route exact path="/">
         <Home />
       </Route>
-      <Route path="/login">
+      <Route exact path="/login">
         <Login />
       </Route>
       <ProtectedRoute accessToken={accessToken} path="/campaigns">

@@ -7,6 +7,9 @@ interface CampaignCardProps {
 }
 
 const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
+  const startDate = campaign.startDate?.toLocaleDateString();
+  const endDate = campaign.endDate?.toLocaleDateString();
+  const dates = `${startDate} ${endDate ? `- ${endDate}` : '- Present'}`;
   const Map = () => {
     if (campaign.geometry) {
       return <GeometryMap geoJSON={campaign.geometry as GeoJSON.Geometry} />;
@@ -18,7 +21,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
     return (
       <Card
         title={campaign.name}
-        subtitle={`${campaign.startDate?.toLocaleDateString()} - ${campaign.endDate?.toLocaleDateString()}`}
+        subtitle={dates}
         to={`/campaigns/${campaign.id}`}
         tags={campaign.summary.variableNames?.filter(
           (variable) => variable !== null,
@@ -31,7 +34,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
     return (
       <Card
         title={campaign.name}
-        subtitle={`${campaign.startDate?.toLocaleDateString()} - ${campaign.endDate?.toLocaleDateString()}`}
+        subtitle={dates}
         to={`/campaigns/${campaign.id}`}
         tags={campaign.summary.variableNames?.filter(
           (variable) => variable !== null,
