@@ -4,21 +4,26 @@ import Home from '../Home';
 import Campaign from '../Campaign';
 import ProtectedRoute from '../common/ProtectedRoute';
 import Login from '../Login/Login';
-import useAccessToken from '../../hooks/auth/useAccessToken';
+import { useAuth } from '../../contexts/AuthContext';
+import QueryWrapper from '../common/QueryWrapper';
+
 const Router: React.FC = () => {
-  const { accessToken } = useAccessToken();
+  const { isAuthenticated, isLoading, error } = useAuth();
+
   return (
-    <Switch>
-      <Route exact path="/">
-        <Home />
-      </Route>
-      <Route exact path="/login">
-        <Login />
-      </Route>
-      <ProtectedRoute accessToken={accessToken} path="/campaigns">
-        <Campaign />
-      </ProtectedRoute>
-    </Switch>
+    <QueryWrapper isLoading={isLoading} error={error}>
+      <Switch>
+        <Route exact path="/">
+          <Home />
+        </Route>
+        <Route exact path="/login">
+          <Login />
+        </Route>
+        <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
+          <Campaign />
+        </ProtectedRoute>
+      </Switch>
+    </QueryWrapper>
   );
 };
 

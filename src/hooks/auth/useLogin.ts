@@ -1,44 +1,22 @@
 import { useState } from 'react';
-import { AuthApi } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
-
-interface LoginResponse {
-  access_token: string;
-  token_type: string;
-}
+import { useAuth } from '../../contexts/AuthContext';
 
 const useLogin = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const config = useConfiguration();
-  const authApi = new AuthApi(config);
+  const { login, isLoading, error } = useAuth();
 
-  const login = async () => {
+  const handleLogin = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const response = await authApi.loginApiV1TokenPost({
-        username: email,
-        password: password,
-      });
-
-      // Store token in localStorage
-      localStorage.setItem('access_token', response.access_token);
-
-      return response.data as LoginResponse;
+      await login(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to login'));
-      console.error('Error during login:', err);
-      throw err;
-    } finally {
-      setIsLoading(false);
+      // Error is already handled in the AuthContext
+      console.error('Login failed:', err);
     }
   };
 
   return {
-    login,
+    login: handleLogin,
     setEmail,
     setPassword,
     email,
