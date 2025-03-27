@@ -33,6 +33,7 @@ export const useList = (
               campaignId: parseInt(campaignId),
               stationId: parseInt(stationId),
               sensorId: parseInt(sensorId),
+              limit: 10000,
             },
           );
         setData(response);

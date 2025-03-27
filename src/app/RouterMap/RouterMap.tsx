@@ -2,17 +2,24 @@ import { MapContainer, TileLayer, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { useDetail } from '../../hooks/campaign/useDetail';
+import { MeasurementItem } from '@upstream/upstream-api';
 
-export default function RouterMap({ campaignId }: { campaignId: string }) {
-  const { measurements } = useDetail(campaignId);
-  const coordinates = measurements.map((m) => [m.latitude, m.longitude]);
+interface RouterMapProps {
+  measurements: MeasurementItem[];
+}
+
+export default function RouterMap({ measurements }: RouterMapProps) {
+  const coordinates = measurements.map((m) => [
+    m.geometry?.coordinates[1],
+    m.geometry?.coordinates[0],
+  ]);
 
   // Calculate the center of the coordinates
   const getCenter = (): LatLngExpression | undefined => {
     if (!measurements.length) return undefined;
 
-    const lats = measurements.map((coord) => coord.latitude);
-    const lngs = measurements.map((coord) => coord.longitude);
+    const lats = measurements.map((coord) => coord.geometry?.coordinates[1]);
+    const lngs = measurements.map((coord) => coord.geometry?.coordinates[0]);
 
     const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
     const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;

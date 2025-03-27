@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { Point } from './Point';
+import {
+    PointFromJSON,
+    PointFromJSONTyped,
+    PointToJSON,
+    PointToJSONTyped,
+} from './Point';
+
 /**
  * 
  * @export
@@ -61,6 +69,12 @@ export interface MeasurementItem {
      * @memberof MeasurementItem
      */
     value?: number | null;
+    /**
+     * 
+     * @type {Point}
+     * @memberof MeasurementItem
+     */
+    geometry?: Point | null;
 }
 
 /**
@@ -89,6 +103,7 @@ export function MeasurementItemFromJSONTyped(json: any, ignoreDiscriminator: boo
         'variabletype': json['variabletype'] == null ? undefined : json['variabletype'],
         'description': json['description'] == null ? undefined : json['description'],
         'value': json['value'] == null ? undefined : json['value'],
+        'geometry': json['geometry'] == null ? undefined : PointFromJSON(json['geometry']),
     };
 }
 
@@ -110,6 +125,7 @@ export function MeasurementItemToJSONTyped(value?: MeasurementItem | null, ignor
         'variabletype': value['variabletype'],
         'description': value['description'],
         'value': value['value'],
+        'geometry': PointToJSON(value['geometry']),
     };
 }
 
