@@ -1,38 +1,40 @@
-import * as React from 'react'; // v17.0.2
-import { extent } from 'd3-array'; // v^2.12.1
-import { curveCatmullRom, curveLinear, line } from 'd3-shape'; // v^3.0.0
-import { scaleLinear, ScaleLinear } from 'd3-scale'; // v^3.2.4
+import * as React from 'react';
+import { extent } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
 import { useList } from '../../hooks/measurements/useList';
+import Points from './_components/Points';
+import Line from './_components/Line';
+import XAxis from './_components/XAxis';
+import YAxis from './_components/YAxis';
+import Area from './_components/Area';
 
 interface DataPoint {
   date: Date;
   value: number;
 }
 
-interface OutlinedSvgTextProps {
-  stroke: string;
-  strokeWidth: number;
-  children: React.ReactNode;
-  [key: string]: unknown;
-}
-
-interface AxisProps {
-  title: string;
-  formatter: (value: number | Date) => string;
-}
-
-interface YAxisProps extends AxisProps {
-  yScale: ScaleLinear<number, number>;
-}
-
-interface XAxisProps extends AxisProps {
-  xScale: ScaleLinear<number, number>;
-  innerHeight: number;
-}
+// metrics (numeric) + dimensions (non-numeric) = fields
+const fields = {
+  date: {
+    accessor: (d: DataPoint) => d.date,
+    title: 'Date',
+    formatter: (date: Date | number) => {
+      if (date instanceof Date) {
+        return date.toISOString();
+      }
+      return new Date(date).toLocaleTimeString();
+    },
+  },
+  value: {
+    accessor: (d: DataPoint) => d.value,
+    title: 'Value',
+    formatter: format('.1f'),
+  },
+};
 
 const TimeSeriesGraph = () => {
-  const { data: response, isLoading, error } = useList('2', '2', '8', 100);
+  const { data: response, isLoading, error } = useList('1', '19', '44', 10000);
   const [data, setData] = React.useState<DataPoint[] | null>(null);
 
   React.useEffect(() => {
@@ -53,7 +55,6 @@ const TimeSeriesGraph = () => {
   if (data && data.length === 0) {
     return <div>No data</div>;
   }
-  console.log(data);
 
   const width = 1600;
   const height = 800;
@@ -76,8 +77,13 @@ const TimeSeriesGraph = () => {
     return <div style={{ width, height }} />;
   }
 
-  const xExtent = extent(data, xAccessor) as [Date, Date];
-  const yExtent = extent(data, yAccessor) as [number, number];
+  const xExtent = extent(data, xAccessor);
+  const yExtent = extent(data, yAccessor);
+
+  if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
+    return <div>Invalid data</div>;
+  }
+
   const xScale = scaleLinear()
     .domain([xExtent[0].getTime(), xExtent[1].getTime()])
     .range([0, innerWidth]);
@@ -93,207 +99,26 @@ const TimeSeriesGraph = () => {
             title={xTitle}
             innerHeight={innerHeight}
           />
-          <Line
+          <Area
             data={data}
             xScale={xScale}
             yScale={yScale}
             xAccessor={xAccessor}
             yAccessor={yAccessor}
           />
-          <Points
+          {/* <Points
             radius={3}
             data={data}
             xScale={xScale}
             yScale={yScale}
             xAccessor={xAccessor}
             yAccessor={yAccessor}
-          />
+          /> */}
           <YAxis yScale={yScale} formatter={yFormatter} title={yTitle} />
         </g>
       </svg>
     </div>
   );
 };
+
 export default TimeSeriesGraph;
-
-interface PointsProps {
-  data: DataPoint[];
-  xScale: ScaleLinear<number, number>;
-  yScale: ScaleLinear<number, number>;
-  xAccessor: (d: DataPoint) => number | Date;
-  yAccessor: (d: DataPoint) => number;
-  radius: number;
-}
-const Points = ({
-  data,
-  xScale,
-  yScale,
-  xAccessor,
-  yAccessor,
-  radius,
-}: PointsProps) => {
-  return (
-    <g>
-      {data.map((d) => (
-        <circle
-          key={d.date.getTime()}
-          cx={xScale(xAccessor(d))}
-          cy={yScale(yAccessor(d))}
-          r={radius}
-        />
-      ))}
-    </g>
-  );
-};
-
-interface LineProps {
-  data: DataPoint[];
-  xScale: ScaleLinear<number, number>;
-  yScale: ScaleLinear<number, number>;
-  xAccessor: (d: DataPoint) => number | Date;
-  yAccessor: (d: DataPoint) => number;
-}
-const Line = ({ data, xScale, yScale, xAccessor, yAccessor }: LineProps) => {
-  const lineBuilder = line<DataPoint>()
-    .x((d) => xScale(xAccessor(d)))
-    .y((d) => yScale(yAccessor(d)))
-    .curve(curveCatmullRom.alpha(0.5));
-
-  const path = lineBuilder(data);
-  return <path d={path} stroke="#9a6fb0" fill="none" strokeWidth={2} />;
-};
-
-/** fancier way of getting a nice svg text stroke */
-const OutlinedSvgText: React.FC<OutlinedSvgTextProps> = ({
-  stroke,
-  strokeWidth,
-  children,
-  ...other
-}) => {
-  return (
-    <>
-      <text stroke={stroke} strokeWidth={strokeWidth} {...other}>
-        {children}
-      </text>
-      <text {...other}>{children}</text>
-    </>
-  );
-};
-
-/** determine number of ticks based on space available  */
-function numTicksForPixels(
-  pixelsAvailable: number,
-  pixelsPerTick = 70,
-): number {
-  return Math.floor(Math.abs(pixelsAvailable) / pixelsPerTick);
-}
-
-/** Y-axis with title  */
-const YAxis: React.FC<YAxisProps> = ({ yScale, title, formatter }) => {
-  const [yMin, yMax] = yScale.range();
-  const ticks = yScale.ticks(numTicksForPixels(yMin - yMax, 50));
-
-  return (
-    <g data-testid="YAxis">
-      <OutlinedSvgText
-        stroke="#fff"
-        strokeWidth={2.5}
-        dx={4}
-        dy="0.8em"
-        fill="var(--gray-600)"
-        className="font-semibold text-2xs"
-      >
-        {title}
-      </OutlinedSvgText>
-
-      <line x1={0} x2={0} y1={yMin} y2={yMax} stroke="var(--gray-400)" />
-      {ticks.map((tick: number) => {
-        const y = yScale(tick);
-        return (
-          <g key={tick} transform={`translate(0 ${y})`}>
-            <text
-              dy="0.34em"
-              textAnchor="end"
-              dx={-12}
-              fill="currentColor"
-              className="text-gray-400 text-2xs"
-            >
-              {formatter(tick)}
-            </text>
-            <line x1={0} x2={-8} stroke="var(--gray-300)" />
-          </g>
-        );
-      })}
-    </g>
-  );
-};
-
-/** X-axis with title, uses CSS for text stroke  */
-const XAxis: React.FC<XAxisProps> = ({
-  xScale,
-  title,
-  formatter,
-  innerHeight,
-}) => {
-  const [xMin, xMax] = xScale.range();
-  const ticks = xScale.ticks(numTicksForPixels(xMax - xMin));
-
-  return (
-    <g data-testid="XAxis" transform={`translate(0 ${innerHeight})`}>
-      <text
-        x={xMax}
-        textAnchor="end"
-        dy={-4}
-        fill="var(--gray-600)"
-        className="font-semibold text-2xs"
-        style={{
-          textShadow: `-1px -1px 1px #fff,
-                        1px -1px 1px #fff,
-                        1px 1px 1px #fff,
-                       -1px 1px 1px #fff`,
-        }}
-      >
-        {title}
-      </text>
-
-      <line x1={xMin} x2={xMax} y1={0} y2={0} stroke="var(--gray-400)" />
-      {ticks.map((tick: number) => {
-        const x = xScale(tick);
-        return (
-          <g key={tick} transform={`translate(${x} 0)`}>
-            <text
-              y={10}
-              x={0}
-              dy="1em"
-              textAnchor="start"
-              fill="currentColor"
-              className="text-gray-400 text-2xs"
-              transform="rotate(45) translate(5, 0)"
-            >
-              {formatter(tick)}
-            </text>
-            <line y1={0} y2={8} stroke="var(--gray-300)" />
-          </g>
-        );
-      })}
-    </g>
-  );
-};
-// metrics (numeric) + dimensions (non-numeric) = fields
-const fields = {
-  date: {
-    accessor: (d: DataPoint) => d.date,
-    title: 'Date',
-    formatter: (date: Date | number) => {
-      if (date instanceof Date) {
-        return date.toISOString();
-      }
-      return new Date(date).toLocaleTimeString();
-    },
-  },
-  value: {
-    accessor: (d: DataPoint) => d.value,
-    title: 'Value',
-    formatter: format('.1f'),
-  },
-};
