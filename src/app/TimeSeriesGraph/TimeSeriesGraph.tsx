@@ -1,6 +1,6 @@
 import * as React from 'react'; // v17.0.2
 import { extent } from 'd3-array'; // v^2.12.1
-import { line } from 'd3-shape'; // v^3.0.0
+import { curveCatmullRom, curveLinear, line } from 'd3-shape'; // v^3.0.0
 import { scaleLinear, ScaleLinear } from 'd3-scale'; // v^3.2.4
 import { format } from 'd3-format';
 import { useList } from '../../hooks/measurements/useList';
@@ -32,7 +32,7 @@ interface XAxisProps extends AxisProps {
 }
 
 const TimeSeriesGraph = () => {
-  const { data: response, isLoading, error } = useList('1', '7', '38');
+  const { data: response, isLoading, error } = useList('2', '2', '8', 100);
   const [data, setData] = React.useState<DataPoint[] | null>(null);
 
   React.useEffect(() => {
@@ -57,7 +57,7 @@ const TimeSeriesGraph = () => {
 
   const width = 1600;
   const height = 800;
-  const margin = { top: 10, right: 100, bottom: 30, left: 50 };
+  const margin = { top: 10, right: 100, bottom: 100, left: 50 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
@@ -81,7 +81,7 @@ const TimeSeriesGraph = () => {
   const xScale = scaleLinear()
     .domain([xExtent[0].getTime(), xExtent[1].getTime()])
     .range([0, innerWidth]);
-  const yScale = scaleLinear().domain(yExtent).range([innerHeight, 0]);
+  const yScale = scaleLinear().domain([0, yExtent[1]]).range([innerHeight, 0]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
@@ -100,14 +100,14 @@ const TimeSeriesGraph = () => {
             xAccessor={xAccessor}
             yAccessor={yAccessor}
           />
-          {/* <Points
-            radius={radius}
+          <Points
+            radius={3}
             data={data}
             xScale={xScale}
             yScale={yScale}
             xAccessor={xAccessor}
             yAccessor={yAccessor}
-          /> */}
+          />
           <YAxis yScale={yScale} formatter={yFormatter} title={yTitle} />
         </g>
       </svg>
@@ -115,6 +115,36 @@ const TimeSeriesGraph = () => {
   );
 };
 export default TimeSeriesGraph;
+
+interface PointsProps {
+  data: DataPoint[];
+  xScale: ScaleLinear<number, number>;
+  yScale: ScaleLinear<number, number>;
+  xAccessor: (d: DataPoint) => number | Date;
+  yAccessor: (d: DataPoint) => number;
+  radius: number;
+}
+const Points = ({
+  data,
+  xScale,
+  yScale,
+  xAccessor,
+  yAccessor,
+  radius,
+}: PointsProps) => {
+  return (
+    <g>
+      {data.map((d) => (
+        <circle
+          key={d.date.getTime()}
+          cx={xScale(xAccessor(d))}
+          cy={yScale(yAccessor(d))}
+          r={radius}
+        />
+      ))}
+    </g>
+  );
+};
 
 interface LineProps {
   data: DataPoint[];
@@ -126,7 +156,9 @@ interface LineProps {
 const Line = ({ data, xScale, yScale, xAccessor, yAccessor }: LineProps) => {
   const lineBuilder = line<DataPoint>()
     .x((d) => xScale(xAccessor(d)))
-    .y((d) => yScale(yAccessor(d)));
+    .y((d) => yScale(yAccessor(d)))
+    .curve(curveCatmullRom.alpha(0.5));
+
   const path = lineBuilder(data);
   return <path d={path} stroke="#9a6fb0" fill="none" strokeWidth={2} />;
 };
@@ -231,10 +263,12 @@ const XAxis: React.FC<XAxisProps> = ({
           <g key={tick} transform={`translate(${x} 0)`}>
             <text
               y={10}
-              dy="0.8em"
-              textAnchor="middle"
+              x={0}
+              dy="1em"
+              textAnchor="start"
               fill="currentColor"
               className="text-gray-400 text-2xs"
+              transform="rotate(45) translate(5, 0)"
             >
               {formatter(tick)}
             </text>
@@ -254,7 +288,7 @@ const fields = {
       if (date instanceof Date) {
         return date.toISOString();
       }
-      return new Date(date).toLocaleDateString();
+      return new Date(date).toLocaleTimeString();
     },
   },
   value: {
