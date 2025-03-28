@@ -2,13 +2,34 @@ import * as React from 'react'; // v17.0.2
 import { extent } from 'd3-array'; // v^2.12.1
 import { csvParse } from 'd3-dsv'; // v^2.0.0
 import { format } from 'd3-format'; // v^2.0.0
-import { scaleLinear } from 'd3-scale'; // v^3.2.4
+import { scaleLinear, ScaleLinear } from 'd3-scale'; // v^3.2.4
 
 interface DataPoint {
   revenue: number;
   vote_average: number;
   original_title: string;
   budget: number;
+}
+
+interface OutlinedSvgTextProps {
+  stroke: string;
+  strokeWidth: number;
+  children: React.ReactNode;
+  [key: string]: unknown;
+}
+
+interface AxisProps {
+  title: string;
+  formatter: (value: number) => string;
+}
+
+interface YAxisProps extends AxisProps {
+  yScale: ScaleLinear<number, number>;
+}
+
+interface XAxisProps extends AxisProps {
+  xScale: ScaleLinear<number, number>;
+  innerHeight: number;
 }
 
 const TimeSeriesGraph = () => {
@@ -36,8 +57,8 @@ const TimeSeriesGraph = () => {
   }
 
   const radius = 4;
-  const xExtent = extent(data, xAccessor);
-  const yExtent = extent(data, yAccessor);
+  const xExtent = extent(data, xAccessor) as [number, number];
+  const yExtent = extent(data, yAccessor) as [number, number];
   const xScale = scaleLinear().domain(xExtent).range([0, innerWidth]);
   const yScale = scaleLinear().domain(yExtent).range([innerHeight, 0]);
 
@@ -115,7 +136,12 @@ const Points = ({
 };
 
 /** fancier way of getting a nice svg text stroke */
-const OutlinedSvgText = ({ stroke, strokeWidth, children, ...other }) => {
+const OutlinedSvgText: React.FC<OutlinedSvgTextProps> = ({
+  stroke,
+  strokeWidth,
+  children,
+  ...other
+}) => {
   return (
     <>
       <text stroke={stroke} strokeWidth={strokeWidth} {...other}>
@@ -127,12 +153,15 @@ const OutlinedSvgText = ({ stroke, strokeWidth, children, ...other }) => {
 };
 
 /** determine number of ticks based on space available  */
-function numTicksForPixels(pixelsAvailable, pixelsPerTick = 70) {
+function numTicksForPixels(
+  pixelsAvailable: number,
+  pixelsPerTick = 70,
+): number {
   return Math.floor(Math.abs(pixelsAvailable) / pixelsPerTick);
 }
 
 /** Y-axis with title  */
-const YAxis = ({ yScale, title, formatter }) => {
+const YAxis: React.FC<YAxisProps> = ({ yScale, title, formatter }) => {
   const [yMin, yMax] = yScale.range();
   const ticks = yScale.ticks(numTicksForPixels(yMin - yMax, 50));
 
@@ -150,7 +179,7 @@ const YAxis = ({ yScale, title, formatter }) => {
       </OutlinedSvgText>
 
       <line x1={0} x2={0} y1={yMin} y2={yMax} stroke="var(--gray-400)" />
-      {ticks.map((tick) => {
+      {ticks.map((tick: number) => {
         const y = yScale(tick);
         return (
           <g key={tick} transform={`translate(0 ${y})`}>
@@ -172,15 +201,14 @@ const YAxis = ({ yScale, title, formatter }) => {
 };
 
 /** X-axis with title, uses CSS for text stroke  */
-const XAxis = ({ xScale, title, formatter, innerHeight }) => {
+const XAxis: React.FC<XAxisProps> = ({
+  xScale,
+  title,
+  formatter,
+  innerHeight,
+}) => {
   const [xMin, xMax] = xScale.range();
   const ticks = xScale.ticks(numTicksForPixels(xMax - xMin));
-
-  // we could try and compute ticks ourselves to get the exact number
-  // but they won't be as nice to look at (e.g. 923.321 instead of 1000 or 900)
-  // const [xDomainMin, xDomainMax] = xScale.domain()
-  // const xIncrement = (xDomainMax - xDomainMin) / (numTicks - 1)
-  // const ticks = range(numTicks).map((i) => xIncrement * i)
 
   return (
     <g data-testid="XAxis" transform={`translate(0 ${innerHeight})`}>
@@ -190,7 +218,6 @@ const XAxis = ({ xScale, title, formatter, innerHeight }) => {
         dy={-4}
         fill="var(--gray-600)"
         className="font-semibold text-2xs"
-        // lazy CSS approach to getting a 1px white outline
         style={{
           textShadow: `-1px -1px 1px #fff,
                         1px -1px 1px #fff,
@@ -202,7 +229,7 @@ const XAxis = ({ xScale, title, formatter, innerHeight }) => {
       </text>
 
       <line x1={xMin} x2={xMax} y1={0} y2={0} stroke="var(--gray-400)" />
-      {ticks.map((tick) => {
+      {ticks.map((tick: number) => {
         const x = xScale(tick);
         return (
           <g key={tick} transform={`translate(${x} 0)`}>
@@ -250,8 +277,8 @@ const useMovieData = () => {
 };
 
 // very lazy large number money formatter ($1.5M, $1.65B etc)
-const bigMoneyFormat = (value) => {
-  if (value == null) return value;
+const bigMoneyFormat = (value: number): string => {
+  if (value == null) return '0';
   const formatted = format('$~s')(value);
   return formatted.replace(/G$/, 'B');
 };
@@ -259,17 +286,17 @@ const bigMoneyFormat = (value) => {
 // metrics (numeric) + dimensions (non-numeric) = fields
 const fields = {
   revenue: {
-    accessor: (d) => d.revenue,
+    accessor: (d: DataPoint) => d.revenue,
     title: 'Revenue',
     formatter: bigMoneyFormat,
   },
   budget: {
-    accessor: (d) => d.budget,
+    accessor: (d: DataPoint) => d.budget,
     title: 'Budget',
     formatter: bigMoneyFormat,
   },
   vote_average: {
-    accessor: (d) => d.vote_average,
+    accessor: (d: DataPoint) => d.vote_average,
     title: 'Vote Average out of 10',
     formatter: format('.1f'),
   },
