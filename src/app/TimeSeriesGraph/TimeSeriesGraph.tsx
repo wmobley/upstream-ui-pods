@@ -1,14 +1,220 @@
 import * as React from 'react'; // v17.0.2
 import { extent } from 'd3-array'; // v^2.12.1
-import { csvParse } from 'd3-dsv'; // v^2.0.0
-import { format } from 'd3-format'; // v^2.0.0
+import { line } from 'd3-shape'; // v^3.0.0
 import { scaleLinear, ScaleLinear } from 'd3-scale'; // v^3.2.4
+import { format } from 'd3-format';
+import { MeasurementItem } from '@upstream/upstream-api';
+
+const data = [
+  { date: '2020-01-01', value: 1, timestamp: 1000 },
+  { date: '2020-01-02', value: 2, timestamp: 2000 },
+  { date: '2020-01-03', value: 3, timestamp: 3000 },
+  { date: '2020-01-04', value: 4, timestamp: 4000 },
+  { date: '2020-01-05', value: 5, timestamp: 5000 },
+];
+
+const new_data: MeasurementItem[] = [
+  {
+    id: 68908,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.248677831,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.386677, 29.777058],
+    },
+  },
+  {
+    id: 68905,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.174488034,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.386293, 29.777083],
+    },
+  },
+  {
+    id: 68897,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.246492712,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.38526, 29.777178],
+    },
+  },
+  {
+    id: 68889,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.22345227,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.38439, 29.777282],
+    },
+  },
+  {
+    id: 68910,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.273337957,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.386948, 29.777052],
+    },
+  },
+  {
+    id: 68893,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.234385868,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.3848, 29.777237],
+    },
+  },
+  {
+    id: 68899,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.196922949,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.385525, 29.777155],
+    },
+  },
+  {
+    id: 68903,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.206870208,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.386042, 29.777105],
+    },
+  },
+  {
+    id: 68898,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.203306633,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.38539, 29.777167],
+    },
+  },
+  {
+    id: 68894,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.249520378,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.384905, 29.777223],
+    },
+  },
+  {
+    id: 68890,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.272683828,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.384488, 29.777272],
+    },
+  },
+  {
+    id: 68896,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.290021475,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.385137, 29.777192],
+    },
+  },
+  {
+    id: 68902,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.233372155,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.385917, 29.777117],
+    },
+  },
+  {
+    id: 68913,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.191564555,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.387372, 29.777043],
+    },
+  },
+  {
+    id: 68895,
+    sensorid: 38,
+    variablename: null,
+    collectiontime: new Date('2023-03-15T16:26:00'),
+    variabletype: null,
+    description: null,
+    value: 0.239854889,
+    geometry: {
+      type: 'Point',
+      coordinates: [-95.385017, 29.777207],
+    },
+  },
+];
 
 interface DataPoint {
-  revenue: number;
-  vote_average: number;
-  original_title: string;
-  budget: number;
+  date: string;
+  value: number;
+  timestamp: number;
 }
 
 interface OutlinedSvgTextProps {
@@ -33,8 +239,6 @@ interface XAxisProps extends AxisProps {
 }
 
 const TimeSeriesGraph = () => {
-  const data = useMovieData();
-
   const width = 800;
   const height = 400;
   const margin = { top: 10, right: 100, bottom: 30, left: 50 };
@@ -42,8 +246,8 @@ const TimeSeriesGraph = () => {
   const innerHeight = height - margin.top - margin.bottom;
 
   // read from pre-defined metric/dimension ("fields") bundles
-  const xField = fields.revenue;
-  const yField = fields.vote_average;
+  const xField = fields.timestamp;
+  const yField = fields.value;
 
   // optionally pull out values into local variables
   const { accessor: xAccessor, title: xTitle, formatter: xFormatter } = xField;
@@ -72,14 +276,21 @@ const TimeSeriesGraph = () => {
             title={xTitle}
             innerHeight={innerHeight}
           />
-          <Points
-            radius={radius}
+          <Line
             data={data}
             xScale={xScale}
             yScale={yScale}
             xAccessor={xAccessor}
             yAccessor={yAccessor}
           />
+          {/* <Points
+            radius={radius}
+            data={data}
+            xScale={xScale}
+            yScale={yScale}
+            xAccessor={xAccessor}
+            yAccessor={yAccessor}
+          /> */}
           <YAxis yScale={yScale} formatter={yFormatter} title={yTitle} />
         </g>
       </svg>
@@ -88,51 +299,19 @@ const TimeSeriesGraph = () => {
 };
 export default TimeSeriesGraph;
 
-interface PointsProps {
+interface LineProps {
   data: DataPoint[];
   xScale: ScaleLinear<number, number>;
+  yScale: ScaleLinear<number, number>;
   xAccessor: (d: DataPoint) => number;
   yAccessor: (d: DataPoint) => number;
-  yScale: ScaleLinear<number, number>;
-  radius?: number;
 }
-
-/** Draws a circle for each point in our data */
-const Points = ({
-  data,
-  xScale,
-  xAccessor,
-  yAccessor,
-  yScale,
-  radius = 8,
-}: PointsProps) => {
-  return (
-    <g data-testid="Points">
-      {data.map((d) => {
-        // without a scale, we have to compute the math ourselves
-        // const x = (width * (d.revenue - minRevenue)) / (maxRevenue - minRevenue)
-        // but scales make it easier for us to think about.
-
-        const x = xScale(xAccessor(d));
-        const y = yScale(yAccessor(d));
-        return (
-          <circle
-            key={d.original_title}
-            cx={x}
-            cy={y}
-            r={radius}
-            className="text-indigo-500 hover:text-yellow-500"
-            fill="currentColor"
-            stroke="white"
-            strokeWidth={0.5}
-            strokeOpacity={1}
-            fillOpacity={0.8}
-            onClick={() => console.log(d)}
-          />
-        );
-      })}
-    </g>
-  );
+const Line = ({ data, xScale, yScale, xAccessor, yAccessor }: LineProps) => {
+  const lineBuilder = line<DataPoint>()
+    .x((d) => xScale(xAccessor(d)))
+    .y((d) => yScale(yAccessor(d)));
+  const path = lineBuilder(data);
+  return <path d={path} stroke="#9a6fb0" fill="none" strokeWidth={2} />;
 };
 
 /** fancier way of getting a nice svg text stroke */
@@ -249,55 +428,21 @@ const XAxis: React.FC<XAxisProps> = ({
     </g>
   );
 };
-
-// fetch our data from CSV and translate to JSON
-const useMovieData = () => {
-  const [data, setData] = React.useState<DataPoint[]>([]);
-
-  React.useEffect(() => {
-    fetch('https://reactviz.com/datasets/tmdb_1000_movies_small.csv')
-      .then((response) => response.text())
-      .then((csvString) => {
-        const data = csvParse(csvString, (row) => {
-          return {
-            budget: +row.budget,
-            vote_average: +row.vote_average,
-            revenue: +row.revenue,
-            original_title: row.original_title,
-          };
-        });
-
-        console.log('[data]', data);
-
-        setData(data);
-      });
-  }, []);
-
-  return data;
-};
-
-// very lazy large number money formatter ($1.5M, $1.65B etc)
-const bigMoneyFormat = (value: number): string => {
-  if (value == null) return '0';
-  const formatted = format('$~s')(value);
-  return formatted.replace(/G$/, 'B');
-};
-
 // metrics (numeric) + dimensions (non-numeric) = fields
 const fields = {
-  revenue: {
-    accessor: (d: DataPoint) => d.revenue,
-    title: 'Revenue',
-    formatter: bigMoneyFormat,
+  date: {
+    accessor: (d: DataPoint) => d.date,
+    title: 'Date',
+    formatter: (value: string) => value,
   },
-  budget: {
-    accessor: (d: DataPoint) => d.budget,
-    title: 'Budget',
-    formatter: bigMoneyFormat,
+  value: {
+    accessor: (d: DataPoint) => d.value,
+    title: 'Value',
+    formatter: format('.1f'),
   },
-  vote_average: {
-    accessor: (d: DataPoint) => d.vote_average,
-    title: 'Vote Average out of 10',
+  timestamp: {
+    accessor: (d: DataPoint) => d.timestamp,
+    title: 'Timestamp',
     formatter: format('.1f'),
   },
 };
