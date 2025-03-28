@@ -3,19 +3,11 @@ import { extent } from 'd3-array'; // v^2.12.1
 import { line } from 'd3-shape'; // v^3.0.0
 import { scaleLinear, ScaleLinear } from 'd3-scale'; // v^3.2.4
 import { format } from 'd3-format';
-
-const data = [
-  { date: new Date('2020-01-01'), value: 1, timestamp: 1000 },
-  { date: new Date('2020-01-02'), value: 2, timestamp: 2000 },
-  { date: new Date('2020-01-03'), value: 3, timestamp: 3000 },
-  { date: new Date('2020-01-04'), value: 4, timestamp: 4000 },
-  { date: new Date('2020-01-05'), value: 5, timestamp: 5000 },
-];
+import { useList } from '../../hooks/measurements/useList';
 
 interface DataPoint {
   date: Date;
   value: number;
-  timestamp: number;
 }
 
 interface OutlinedSvgTextProps {
@@ -40,9 +32,31 @@ interface XAxisProps extends AxisProps {
 }
 
 const TimeSeriesGraph = () => {
-  // const { items } = useList('1', '7', '38');
-  const width = 800;
-  const height = 400;
+  const { data: response, isLoading, error } = useList('1', '7', '38');
+  const [data, setData] = React.useState<DataPoint[] | null>(null);
+
+  React.useEffect(() => {
+    const points: DataPoint[] =
+      response?.items.map(
+        (item) =>
+          ({
+            date: item.collectiontime,
+            value: item.value,
+          }) as DataPoint,
+      ) || [];
+    setData(points);
+  }, [response]);
+
+  if (!data || isLoading || error) {
+    return <div>Loading...</div>;
+  }
+  if (data && data.length === 0) {
+    return <div>No data</div>;
+  }
+  console.log(data);
+
+  const width = 1600;
+  const height = 800;
   const margin = { top: 10, right: 100, bottom: 30, left: 50 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
@@ -246,11 +260,6 @@ const fields = {
   value: {
     accessor: (d: DataPoint) => d.value,
     title: 'Value',
-    formatter: format('.1f'),
-  },
-  timestamp: {
-    accessor: (d: DataPoint) => d.timestamp,
-    title: 'Timestamp',
     formatter: format('.1f'),
   },
 };
