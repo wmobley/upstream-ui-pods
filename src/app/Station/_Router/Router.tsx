@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import StationDashboard from '../_components/StationDashboard';
 import RouteMapViz from '../../Sensor/viz/RouteMapViz';
+import HeatMapViz from '../../Sensor/viz/HeatMapViz';
 const Router: React.FC = () => {
   const { path } = useRouteMatch();
   return (
@@ -34,6 +35,24 @@ const Router: React.FC = () => {
           sensorId: string;
         }>) => (
           <RouteMapViz
+            campaignId={campaignId}
+            stationId={stationId}
+            sensorId={sensorId}
+          />
+        )}
+      />
+      <Route
+        path={`/campaigns/:campaignId/stations/:stationId/sensors/:sensorId/viz/heat-map`}
+        render={({
+          match: {
+            params: { campaignId, stationId, sensorId },
+          },
+        }: RouteComponentProps<{
+          campaignId: string;
+          stationId: string;
+          sensorId: string;
+        }>) => (
+          <HeatMapViz
             campaignId={campaignId}
             stationId={stationId}
             sensorId={sensorId}
