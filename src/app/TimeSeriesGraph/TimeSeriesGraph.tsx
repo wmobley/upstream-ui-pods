@@ -3,216 +3,17 @@ import { extent } from 'd3-array'; // v^2.12.1
 import { line } from 'd3-shape'; // v^3.0.0
 import { scaleLinear, ScaleLinear } from 'd3-scale'; // v^3.2.4
 import { format } from 'd3-format';
-import { MeasurementItem } from '@upstream/upstream-api';
 
 const data = [
-  { date: '2020-01-01', value: 1, timestamp: 1000 },
-  { date: '2020-01-02', value: 2, timestamp: 2000 },
-  { date: '2020-01-03', value: 3, timestamp: 3000 },
-  { date: '2020-01-04', value: 4, timestamp: 4000 },
-  { date: '2020-01-05', value: 5, timestamp: 5000 },
-];
-
-const new_data: MeasurementItem[] = [
-  {
-    id: 68908,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.248677831,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.386677, 29.777058],
-    },
-  },
-  {
-    id: 68905,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.174488034,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.386293, 29.777083],
-    },
-  },
-  {
-    id: 68897,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.246492712,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.38526, 29.777178],
-    },
-  },
-  {
-    id: 68889,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.22345227,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.38439, 29.777282],
-    },
-  },
-  {
-    id: 68910,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.273337957,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.386948, 29.777052],
-    },
-  },
-  {
-    id: 68893,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.234385868,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.3848, 29.777237],
-    },
-  },
-  {
-    id: 68899,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.196922949,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.385525, 29.777155],
-    },
-  },
-  {
-    id: 68903,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.206870208,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.386042, 29.777105],
-    },
-  },
-  {
-    id: 68898,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.203306633,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.38539, 29.777167],
-    },
-  },
-  {
-    id: 68894,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.249520378,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.384905, 29.777223],
-    },
-  },
-  {
-    id: 68890,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.272683828,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.384488, 29.777272],
-    },
-  },
-  {
-    id: 68896,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.290021475,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.385137, 29.777192],
-    },
-  },
-  {
-    id: 68902,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.233372155,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.385917, 29.777117],
-    },
-  },
-  {
-    id: 68913,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.191564555,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.387372, 29.777043],
-    },
-  },
-  {
-    id: 68895,
-    sensorid: 38,
-    variablename: null,
-    collectiontime: new Date('2023-03-15T16:26:00'),
-    variabletype: null,
-    description: null,
-    value: 0.239854889,
-    geometry: {
-      type: 'Point',
-      coordinates: [-95.385017, 29.777207],
-    },
-  },
+  { date: new Date('2020-01-01'), value: 1, timestamp: 1000 },
+  { date: new Date('2020-01-02'), value: 2, timestamp: 2000 },
+  { date: new Date('2020-01-03'), value: 3, timestamp: 3000 },
+  { date: new Date('2020-01-04'), value: 4, timestamp: 4000 },
+  { date: new Date('2020-01-05'), value: 5, timestamp: 5000 },
 ];
 
 interface DataPoint {
-  date: string;
+  date: Date;
   value: number;
   timestamp: number;
 }
@@ -226,7 +27,7 @@ interface OutlinedSvgTextProps {
 
 interface AxisProps {
   title: string;
-  formatter: (value: number) => string;
+  formatter: (value: number | Date) => string;
 }
 
 interface YAxisProps extends AxisProps {
@@ -239,6 +40,7 @@ interface XAxisProps extends AxisProps {
 }
 
 const TimeSeriesGraph = () => {
+  // const { items } = useList('1', '7', '38');
   const width = 800;
   const height = 400;
   const margin = { top: 10, right: 100, bottom: 30, left: 50 };
@@ -246,7 +48,7 @@ const TimeSeriesGraph = () => {
   const innerHeight = height - margin.top - margin.bottom;
 
   // read from pre-defined metric/dimension ("fields") bundles
-  const xField = fields.timestamp;
+  const xField = fields.date;
   const yField = fields.value;
 
   // optionally pull out values into local variables
@@ -260,10 +62,11 @@ const TimeSeriesGraph = () => {
     return <div style={{ width, height }} />;
   }
 
-  const radius = 4;
-  const xExtent = extent(data, xAccessor) as [number, number];
+  const xExtent = extent(data, xAccessor) as [Date, Date];
   const yExtent = extent(data, yAccessor) as [number, number];
-  const xScale = scaleLinear().domain(xExtent).range([0, innerWidth]);
+  const xScale = scaleLinear()
+    .domain([xExtent[0].getTime(), xExtent[1].getTime()])
+    .range([0, innerWidth]);
   const yScale = scaleLinear().domain(yExtent).range([innerHeight, 0]);
 
   return (
@@ -272,7 +75,7 @@ const TimeSeriesGraph = () => {
         <g transform={`translate(${margin.left} ${margin.top})`}>
           <XAxis
             xScale={xScale}
-            formatter={xFormatter}
+            formatter={xFormatter as (value: number | Date) => string}
             title={xTitle}
             innerHeight={innerHeight}
           />
@@ -303,7 +106,7 @@ interface LineProps {
   data: DataPoint[];
   xScale: ScaleLinear<number, number>;
   yScale: ScaleLinear<number, number>;
-  xAccessor: (d: DataPoint) => number;
+  xAccessor: (d: DataPoint) => number | Date;
   yAccessor: (d: DataPoint) => number;
 }
 const Line = ({ data, xScale, yScale, xAccessor, yAccessor }: LineProps) => {
@@ -433,7 +236,12 @@ const fields = {
   date: {
     accessor: (d: DataPoint) => d.date,
     title: 'Date',
-    formatter: (value: string) => value,
+    formatter: (date: Date | number) => {
+      if (date instanceof Date) {
+        return date.toISOString();
+      }
+      return new Date(date).toLocaleDateString();
+    },
   },
   value: {
     accessor: (d: DataPoint) => d.value,
