@@ -70,17 +70,27 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   xFormatter = defaultProps.xFormatter!,
   yFormatter = defaultProps.yFormatter!,
 }) => {
-  // Refs for D3
-  const svgRef = React.useRef<SVGSVGElement>(null);
-
-  // Memoize calculations
+  // Calculate dimensions for main and overview charts
   const dimensions = React.useMemo(() => {
+    const mainHeight = height * 0.7; // Main chart takes 70% of total height
+    const overviewHeight = height * 0.2; // Overview takes 20% of total height
+    const spacing = height * 0.1; // 10% spacing between charts
+
     const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-    return { innerWidth, innerHeight };
+    const mainInnerHeight = mainHeight - margin.top - margin.bottom;
+    const overviewInnerHeight = overviewHeight - margin.top - margin.bottom;
+
+    return {
+      innerWidth,
+      mainHeight,
+      mainInnerHeight,
+      overviewHeight,
+      overviewInnerHeight,
+      spacing,
+    };
   }, [width, height, margin]);
 
-  // Memoize scales
+  // Memoize scales for both charts
   const scales = React.useMemo(() => {
     const xExtent = extent(data, (d) => d.timestamp.getTime());
     const yExtent = extent(data, (d) => d.value);
@@ -89,39 +99,64 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       return null;
     }
 
+    // Main chart scales
     const xScale = scaleLinear()
       .domain([xExtent[0], xExtent[1]])
       .range([0, dimensions.innerWidth]);
 
     const yScale = scaleLinear()
       .domain([0, yExtent[1]])
-      .range([dimensions.innerHeight, 0]);
+      .range([dimensions.mainInnerHeight, 0]);
 
-    return { xScale, yScale };
-  }, [data, dimensions.innerWidth, dimensions.innerHeight]);
+    // Overview chart scales
+    const overviewXScale = scaleLinear()
+      .domain([xExtent[0], xExtent[1]])
+      .range([0, dimensions.innerWidth]);
 
-  // Memoize path generators
+    const overviewYScale = scaleLinear()
+      .domain([0, yExtent[1]])
+      .range([dimensions.overviewInnerHeight, 0]);
+
+    return { xScale, yScale, overviewXScale, overviewYScale };
+  }, [data, dimensions]);
+
+  // Memoize path generators for both charts
   const paths = React.useMemo(() => {
     if (!scales) return null;
 
-    const lineGenerator = line<DataPoint>()
+    // Main chart paths
+    const mainLineGenerator = line<DataPoint>()
       .x((d) => scales.xScale(d.timestamp.getTime()))
       .y((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
-    const areaGenerator = area<DataPoint>()
+    const mainAreaGenerator = area<DataPoint>()
       .x((d) => scales.xScale(d.timestamp.getTime()))
       .y0(() => scales.yScale(0))
       .y1((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
+    // Overview chart paths
+    const overviewLineGenerator = line<DataPoint>()
+      .x((d) => scales.overviewXScale(d.timestamp.getTime()))
+      .y((d) => scales.overviewYScale(d.value))
+      .curve(curveCatmullRom.alpha(0.5));
+
+    const overviewAreaGenerator = area<DataPoint>()
+      .x((d) => scales.overviewXScale(d.timestamp.getTime()))
+      .y0(() => scales.overviewYScale(0))
+      .y1((d) => scales.overviewYScale(d.value))
+      .curve(curveCatmullRom.alpha(0.5));
+
     return {
-      linePath: lineGenerator(data),
-      areaPath: areaGenerator(data),
+      mainLinePath: mainLineGenerator(data),
+      mainAreaPath: mainAreaGenerator(data),
+      overviewLinePath: overviewLineGenerator(data),
+      overviewAreaPath: overviewAreaGenerator(data),
     };
   }, [data, scales]);
 
-  // Memoize axis ticks
+  // Memoize axis ticks for main chart
   const axisTicks = React.useMemo(() => {
     if (!scales) return null;
 
@@ -146,29 +181,28 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <svg ref={svgRef} width={width} height={height}>
-        <g transform={`translate(${margin.left},${margin.top})`}>
-          {/* Area */}
+      <svg width={width} height={height}>
+        {/* Main chart */}
+        <g
+          transform={`translate(${margin.left},${margin.top})`}
+          className="main-chart"
+        >
           {showArea && (
             <path
-              d={paths.areaPath || ''}
+              d={paths.mainAreaPath || ''}
               fill={colors.area}
               fillOpacity={0.2}
               stroke="none"
             />
           )}
-
-          {/* Line */}
           {showLine && (
             <path
-              d={paths.linePath || ''}
+              d={paths.mainLinePath || ''}
               fill="none"
               stroke={colors.line}
               strokeWidth={2}
             />
           )}
-
-          {/* Points */}
           {showPoints && (
             <g>
               {data.map((d) => (
@@ -182,9 +216,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               ))}
             </g>
           )}
-
-          {/* X Axis */}
-          <g transform={`translate(0,${dimensions.innerHeight})`}>
+          {/* Main chart axes */}
+          <g
+            transform={`translate(0,${dimensions.mainInnerHeight})`}
+            className="x-axis"
+          >
             <line
               x1={0}
               x2={dimensions.innerWidth}
@@ -215,14 +251,12 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               {xAxisTitle}
             </text>
           </g>
-
-          {/* Y Axis */}
-          <g>
+          <g className="y-axis">
             <line
               x1={0}
               x2={0}
               y1={0}
-              y2={dimensions.innerHeight}
+              y2={dimensions.mainInnerHeight}
               stroke="var(--gray-400)"
             />
             {axisTicks.yTicks.map((tick) => (
@@ -241,7 +275,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
             ))}
             <text
               transform="rotate(-90)"
-              x={-dimensions.innerHeight / 2}
+              x={-dimensions.mainInnerHeight / 2}
               y={-16}
               textAnchor="middle"
               fill="var(--gray-600)"
@@ -249,6 +283,42 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
             >
               {yAxisTitle}
             </text>
+          </g>
+        </g>
+
+        {/* Overview chart */}
+        <g
+          transform={`translate(${margin.left},${dimensions.mainHeight + dimensions.spacing})`}
+          className="overview-chart"
+        >
+          {showArea && (
+            <path
+              d={paths.overviewAreaPath || ''}
+              fill={colors.area}
+              fillOpacity={0.2}
+              stroke="none"
+            />
+          )}
+          {showLine && (
+            <path
+              d={paths.overviewLinePath || ''}
+              fill="none"
+              stroke={colors.line}
+              strokeWidth={1}
+            />
+          )}
+          {/* Overview chart x-axis */}
+          <g
+            transform={`translate(0,${dimensions.overviewInnerHeight})`}
+            className="overview-x-axis"
+          >
+            <line
+              x1={0}
+              x2={dimensions.innerWidth}
+              y1={0}
+              y2={0}
+              stroke="var(--gray-400)"
+            />
           </g>
         </g>
       </svg>
