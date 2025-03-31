@@ -80,6 +80,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   // Track if initial selection has been set
   const initialSelectionRef = React.useRef(false);
 
+  // Add state for view domain
+  const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
+    null,
+  );
+
   // Calculate dimensions for main and overview charts
   const dimensions = React.useMemo(() => {
     const mainHeight = height * 0.7; // Main chart takes 70% of total height
@@ -109,9 +114,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       return null;
     }
 
-    // Main chart scales
+    // Main chart scales - use viewDomain if available
     const xScale = scaleLinear()
-      .domain([xExtent[0], xExtent[1]])
+      .domain(viewDomain || [xExtent[0], xExtent[1]])
       .range([0, dimensions.innerWidth]);
 
     const yScale = scaleLinear()
@@ -128,7 +133,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       .range([dimensions.overviewInnerHeight, 0]);
 
     return { xScale, yScale, overviewXScale, overviewYScale };
-  }, [data, dimensions]);
+  }, [data, dimensions, viewDomain]);
 
   // Memoize path generators for both charts
   const paths = React.useMemo(() => {
@@ -208,6 +213,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           scales.overviewXScale.invert(selection[0]),
           scales.overviewXScale.invert(selection[1]),
         ];
+
+        // Update view domain
+        setViewDomain(domain);
         onBrush?.(domain);
       });
 
@@ -238,7 +246,13 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     return () => {
       brushGroup.on('.brush', null);
     };
-  }, [scales, dimensions.innerWidth, dimensions.overviewInnerHeight, onBrush]);
+  }, [
+    scales,
+    dimensions.innerWidth,
+    dimensions.overviewInnerHeight,
+    onBrush,
+    setViewDomain,
+  ]);
 
   if (!scales || !paths || !axisTicks) {
     return <div>Invalid data</div>;
