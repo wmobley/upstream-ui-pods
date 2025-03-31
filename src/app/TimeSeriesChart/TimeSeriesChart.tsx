@@ -7,6 +7,12 @@ import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
 
 // Types
+interface TooltipData {
+  x: number;
+  y: number;
+  data: DataPoint;
+}
+
 export interface DataPoint {
   timestamp: Date;
   value: number;
@@ -32,6 +38,7 @@ export interface TimeSeriesChartProps {
   xAxisTitle?: string;
   yAxisTitle?: string;
   xFormatter?: (date: Date | number) => string;
+  xFormatterOverview?: (date: Date | number) => string;
   yFormatter?: (value: number) => string;
   onBrush?: (domain: [number, number]) => void;
 }
@@ -78,6 +85,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   xAxisTitle = defaultProps.xAxisTitle!,
   yAxisTitle = defaultProps.yAxisTitle!,
   xFormatter = defaultProps.xFormatter!,
+  xFormatterOverview = defaultProps.xFormatterOverview!,
   yFormatter = defaultProps.yFormatter!,
   onBrush,
 }) => {
@@ -91,6 +99,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
     null,
   );
+
+  // Add tooltip state
+  const [tooltip, setTooltip] = React.useState<TooltipData | null>(null);
 
   // Calculate dimensions for main and overview charts
   const dimensions = React.useMemo(() => {
@@ -266,109 +277,168 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center relative">
       <svg width={width} height={height}>
         {/* Main chart */}
         <g
           transform={`translate(${margin.left},${margin.top})`}
           className="main-chart"
+          onMouseLeave={() => setTooltip(null)}
         >
-          {showArea && (
-            <path
-              d={paths.mainAreaPath || ''}
-              fill={colors.area}
-              fillOpacity={0.2}
-              stroke="none"
-            />
-          )}
-          {showLine && (
-            <path
-              d={paths.mainLinePath || ''}
-              fill="none"
-              stroke={colors.line}
-              strokeWidth={2}
-            />
-          )}
-          {showPoints && (
+          {/* Chart background */}
+          <rect
+            x={0}
+            y={0}
+            width={dimensions.innerWidth}
+            height={dimensions.mainInnerHeight}
+            fill="white"
+          />
+
+          {/* Data visualization layer */}
+          <g className="data-layer">
+            {showArea && (
+              <path
+                d={paths.mainAreaPath || ''}
+                fill={colors.area}
+                fillOpacity={0.2}
+                stroke="none"
+              />
+            )}
+            {showLine && (
+              <path
+                d={paths.mainLinePath || ''}
+                fill="none"
+                stroke={colors.line}
+                strokeWidth={2}
+              />
+            )}
+            {showPoints && (
+              <g>
+                {data.map((d) => (
+                  <circle
+                    key={d.timestamp.getTime()}
+                    cx={scales.xScale(d.timestamp.getTime())}
+                    cy={scales.yScale(d.value)}
+                    r={pointRadius}
+                    fill={colors.point}
+                  />
+                ))}
+              </g>
+            )}
+            {/* Interactive overlay for tooltip */}
             <g>
               {data.map((d) => (
                 <circle
                   key={d.timestamp.getTime()}
                   cx={scales.xScale(d.timestamp.getTime())}
                   cy={scales.yScale(d.value)}
-                  r={pointRadius}
-                  fill={colors.point}
+                  r={pointRadius + 5}
+                  fill="transparent"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const svgRect = e.currentTarget
+                      .closest('svg')
+                      ?.getBoundingClientRect();
+                    if (!svgRect) return;
+
+                    setTooltip({
+                      x: rect.left - svgRect.left,
+                      y: rect.top - svgRect.top,
+                      data: d,
+                    });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                  style={{ cursor: 'pointer' }}
                 />
               ))}
             </g>
-          )}
-          {/* Main chart axes */}
-          <g
-            transform={`translate(0,${dimensions.mainInnerHeight})`}
-            className="x-axis"
-          >
-            <line
-              x1={0}
-              x2={dimensions.innerWidth}
-              y1={0}
-              y2={0}
-              stroke="var(--gray-400)"
-            />
-            {axisTicks.xTicks.map((tick) => (
-              <g key={tick.value} transform={`translate(${tick.x},0)`}>
-                <line y1={0} y2={6} stroke="var(--gray-300)" />
-                <text
-                  y={20}
-                  textAnchor="middle"
-                  fill="var(--gray-600)"
-                  className="text-xs"
-                >
-                  {tick.label}
-                </text>
-              </g>
-            ))}
-            <text
-              x={dimensions.innerWidth}
-              y={-6}
-              textAnchor="end"
-              fill="var(--gray-600)"
-              className="text-xs"
-            >
-              {xAxisTitle}
-            </text>
           </g>
-          <g className="y-axis">
-            <line
-              x1={0}
-              x2={0}
-              y1={0}
-              y2={dimensions.mainInnerHeight}
-              stroke="var(--gray-400)"
-            />
-            {axisTicks.yTicks.map((tick) => (
-              <g key={tick.value} transform={`translate(0,${tick.y})`}>
-                <line x1={-6} x2={0} stroke="var(--gray-300)" />
-                <text
-                  x={-12}
-                  y={4}
-                  textAnchor="end"
-                  fill="var(--gray-600)"
-                  className="text-xs"
-                >
-                  {tick.label}
-                </text>
-              </g>
-            ))}
-            <text
-              transform="rotate(-90)"
-              x={-dimensions.mainInnerHeight / 2}
-              y={-16}
-              textAnchor="middle"
-              fill="var(--gray-600)"
-              className="text-xs"
+
+          {/* Axes layer - rendered last to be on top */}
+          <g className="axes-layer">
+            {/* X Axis */}
+            <g
+              transform={`translate(0,${dimensions.mainInnerHeight})`}
+              className="x-axis"
             >
-              {yAxisTitle}
-            </text>
+              <rect
+                x={-margin.left}
+                y={0}
+                width={width}
+                height={margin.bottom}
+                fill="white"
+              />
+              <line
+                x1={0}
+                x2={dimensions.innerWidth}
+                y1={0}
+                y2={0}
+                stroke="var(--gray-400)"
+              />
+              {axisTicks.xTicks.map((tick) => (
+                <g key={tick.value} transform={`translate(${tick.x},0)`}>
+                  <line y1={0} y2={6} stroke="var(--gray-300)" />
+                  <text
+                    y={20}
+                    textAnchor="middle"
+                    fill="var(--gray-600)"
+                    className="text-xs"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
+              <text
+                x={dimensions.innerWidth}
+                y={dimensions.mainInnerHeight}
+                textAnchor="end"
+                fill="var(--gray-600)"
+                className="text-xs"
+              >
+                {xAxisTitle}
+              </text>
+            </g>
+            {/* Y Axis */}
+            <g className="y-axis">
+              <rect
+                x={-margin.left}
+                y={-margin.top}
+                width={margin.left}
+                height={dimensions.mainInnerHeight + margin.top + margin.bottom}
+                fill="white"
+              />
+              <line
+                x1={0}
+                x2={0}
+                y1={0}
+                y2={dimensions.mainInnerHeight}
+                stroke="var(--gray-400)"
+              />
+              {axisTicks.yTicks.map((tick) => (
+                <g key={tick.value} transform={`translate(0,${tick.y})`}>
+                  <line x1={-6} x2={0} stroke="var(--gray-300)" />
+                  <text
+                    x={-12}
+                    y={4}
+                    textAnchor="end"
+                    fill="var(--gray-600)"
+                    className="text-xs"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
+              <text
+                transform="rotate(-90)"
+                x={-dimensions.mainInnerHeight}
+                y={-30}
+                textAnchor="start"
+                fill="var(--gray-600)"
+                className="text-xs"
+              >
+                {yAxisTitle}
+              </text>
+            </g>
           </g>
         </g>
 
@@ -417,7 +487,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                   fill="var(--gray-600)"
                   className="text-xs"
                 >
-                  {xFormatter(tick)}
+                  {xFormatterOverview(tick)}
                 </text>
               </g>
             ))}
@@ -447,6 +517,24 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           />
         </g>
       </svg>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="absolute bg-white p-2 rounded shadow-lg border border-gray-200 text-sm z-50 pointer-events-none"
+          style={{
+            left: tooltip.x,
+            top: Math.max(margin.top, tooltip.y - 40),
+            transform: 'translateX(-50%)',
+            minWidth: '160px',
+          }}
+        >
+          <div className="font-semibold">
+            {tooltip.data.timestamp.toLocaleString()}
+          </div>
+          <div>Value: {yFormatter(tooltip.data.value)}</div>
+        </div>
+      )}
     </div>
   );
 };
