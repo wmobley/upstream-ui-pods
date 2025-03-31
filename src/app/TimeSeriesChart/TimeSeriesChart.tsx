@@ -285,129 +285,160 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           className="main-chart"
           onMouseLeave={() => setTooltip(null)}
         >
-          {showArea && (
-            <path
-              d={paths.mainAreaPath || ''}
-              fill={colors.area}
-              fillOpacity={0.2}
-              stroke="none"
-            />
-          )}
-          {showLine && (
-            <path
-              d={paths.mainLinePath || ''}
-              fill="none"
-              stroke={colors.line}
-              strokeWidth={2}
-            />
-          )}
-          {/* Interactive overlay for tooltip */}
-          <g>
-            {data.map((d) => (
-              <circle
-                key={d.timestamp.getTime()}
-                cx={scales.xScale(d.timestamp.getTime())}
-                cy={scales.yScale(d.value)}
-                r={pointRadius + 5}
-                fill="transparent"
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const svgRect = e.currentTarget
-                    .closest('svg')
-                    ?.getBoundingClientRect();
-                  if (!svgRect) return;
+          {/* Chart background */}
+          <rect
+            x={0}
+            y={0}
+            width={dimensions.innerWidth}
+            height={dimensions.mainInnerHeight}
+            fill="white"
+          />
 
-                  setTooltip({
-                    x: rect.left - svgRect.left,
-                    y: rect.top - svgRect.top,
-                    data: d,
-                  });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: 'pointer' }}
+          {/* Data visualization layer */}
+          <g className="data-layer">
+            {showArea && (
+              <path
+                d={paths.mainAreaPath || ''}
+                fill={colors.area}
+                fillOpacity={0.2}
+                stroke="none"
               />
-            ))}
-          </g>
-          {showPoints && (
+            )}
+            {showLine && (
+              <path
+                d={paths.mainLinePath || ''}
+                fill="none"
+                stroke={colors.line}
+                strokeWidth={2}
+              />
+            )}
+            {showPoints && (
+              <g>
+                {data.map((d) => (
+                  <circle
+                    key={d.timestamp.getTime()}
+                    cx={scales.xScale(d.timestamp.getTime())}
+                    cy={scales.yScale(d.value)}
+                    r={pointRadius}
+                    fill={colors.point}
+                  />
+                ))}
+              </g>
+            )}
+            {/* Interactive overlay for tooltip */}
             <g>
               {data.map((d) => (
                 <circle
                   key={d.timestamp.getTime()}
                   cx={scales.xScale(d.timestamp.getTime())}
                   cy={scales.yScale(d.value)}
-                  r={pointRadius}
-                  fill={colors.point}
+                  r={pointRadius + 5}
+                  fill="transparent"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const svgRect = e.currentTarget
+                      .closest('svg')
+                      ?.getBoundingClientRect();
+                    if (!svgRect) return;
+
+                    setTooltip({
+                      x: rect.left - svgRect.left,
+                      y: rect.top - svgRect.top,
+                      data: d,
+                    });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                  style={{ cursor: 'pointer' }}
                 />
               ))}
             </g>
-          )}
-          {/* Main chart axes */}
-          <g
-            transform={`translate(0,${dimensions.mainInnerHeight})`}
-            className="x-axis"
-          >
-            <line
-              x1={0}
-              x2={dimensions.innerWidth}
-              y1={0}
-              y2={0}
-              stroke="var(--gray-400)"
-            />
-            {axisTicks.xTicks.map((tick) => (
-              <g key={tick.value} transform={`translate(${tick.x},0)`}>
-                <line y1={0} y2={6} stroke="var(--gray-300)" />
-                <text
-                  y={20}
-                  textAnchor="middle"
-                  fill="var(--gray-600)"
-                  className="text-xs"
-                >
-                  {tick.label}
-                </text>
-              </g>
-            ))}
-            <text
-              x={dimensions.innerWidth}
-              y={-6}
-              textAnchor="end"
-              fill="var(--gray-600)"
-              className="text-xs"
-            >
-              {xAxisTitle}
-            </text>
           </g>
-          <g className="y-axis">
-            <line
-              x1={0}
-              x2={0}
-              y1={0}
-              y2={dimensions.mainInnerHeight}
-              stroke="var(--gray-400)"
-            />
-            {axisTicks.yTicks.map((tick) => (
-              <g key={tick.value} transform={`translate(0,${tick.y})`}>
-                <line x1={-6} x2={0} stroke="var(--gray-300)" />
-                <text
-                  x={-12}
-                  y={4}
-                  textAnchor="end"
-                  fill="var(--gray-600)"
-                  className="text-xs"
-                >
-                  {tick.label}
-                </text>
-              </g>
-            ))}
-            <text
-              transform="rotate(-90)"
-              x={-dimensions.mainInnerHeight / 2}
-              y={-16}
-              textAnchor="middle"
-              fill="var(--gray-600)"
-              className="text-xs"
+
+          {/* Axes layer - rendered last to be on top */}
+          <g className="axes-layer">
+            {/* X Axis */}
+            <g
+              transform={`translate(0,${dimensions.mainInnerHeight})`}
+              className="x-axis"
             >
-              {yAxisTitle}
-            </text>
+              <rect
+                x={-margin.left}
+                y={0}
+                width={width}
+                height={margin.bottom}
+                fill="white"
+              />
+              <line
+                x1={0}
+                x2={dimensions.innerWidth}
+                y1={0}
+                y2={0}
+                stroke="var(--gray-400)"
+              />
+              {axisTicks.xTicks.map((tick) => (
+                <g key={tick.value} transform={`translate(${tick.x},0)`}>
+                  <line y1={0} y2={6} stroke="var(--gray-300)" />
+                  <text
+                    y={20}
+                    textAnchor="middle"
+                    fill="var(--gray-600)"
+                    className="text-xs"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
+              <text
+                x={dimensions.innerWidth}
+                y={dimensions.mainInnerHeight}
+                textAnchor="end"
+                fill="var(--gray-600)"
+                className="text-xs"
+              >
+                {xAxisTitle}
+              </text>
+            </g>
+            {/* Y Axis */}
+            <g className="y-axis">
+              <rect
+                x={-margin.left}
+                y={-margin.top}
+                width={margin.left}
+                height={dimensions.mainInnerHeight + margin.top + margin.bottom}
+                fill="white"
+              />
+              <line
+                x1={0}
+                x2={0}
+                y1={0}
+                y2={dimensions.mainInnerHeight}
+                stroke="var(--gray-400)"
+              />
+              {axisTicks.yTicks.map((tick) => (
+                <g key={tick.value} transform={`translate(0,${tick.y})`}>
+                  <line x1={-6} x2={0} stroke="var(--gray-300)" />
+                  <text
+                    x={-12}
+                    y={4}
+                    textAnchor="end"
+                    fill="var(--gray-600)"
+                    className="text-xs"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
+              <text
+                transform="rotate(-90)"
+                x={-dimensions.mainInnerHeight}
+                y={-30}
+                textAnchor="start"
+                fill="var(--gray-600)"
+                className="text-xs"
+              >
+                {yAxisTitle}
+              </text>
+            </g>
           </g>
         </g>
 

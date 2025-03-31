@@ -39,7 +39,7 @@ const TimeSeriesGraph = () => {
         data={downsampledData}
         width={1600}
         height={800}
-        margin={{ top: 10, right: 100, bottom: 100, left: 50 }}
+        margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
         showArea={false}
         showLine={false}
         showPoints={true}
