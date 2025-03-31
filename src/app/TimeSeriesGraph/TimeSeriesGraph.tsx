@@ -1,35 +1,23 @@
-import * as React from 'react';
-import { useList } from '../../hooks/measurements/useList';
-import TimeSeriesChart, { DataPoint } from '../TimeSeriesChart';
+import TimeSeriesChart from '../TimeSeriesChart';
+import { useProcessedMeasurements } from '../../hooks/measurements/useProcessedMeasurements';
 
 const TimeSeriesGraph = () => {
-  const { data: response, isLoading, error } = useList('1', '19', '44', 1000);
-  const [data, setData] = React.useState<DataPoint[] | null>(null);
+  const containerWidth = 1600;
+  const { downsampledData, aggregatedData, isLoading, error } =
+    useProcessedMeasurements('1', '7 ', '38', containerWidth);
 
-  React.useEffect(() => {
-    const points: DataPoint[] =
-      response?.items.map(
-        (item) =>
-          ({
-            date: item.collectiontime,
-            value: item.value,
-          }) as DataPoint,
-      ) || [];
-    setData(points);
-  }, [response]);
-
-  if (!data || isLoading || error) {
+  if (!downsampledData || isLoading || error) {
     return <div>Loading...</div>;
   }
-  if (data && data.length === 0) {
+  if (downsampledData && downsampledData.length === 0) {
     return <div>No data</div>;
   }
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
-      <p> Number of points: {response?.size}</p>
+      <p> Number of points: {downsampledData.length}</p>
       <TimeSeriesChart
-        data={data}
+        data={downsampledData}
         width={1600}
         height={800}
         margin={{ top: 10, right: 100, bottom: 100, left: 50 }}
@@ -47,7 +35,7 @@ const TimeSeriesGraph = () => {
           if (date instanceof Date) {
             return date.toISOString();
           }
-          return new Date(date).toLocaleTimeString();
+          return new Date(date).toDateString();
         }}
         yFormatter={(value: number) => value.toFixed(1)}
       />
