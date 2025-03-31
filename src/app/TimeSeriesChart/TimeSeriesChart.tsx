@@ -3,6 +3,8 @@ import { extent } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
 import { line, curveCatmullRom, area } from 'd3-shape';
+import { brushX } from 'd3-brush';
+import { select } from 'd3-selection';
 
 // Types
 export interface DataPoint {
@@ -28,6 +30,7 @@ export interface TimeSeriesChartProps {
   yAxisTitle?: string;
   xFormatter?: (date: Date | number) => string;
   yFormatter?: (value: number) => string;
+  onBrush?: (domain: [number, number]) => void;
 }
 
 // Default props
@@ -69,7 +72,14 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   yAxisTitle = defaultProps.yAxisTitle!,
   xFormatter = defaultProps.xFormatter!,
   yFormatter = defaultProps.yFormatter!,
+  onBrush,
 }) => {
+  // Add refs for brush
+  const overviewRef = React.useRef<SVGGElement>(null);
+
+  // Track if initial selection has been set
+  const initialSelectionRef = React.useRef(false);
+
   // Calculate dimensions for main and overview charts
   const dimensions = React.useMemo(() => {
     const mainHeight = height * 0.7; // Main chart takes 70% of total height
@@ -174,6 +184,61 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
     return { xTicks, yTicks };
   }, [scales, xFormatter, yFormatter]);
+
+  // Initialize brush
+  React.useEffect(() => {
+    if (!scales || !overviewRef.current) return;
+
+    // Create brush behavior
+    const brush = brushX<unknown>()
+      .extent([
+        [0, 0],
+        [dimensions.innerWidth, dimensions.overviewInnerHeight],
+      ])
+      .on('start', () => {
+        // Mark that user has started brushing
+        initialSelectionRef.current = true;
+      })
+      .on('brush', (event) => {
+        if (!event.selection) return;
+        const selection = event.selection as [number, number];
+
+        // Convert pixel coordinates to domain values
+        const domain: [number, number] = [
+          scales.overviewXScale.invert(selection[0]),
+          scales.overviewXScale.invert(selection[1]),
+        ];
+        onBrush?.(domain);
+      });
+
+    // Apply brush to overview chart
+    const brushGroup = select(overviewRef.current);
+    brushGroup.call(brush);
+
+    // Set initial selection if not already set
+    if (!initialSelectionRef.current) {
+      // Calculate 10% width selection centered in the middle
+      const selectionWidth = dimensions.innerWidth * 0.1;
+      const selectionStart = (dimensions.innerWidth - selectionWidth) / 2;
+      const selectionEnd = selectionStart + selectionWidth;
+
+      brushGroup.call(brush.move, [selectionStart, selectionEnd]);
+
+      // Trigger initial brush event with 10% domain
+      if (scales.overviewXScale) {
+        const domain: [number, number] = [
+          scales.overviewXScale.invert(selectionStart),
+          scales.overviewXScale.invert(selectionEnd),
+        ];
+        onBrush?.(domain);
+      }
+    }
+
+    // Cleanup
+    return () => {
+      brushGroup.on('.brush', null);
+    };
+  }, [scales, dimensions.innerWidth, dimensions.overviewInnerHeight, onBrush]);
 
   if (!scales || !paths || !axisTicks) {
     return <div>Invalid data</div>;
@@ -320,6 +385,20 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               stroke="var(--gray-400)"
             />
           </g>
+          {/* Brush container */}
+
+          <g
+            ref={overviewRef}
+            className="brush"
+            style={
+              {
+                '--brush-selection-fill': 'var(--gray-200)',
+                '--brush-selection-stroke': 'var(--gray-400)',
+                '--brush-handle-fill': 'var(--gray-50)',
+                '--brush-handle-stroke': 'var(--gray-500)',
+              } as React.CSSProperties
+            }
+          />
         </g>
       </svg>
     </div>

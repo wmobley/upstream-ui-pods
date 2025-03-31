@@ -38,6 +38,15 @@ const TimeSeriesGraph = () => {
           return new Date(date).toDateString();
         }}
         yFormatter={(value: number) => value.toFixed(1)}
+        onBrush={(domain) => {
+          console.log(
+            'Selected time range:',
+            new Date(domain[0]),
+            'to',
+            new Date(domain[1]),
+          );
+          // Update your application state or fetch new data
+        }}
       />
     </div>
   );
