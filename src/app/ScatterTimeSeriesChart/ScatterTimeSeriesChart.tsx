@@ -345,7 +345,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                       data: d,
                     });
                   }}
-                  // onMouseLeave={() => setTooltip(null)}
                   style={{ cursor: 'pointer' }}
                 />
               ))}
