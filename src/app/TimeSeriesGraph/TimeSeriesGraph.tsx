@@ -59,6 +59,10 @@ const TimeSeriesGraph = () => {
           // For overview - show date
           return dateObj.toLocaleDateString();
         }}
+        xFormatterOverview={(date: Date | number) => {
+          const dateObj = date instanceof Date ? date : new Date(date);
+          return dateObj.toLocaleDateString();
+        }}
         yFormatter={(value: number) => value.toFixed(1)}
         onBrush={(domain) => {
           setSelectedTimeRange(domain);

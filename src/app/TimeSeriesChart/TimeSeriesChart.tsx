@@ -38,6 +38,7 @@ export interface TimeSeriesChartProps {
   xAxisTitle?: string;
   yAxisTitle?: string;
   xFormatter?: (date: Date | number) => string;
+  xFormatterOverview?: (date: Date | number) => string;
   yFormatter?: (value: number) => string;
   onBrush?: (domain: [number, number]) => void;
 }
@@ -84,6 +85,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   xAxisTitle = defaultProps.xAxisTitle!,
   yAxisTitle = defaultProps.yAxisTitle!,
   xFormatter = defaultProps.xFormatter!,
+  xFormatterOverview = defaultProps.xFormatterOverview!,
   yFormatter = defaultProps.yFormatter!,
   onBrush,
 }) => {
@@ -454,7 +456,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                   fill="var(--gray-600)"
                   className="text-xs"
                 >
-                  {xFormatter(tick)}
+                  {xFormatterOverview(tick)}
                 </text>
               </g>
             ))}
