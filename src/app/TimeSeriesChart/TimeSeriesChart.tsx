@@ -6,7 +6,7 @@ import { line, curveCatmullRom, area } from 'd3-shape';
 
 // Types
 export interface DataPoint {
-  date: Date;
+  timestamp: Date;
   value: number;
 }
 
@@ -82,7 +82,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   // Memoize scales
   const scales = React.useMemo(() => {
-    const xExtent = extent(data, (d) => d.date.getTime());
+    const xExtent = extent(data, (d) => d.timestamp.getTime());
     const yExtent = extent(data, (d) => d.value);
 
     if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
@@ -105,12 +105,12 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     if (!scales) return null;
 
     const lineGenerator = line<DataPoint>()
-      .x((d) => scales.xScale(d.date.getTime()))
+      .x((d) => scales.xScale(d.timestamp.getTime()))
       .y((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
     const areaGenerator = area<DataPoint>()
-      .x((d) => scales.xScale(d.date.getTime()))
+      .x((d) => scales.xScale(d.timestamp.getTime()))
       .y0(() => scales.yScale(0))
       .y1((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
@@ -173,8 +173,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
             <g>
               {data.map((d) => (
                 <circle
-                  key={d.date.getTime()}
-                  cx={scales.xScale(d.date.getTime())}
+                  key={d.timestamp.getTime()}
+                  cx={scales.xScale(d.timestamp.getTime())}
                   cy={scales.yScale(d.value)}
                   r={pointRadius}
                   fill={colors.point}
