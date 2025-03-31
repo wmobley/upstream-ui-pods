@@ -7,6 +7,12 @@ import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
 
 // Types
+interface TooltipData {
+  x: number;
+  y: number;
+  data: DataPoint;
+}
+
 export interface DataPoint {
   timestamp: Date;
   value: number;
@@ -91,6 +97,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
     null,
   );
+
+  // Add tooltip state
+  const [tooltip, setTooltip] = React.useState<TooltipData | null>(null);
 
   // Calculate dimensions for main and overview charts
   const dimensions = React.useMemo(() => {
@@ -266,12 +275,13 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center relative">
       <svg width={width} height={height}>
         {/* Main chart */}
         <g
           transform={`translate(${margin.left},${margin.top})`}
           className="main-chart"
+          onMouseLeave={() => setTooltip(null)}
         >
           {showArea && (
             <path
@@ -289,6 +299,33 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               strokeWidth={2}
             />
           )}
+          {/* Interactive overlay for tooltip */}
+          <g>
+            {data.map((d) => (
+              <circle
+                key={d.timestamp.getTime()}
+                cx={scales.xScale(d.timestamp.getTime())}
+                cy={scales.yScale(d.value)}
+                r={pointRadius + 5}
+                fill="transparent"
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const svgRect = e.currentTarget
+                    .closest('svg')
+                    ?.getBoundingClientRect();
+                  if (!svgRect) return;
+
+                  setTooltip({
+                    x: rect.left - svgRect.left,
+                    y: rect.top - svgRect.top,
+                    data: d,
+                  });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+                style={{ cursor: 'pointer' }}
+              />
+            ))}
+          </g>
           {showPoints && (
             <g>
               {data.map((d) => (
@@ -447,6 +484,24 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           />
         </g>
       </svg>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="absolute bg-white p-2 rounded shadow-lg border border-gray-200 text-sm z-50 pointer-events-none"
+          style={{
+            left: tooltip.x,
+            top: Math.max(margin.top, tooltip.y - 40),
+            transform: 'translateX(-50%)',
+            minWidth: '160px',
+          }}
+        >
+          <div className="font-semibold">
+            {tooltip.data.timestamp.toLocaleString()}
+          </div>
+          <div>Value: {yFormatter(tooltip.data.value)}</div>
+        </div>
+      )}
     </div>
   );
 };
