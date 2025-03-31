@@ -40,9 +40,9 @@ const TimeSeriesGraph = () => {
         width={1600}
         height={800}
         margin={{ top: 10, right: 100, bottom: 100, left: 50 }}
-        showArea={true}
-        showLine={true}
-        showPoints={false}
+        showArea={false}
+        showLine={false}
+        showPoints={true}
         colors={{
           line: '#9a6fb0',
           area: '#9a6fb0',

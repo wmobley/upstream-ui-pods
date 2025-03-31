@@ -20,6 +20,9 @@ export interface TimeSeriesChartProps {
   showArea?: boolean;
   showLine?: boolean;
   showPoints?: boolean;
+  showAreaOverview?: boolean;
+  showLineOverview?: boolean;
+  showPointsOverview?: boolean;
   pointRadius?: number;
   colors?: {
     line?: string;
@@ -41,6 +44,8 @@ const defaultProps: Partial<TimeSeriesChartProps> = {
   showArea: true,
   showLine: true,
   showPoints: false,
+  showAreaOverview: true,
+  showLineOverview: true,
   pointRadius: 3,
   colors: {
     line: '#9a6fb0',
@@ -66,6 +71,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   showArea = defaultProps.showArea!,
   showLine = defaultProps.showLine!,
   showPoints = defaultProps.showPoints!,
+  showAreaOverview = defaultProps.showAreaOverview!,
+  showLineOverview = defaultProps.showLineOverview!,
   pointRadius = defaultProps.pointRadius!,
   colors = defaultProps.colors!,
   xAxisTitle = defaultProps.xAxisTitle!,
@@ -370,7 +377,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           transform={`translate(${margin.left},${dimensions.mainHeight + dimensions.spacing})`}
           className="overview-chart"
         >
-          {showArea && (
+          {showAreaOverview && (
             <path
               d={paths.overviewAreaPath || ''}
               fill={colors.area}
@@ -378,7 +385,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               stroke="none"
             />
           )}
-          {showLine && (
+          {showLineOverview && (
             <path
               d={paths.overviewLinePath || ''}
               fill="none"
