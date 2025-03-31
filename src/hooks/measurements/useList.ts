@@ -15,6 +15,7 @@ export const useList = (
   campaignId: string,
   stationId: string,
   sensorId: string,
+  limit: number = 10000,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
@@ -33,7 +34,7 @@ export const useList = (
               campaignId: parseInt(campaignId),
               stationId: parseInt(stationId),
               sensorId: parseInt(sensorId),
-              limit: 10000,
+              limit,
             },
           );
         setData(response);

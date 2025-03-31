@@ -14,7 +14,12 @@ const MeasurementsSummary = ({
   stationId,
   sensorId,
 }: MeasurementsSummaryProps) => {
-  const { data, isLoading, error } = useList(campaignId, stationId, sensorId);
+  const { data, isLoading, error } = useList(
+    campaignId,
+    stationId,
+    sensorId,
+    5000,
+  );
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       <h2 className="text-xl font-semibold mb-4">Measurements</h2>
@@ -32,8 +37,15 @@ const MeasurementsSummary = ({
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/route-map`}
         >
-          <button className="bg-blue-500 text-white px-4 py-2 rounded-md">
+          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
             View Route Map
+          </button>
+        </Link>
+        <Link
+          to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/heat-map`}
+        >
+          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
+            View Heat Map
           </button>
         </Link>
       </div>

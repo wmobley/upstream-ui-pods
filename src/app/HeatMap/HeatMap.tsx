@@ -7,12 +7,15 @@ import Tile from '../common/Tile/Tile';
 import CarLine from '../common/CarLine/CarLine';
 import { createGoogleStreetViewUrl } from '../common/GoogleMaps/GoogleMapsStreet';
 import { MeasurementItem } from '@upstream/upstream-api';
+import Legend from '../common/Legend/Legend';
+import { getColorByValue } from '../common/Intervals';
 
 interface HeatMapProps {
   measurements: MeasurementItem[];
+  intervals: Interval[];
 }
 
-export default function HeatMap({ measurements }: HeatMapProps) {
+export default function HeatMap({ measurements, intervals }: HeatMapProps) {
   const [selectedInterval, setSelectedInterval] = useState<Interval | null>(
     null,
   );
@@ -85,8 +88,7 @@ export default function HeatMap({ measurements }: HeatMapProps) {
               center={[m.geometry?.coordinates[1], m.geometry?.coordinates[0]]}
               radius={6}
               pathOptions={{
-                // color: getColorByValue(value, intervals),
-                color: 'blue',
+                color: getColorByValue(value, intervals),
                 fillOpacity: 1,
                 weight: 1,
               }}
@@ -116,12 +118,12 @@ export default function HeatMap({ measurements }: HeatMapProps) {
           </Marker>
         )}
       </MapContainer>
-      {/* <Legend
+      <Legend
         title={title}
         intervals={intervals}
         selectedInterval={selectedInterval}
         onIntervalSelect={setSelectedInterval}
-      /> */}
+      />
     </div>
   );
 }
