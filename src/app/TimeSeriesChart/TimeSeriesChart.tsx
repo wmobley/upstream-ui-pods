@@ -405,6 +405,31 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               y2={0}
               stroke="var(--gray-400)"
             />
+            {scales.overviewXScale.ticks(5).map((tick) => (
+              <g
+                key={tick}
+                transform={`translate(${scales.overviewXScale(tick)},0)`}
+              >
+                <line y1={0} y2={6} stroke="var(--gray-300)" />
+                <text
+                  y={20}
+                  textAnchor="middle"
+                  fill="var(--gray-600)"
+                  className="text-xs"
+                >
+                  {xFormatter(tick)}
+                </text>
+              </g>
+            ))}
+            <text
+              x={dimensions.innerWidth / 2}
+              y={40}
+              textAnchor="middle"
+              fill="var(--gray-600)"
+              className="text-xs"
+            >
+              Overview
+            </text>
           </g>
           {/* Brush container */}
 

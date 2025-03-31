@@ -51,10 +51,13 @@ const TimeSeriesGraph = () => {
         xAxisTitle="Date"
         yAxisTitle="Value"
         xFormatter={(date: Date | number) => {
-          if (date instanceof Date) {
-            return date.toISOString();
+          const dateObj = date instanceof Date ? date : new Date(date);
+          // For main chart - show time
+          if (selectedTimeRange) {
+            return dateObj.toLocaleTimeString();
           }
-          return new Date(date).toDateString();
+          // For overview - show date
+          return dateObj.toLocaleDateString();
         }}
         yFormatter={(value: number) => value.toFixed(1)}
         onBrush={(domain) => {
