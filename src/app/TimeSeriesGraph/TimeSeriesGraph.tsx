@@ -2,8 +2,9 @@ import TimeSeriesChart from '../TimeSeriesChart';
 import { useProcessedMeasurements } from '../../hooks/measurements/useProcessedMeasurements';
 
 const TimeSeriesGraph = () => {
+  const containerWidth = 1600;
   const { downsampledData, aggregatedData, isLoading, error } =
-    useProcessedMeasurements('1', '19', '44', 100000);
+    useProcessedMeasurements('1', '7 ', '38', containerWidth);
 
   if (!downsampledData || isLoading || error) {
     return <div>Loading...</div>;
@@ -34,7 +35,7 @@ const TimeSeriesGraph = () => {
           if (date instanceof Date) {
             return date.toISOString();
           }
-          return new Date(date).toLocaleTimeString();
+          return new Date(date).toDateString();
         }}
         yFormatter={(value: number) => value.toFixed(1)}
       />
