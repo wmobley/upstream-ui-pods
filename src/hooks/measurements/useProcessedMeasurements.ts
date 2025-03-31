@@ -13,6 +13,7 @@ import {
 export interface ProcessedMeasurementsResult {
   downsampledData: ProcessedDataPoint[];
   aggregatedData: TimeAggregation[];
+  data: DataPoint[];
   isLoading: boolean;
   error: Error | null;
 }
@@ -72,6 +73,11 @@ export function useProcessedMeasurements(
 
   return {
     ...processedData,
+    data:
+      data?.items.map((item) => ({
+        timestamp: new Date(item.collectiontime),
+        value: item.value as number,
+      })) || [],
     isLoading,
     error,
   };
