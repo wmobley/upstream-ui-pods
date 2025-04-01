@@ -33,9 +33,9 @@ export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdS
     endDate?: Date | null;
     minMeasurementValue?: number | null;
     maxMeasurementValue?: number | null;
-    downsampleThreshold?: number | null;
     limit?: number;
     page?: number;
+    downsampleThreshold?: number | null;
 }
 
 /**
@@ -86,16 +86,16 @@ export class MeasurementsApi extends runtime.BaseAPI {
             queryParameters['max_measurement_value'] = requestParameters['maxMeasurementValue'];
         }
 
-        if (requestParameters['downsampleThreshold'] != null) {
-            queryParameters['downsample_threshold'] = requestParameters['downsampleThreshold'];
-        }
-
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
         }
 
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['downsampleThreshold'] != null) {
+            queryParameters['downsample_threshold'] = requestParameters['downsampleThreshold'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
