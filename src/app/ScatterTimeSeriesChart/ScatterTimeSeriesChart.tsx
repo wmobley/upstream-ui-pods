@@ -5,17 +5,15 @@ import { format } from 'd3-format';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
+import Modal from '../common/Modal/Modal';
+import { DataPoint } from '../../utils/dataProcessing';
+import GeometryMap from '../common/GeometryMap/GeometryMap';
 
 // Types
 interface TooltipData {
   x: number;
   y: number;
   data: DataPoint;
-}
-
-export interface DataPoint {
-  timestamp: Date;
-  value: number;
 }
 
 export interface TimeSeriesChartProps {
@@ -91,6 +89,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 }) => {
   // Add refs for brush
   const overviewRef = React.useRef<SVGGElement>(null);
+  const [modalOpen, setModalOpen] = React.useState(false);
 
   // Track if initial selection has been set
   const initialSelectionRef = React.useRef(false);
@@ -283,7 +282,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         <g
           transform={`translate(${margin.left},${margin.top})`}
           className="main-chart"
-          onMouseLeave={() => setTooltip(null)}
         >
           {/* Chart background */}
           <rect
@@ -334,7 +332,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                   cy={scales.yScale(d.value)}
                   r={pointRadius + 5}
                   fill="transparent"
-                  onMouseEnter={(e) => {
+                  onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const svgRect = e.currentTarget
                       .closest('svg')
@@ -347,7 +345,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                       data: d,
                     });
                   }}
-                  onMouseLeave={() => setTooltip(null)}
+                  // onMouseLeave={() => setTooltip(null)}
                   style={{ cursor: 'pointer' }}
                 />
               ))}
@@ -518,23 +516,25 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         </g>
       </svg>
 
-      {/* Tooltip */}
-      {tooltip && (
-        <div
-          className="absolute bg-white p-2 rounded shadow-lg border border-gray-200 text-sm z-50 pointer-events-none"
-          style={{
-            left: tooltip.x,
-            top: Math.max(margin.top, tooltip.y - 40),
-            transform: 'translateX(-50%)',
-            minWidth: '160px',
-          }}
-        >
-          <div className="font-semibold">
-            {tooltip.data.timestamp.toLocaleString()}
-          </div>
-          <div>Value: {yFormatter(tooltip.data.value)}</div>
+      <Modal
+        isOpen={tooltip !== null}
+        onClose={() => setTooltip(null)}
+        title="Measurement Details"
+      >
+        <div className="p-4">
+          {tooltip && (
+            <div>
+              <p>Timestamp: {tooltip.data.timestamp.toLocaleString()}</p>
+              <p>Value: {yFormatter(tooltip.data.value)}</p>
+              {tooltip.data.geometry && (
+                <div className="h-80 w-80">
+                  <GeometryMap geoJSON={tooltip.data.geometry} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

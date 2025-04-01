@@ -6,6 +6,7 @@ import { MapContainer } from 'react-leaflet';
 
 const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
   if (!geoJSON) {
+    console.log('no geoJSON');
     return null;
   }
   const data: GeoJSON.FeatureCollection = {
@@ -18,6 +19,7 @@ const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
       },
     ],
   };
+  console.log(data);
 
   // Calculate bounds from GeoJSON coordinates
   const calculateBounds = (geometry: GeoJSON.Geometry): LatLngBounds => {
