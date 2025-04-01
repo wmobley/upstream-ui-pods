@@ -9,6 +9,8 @@ import { createGoogleStreetViewUrl } from '../common/GoogleMaps/GoogleMapsStreet
 import { MeasurementItem } from '@upstream/upstream-api';
 import Legend from '../common/Legend/Legend';
 import { getColorByValue } from '../common/Intervals';
+import { getReducedPoints } from '../../utils/mapRendering';
+import { getCenter } from '../../utils/mapRendering';
 
 interface HeatMapProps {
   measurements: MeasurementItem[];
@@ -24,43 +26,6 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
     percentile: number;
     position: LatLngExpression;
   } | null>(null);
-
-  // Filter measurements based on selected interval
-  const filteredMeasurements = selectedInterval
-    ? measurements.filter(
-        (m) =>
-          m.value &&
-          m.value >= selectedInterval.minValue &&
-          m.value <= selectedInterval.maxValue,
-      )
-    : measurements;
-
-  const title = (
-    <>
-      C<sub>3</sub>H<sub>4</sub>OH<sup>+</sup> Concentration
-    </>
-  );
-  // Function to get a subset of points
-  const getReducedPoints = () => {
-    const maxPoints = 10000; // Adjust this number based on performance
-    if (filteredMeasurements.length <= maxPoints) return filteredMeasurements;
-
-    const step = Math.ceil(filteredMeasurements.length / maxPoints);
-    return filteredMeasurements.filter((_, index) => index % step === 0);
-  };
-
-  // Calculate the center of the coordinates
-  const getCenter = (): LatLngExpression | undefined => {
-    if (!filteredMeasurements.length) return undefined;
-
-    const lngs = filteredMeasurements.map((m) => m.geometry?.coordinates[0]);
-    const lats = filteredMeasurements.map((m) => m.geometry?.coordinates[1]);
-
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-
-    return [centerLat, centerLng];
-  };
 
   if (!measurements) return null;
   return (
@@ -79,7 +44,7 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
       <MapContainer center={getCenter()} zoom={9} className="h-full w-full">
         <Tile />
         <CarLine measurements={measurements} />
-        {getReducedPoints().map((m, index) => {
+        {getReducedPoints(measurements).map((m, index) => {
           const value = m.value;
 
           return (

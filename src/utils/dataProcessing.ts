@@ -7,6 +7,7 @@
 export interface DataPoint {
   timestamp: Date;
   value: number;
+  geometry: GeoJSON.Point;
 }
 
 export interface ProcessedDataPoint extends DataPoint {
@@ -74,7 +75,12 @@ export function lttb(
       const area = calculateTriangleArea(
         sampled[sampled.length - 1],
         { ...data[j], originalIndex: j },
-        { timestamp: new Date(avgX), value: avgY, originalIndex: -1 },
+        {
+          timestamp: new Date(avgX),
+          value: avgY,
+          originalIndex: -1,
+          geometry: data[j].geometry,
+        },
       );
 
       if (area > maxArea) {

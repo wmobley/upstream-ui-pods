@@ -42,6 +42,7 @@ export function useProcessedMeasurements(
       .map((item) => ({
         timestamp: new Date(item.collectiontime),
         value: item.value as number, // We know it's not null from the filter
+        geometry: item.geometry as GeoJSON.Point,
       }));
 
     // Filter by time range if provided
@@ -77,6 +78,7 @@ export function useProcessedMeasurements(
       data?.items.map((item) => ({
         timestamp: new Date(item.collectiontime),
         value: item.value as number,
+        geometry: item.geometry as GeoJSON.Point,
       })) || [],
     isLoading,
     error,

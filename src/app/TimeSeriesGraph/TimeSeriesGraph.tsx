@@ -1,4 +1,4 @@
-import TimeSeriesChart from '../TimeSeriesChart';
+import TimeSeriesChart from '../ScatterTimeSeriesChart';
 import { useProcessedMeasurements } from '../../hooks/measurements/useProcessedMeasurements';
 import { useState } from 'react';
 
