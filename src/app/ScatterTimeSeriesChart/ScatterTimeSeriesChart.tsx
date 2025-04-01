@@ -89,7 +89,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 }) => {
   // Add refs for brush
   const overviewRef = React.useRef<SVGGElement>(null);
-  const [modalOpen, setModalOpen] = React.useState(false);
 
   // Track if initial selection has been set
   const initialSelectionRef = React.useRef(false);
@@ -282,6 +281,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         <g
           transform={`translate(${margin.left},${margin.top})`}
           className="main-chart"
+          onMouseLeave={() => setTooltip(null)}
         >
           {/* Chart background */}
           <rect
