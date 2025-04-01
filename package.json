@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b tsconfig.app.json tsconfig.node.json && vite build",
+    "build": "pushd packages/upstream-api && npm run build && popd && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
