@@ -8,7 +8,7 @@ import CarLine from '../common/CarLine/CarLine';
 import { MeasurementItem } from '@upstream/upstream-api';
 import Legend from '../common/Legend/Legend';
 import { getColorByValue } from '../common/Intervals';
-import { getReducedPoints, getCenter } from '../../utils/mapRendering';
+import { getReducedPoints } from '../../utils/mapRendering';
 
 interface HeatMapProps {
   measurements: MeasurementItem[];
@@ -27,22 +27,32 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
   } | null>(null);
 
   if (!measurements) return null;
+
+  const center: LatLngExpression = [
+    // @ts-expect-error
+    measurements[0].geometry?.coordinates[1],
+    // @ts-expect-error
+    measurements[0].geometry?.coordinates[0],
+  ];
+
   return (
     <div className="h-screen w-full ">
-      <MapContainer
-        center={getCenter(measurements)}
-        zoom={9}
-        className="h-full w-full"
-      >
+      <MapContainer center={center} zoom={9} className="h-full w-full">
         <Tile />
         <CarLine measurements={measurements} />
         {getReducedPoints(measurements).map((m, index) => {
           const value = m.value;
+          const position: LatLngExpression = [
+            // @ts-expect-error
+            m.geometry?.coordinates[1],
+            // @ts-expect-error
+            m.geometry?.coordinates[0],
+          ];
 
           return (
             <CircleMarker
               key={index}
-              center={[m.geometry?.coordinates[0], m.geometry?.coordinates[1]]}
+              center={position}
               radius={6}
               pathOptions={{
                 color: getColorByValue(value, intervals),
@@ -53,11 +63,8 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
                 click: () => {
                   setSelectedPoint({
                     value,
-                    // percentile: 0,
-                    position: [
-                      m.geometry?.coordinates[1],
-                      m.geometry?.coordinates[0],
-                    ] as LatLngExpression,
+                    percentile: 0,
+                    position,
                   });
                 },
               }}

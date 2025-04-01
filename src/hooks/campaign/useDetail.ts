@@ -1,27 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-  CampaignsApi,
-  Configuration,
-  GetCampaignResponse,
-} from '@upstream/upstream-api';
+import { CampaignsApi, GetCampaignResponse } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
-
-// Add this helper function to parse geometry string
-const parseGeometry = (geometry: string): [number, number] | null => {
-  try {
-    // Assuming format is "POINT(longitude latitude)"
-    const coords = geometry
-      .replace('POINT (', '')
-      .replace(')', '')
-      .split(' ')
-      .map(Number);
-    // Leaflet expects [latitude, longitude]
-    return [coords[1], coords[0]];
-  } catch (err) {
-    console.error('Error parsing geometry:', err);
-    return null;
-  }
-};
 
 export const useDetail = (campaignId: string) => {
   const [campaign, setCampaign] = useState<GetCampaignResponse | null>(null);

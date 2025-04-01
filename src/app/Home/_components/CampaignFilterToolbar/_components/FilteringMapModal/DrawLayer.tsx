@@ -6,15 +6,9 @@ interface DrawLayerProps {
   onCreate: (e: PM.CreateEventHandler) => void;
   onChange: (e: PM.ChangeEventHandler) => void;
   bounds: LatLngBounds | null;
-  setBounds: (bounds: LatLngBounds) => void;
 }
 
-const DrawLayer = ({
-  onCreate,
-  onChange,
-  bounds,
-  setBounds,
-}: DrawLayerProps) => {
+const DrawLayer = ({ onCreate, onChange, bounds }: DrawLayerProps) => {
   return (
     <FeatureGroup>
       <GeomanControls

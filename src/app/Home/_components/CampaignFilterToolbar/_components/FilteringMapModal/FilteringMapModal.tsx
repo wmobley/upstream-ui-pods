@@ -58,7 +58,6 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
             onCreate={handleCreate}
             onChange={handleChange}
             bounds={bounds}
-            setBounds={setBounds}
           />
         </MapContainer>
       </div>

@@ -59,7 +59,6 @@ export function useProcessedMeasurements(
     const interval = getAppropriateResolution(
       startTime || filteredData[0].timestamp,
       endTime || filteredData[filteredData.length - 1].timestamp,
-      containerWidth,
     );
 
     // Process data using both methods
