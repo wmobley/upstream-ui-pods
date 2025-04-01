@@ -1,7 +1,5 @@
-import { useList } from '../../../hooks/measurements/useList';
-import RouterMap from '../../RouterMap/RouterMap';
-import QueryWrapper from '../../common/QueryWrapper';
-import TimeSeriesGraph from '../../TimeSeriesGraph/TimeSeriesGraph';
+import TimeSeriesGraph from '../../TimeSeriesGraph';
+
 interface MeasurementsSummaryProps {
   campaignId: string;
   stationId: string;
