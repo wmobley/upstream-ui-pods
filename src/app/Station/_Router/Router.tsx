@@ -8,6 +8,7 @@ import {
 import StationDashboard from '../_components/StationDashboard';
 import RouteMapViz from '../../Sensor/viz/RouteMapViz';
 import HeatMapViz from '../../Sensor/viz/HeatMapViz';
+import ScatterTimeViz from '../../Sensor/viz/ScatterTimeViz';
 const Router: React.FC = () => {
   const { path } = useRouteMatch();
   return (
@@ -53,6 +54,24 @@ const Router: React.FC = () => {
           sensorId: string;
         }>) => (
           <HeatMapViz
+            campaignId={campaignId}
+            stationId={stationId}
+            sensorId={sensorId}
+          />
+        )}
+      />
+      <Route
+        path={`/campaigns/:campaignId/stations/:stationId/sensors/:sensorId/viz/scatter-time`}
+        render={({
+          match: {
+            params: { campaignId, stationId, sensorId },
+          },
+        }: RouteComponentProps<{
+          campaignId: string;
+          stationId: string;
+          sensorId: string;
+        }>) => (
+          <ScatterTimeViz
             campaignId={campaignId}
             stationId={stationId}
             sensorId={sensorId}

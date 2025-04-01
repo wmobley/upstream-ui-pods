@@ -48,6 +48,13 @@ const MeasurementsSummary = ({
             View Heat Map
           </button>
         </Link>
+        <Link
+          to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/scatter-time`}
+        >
+          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
+            View Scatter Time
+          </button>
+        </Link>
       </div>
     </QueryWrapper>
   );

@@ -15,8 +15,10 @@ const HeatMapViz = ({
     campaignId,
     stationId,
     sensorId,
+    500000,
     5000,
   );
+
   const intervals = [
     {
       minPercentile: 0,

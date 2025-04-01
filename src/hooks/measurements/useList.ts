@@ -16,6 +16,7 @@ export const useList = (
   stationId: string,
   sensorId: string,
   limit: number = 500000,
+  downsampleThreshold: number | undefined = undefined,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
@@ -34,6 +35,7 @@ export const useList = (
               campaignId: parseInt(campaignId),
               stationId: parseInt(stationId),
               sensorId: parseInt(sensorId),
+              downsampleThreshold,
               limit,
             },
           );

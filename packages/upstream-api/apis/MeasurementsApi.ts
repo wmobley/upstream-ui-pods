@@ -33,6 +33,7 @@ export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdS
     endDate?: Date | null;
     minMeasurementValue?: number | null;
     maxMeasurementValue?: number | null;
+    downsampleThreshold?: number | null;
     limit?: number;
     page?: number;
 }
@@ -83,6 +84,10 @@ export class MeasurementsApi extends runtime.BaseAPI {
 
         if (requestParameters['maxMeasurementValue'] != null) {
             queryParameters['max_measurement_value'] = requestParameters['maxMeasurementValue'];
+        }
+
+        if (requestParameters['downsampleThreshold'] != null) {
+            queryParameters['downsample_threshold'] = requestParameters['downsampleThreshold'];
         }
 
         if (requestParameters['limit'] != null) {

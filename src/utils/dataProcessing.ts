@@ -4,6 +4,8 @@
  * and time-based aggregation functions.
  */
 
+import { MeasurementItem } from '@upstream/upstream-api';
+
 export interface DataPoint {
   timestamp: Date;
   value: number;

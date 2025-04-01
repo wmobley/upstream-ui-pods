@@ -281,16 +281,15 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         <g
           transform={`translate(${margin.left},${margin.top})`}
           className="main-chart"
-          onMouseLeave={() => setTooltip(null)}
         >
           {/* Chart background */}
-          <rect
+          {/* <rect
             x={0}
             y={0}
             width={dimensions.innerWidth}
             height={dimensions.mainInnerHeight}
             fill="white"
-          />
+          /> */}
 
           {/* Data visualization layer */}
           <g className="data-layer">

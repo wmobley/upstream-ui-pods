@@ -5,12 +5,10 @@ import { Interval } from '../../app/common/types';
 import { useState } from 'react';
 import Tile from '../common/Tile/Tile';
 import CarLine from '../common/CarLine/CarLine';
-import { createGoogleStreetViewUrl } from '../common/GoogleMaps/GoogleMapsStreet';
 import { MeasurementItem } from '@upstream/upstream-api';
 import Legend from '../common/Legend/Legend';
 import { getColorByValue } from '../common/Intervals';
-import { getReducedPoints } from '../../utils/mapRendering';
-import { getCenter } from '../../utils/mapRendering';
+import { getReducedPoints, getCenter } from '../../utils/mapRendering';
 
 interface HeatMapProps {
   measurements: MeasurementItem[];
@@ -21,6 +19,7 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
   const [selectedInterval, setSelectedInterval] = useState<Interval | null>(
     null,
   );
+  const title = 'Heat Map';
   const [selectedPoint, setSelectedPoint] = useState<{
     value: number;
     percentile: number;
@@ -29,19 +28,12 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
 
   if (!measurements) return null;
   return (
-    <div className="h-[500px] w-full relative">
-      {selectedPoint && (
-        <div className="absolute bottom-8 left-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
-          <a
-            href={createGoogleStreetViewUrl({
-              position: selectedPoint?.position as LatLngExpression,
-            })}
-          >
-            Google Maps Street View
-          </a>
-        </div>
-      )}
-      <MapContainer center={getCenter()} zoom={9} className="h-full w-full">
+    <div className="h-screen w-full ">
+      <MapContainer
+        center={getCenter(measurements)}
+        zoom={9}
+        className="h-full w-full"
+      >
         <Tile />
         <CarLine measurements={measurements} />
         {getReducedPoints(measurements).map((m, index) => {
@@ -84,7 +76,7 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
         )}
       </MapContainer>
       <Legend
-        title={title}
+        title={title ? title : ''}
         intervals={intervals}
         selectedInterval={selectedInterval}
         onIntervalSelect={setSelectedInterval}
