@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    base: '/ui/',
     resolve: {
       alias: {
         src: '/src',
