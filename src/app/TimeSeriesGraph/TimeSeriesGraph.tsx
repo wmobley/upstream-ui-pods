@@ -2,6 +2,7 @@ import TimeSeriesChart from '../ScatterTimeSeriesChart';
 import { useState } from 'react';
 import { useList } from '../../hooks/measurements/useList';
 import QueryWrapper from '../common/QueryWrapper';
+import { DataPoint } from '../../utils/dataProcessing';
 
 interface TimeSeriesGraphProps {
   campaignId: string;
@@ -16,7 +17,7 @@ const TimeSeriesGraph = ({
   sensorId,
   initialDownsampleThreshold,
 }: TimeSeriesGraphProps) => {
-  const [downsampleThreshold, setDownsampleThreshold] = useState<number>(
+  const [downsampleThreshold] = useState<number>(
     initialDownsampleThreshold ?? 5000,
   );
   const { data, isLoading, error } = useList(
@@ -26,11 +27,14 @@ const TimeSeriesGraph = ({
     500000,
     downsampleThreshold,
   );
-  const downsampledData = data?.items.map((item) => ({
-    timestamp: item.collectiontime,
-    value: item.value,
-    geometry: item.geometry,
-  }));
+  const downsampledData = data?.items.map(
+    (item) =>
+      ({
+        timestamp: item.collectiontime,
+        value: item.value,
+        geometry: item.geometry,
+      }) as DataPoint,
+  );
 
   // Add state for selected time range
   const [selectedTimeRange, setSelectedTimeRange] = useState<
