@@ -1,2 +1,2 @@
 export { default } from './ScatterTimeSeriesChart';
-export type { DataPoint, TimeSeriesChartProps } from './ScatterTimeSeriesChart';
+export type { TimeSeriesChartProps } from './ScatterTimeSeriesChart';

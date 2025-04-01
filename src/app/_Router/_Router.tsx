@@ -6,7 +6,6 @@ import ProtectedRoute from '../common/ProtectedRoute';
 import Login from '../Login/Login';
 import { useAuth } from '../../contexts/AuthContext';
 import QueryWrapper from '../common/QueryWrapper';
-import TimeSeriesGraph from '../TimeSeriesGraph/TimeSeriesGraph';
 
 const Router: React.FC = () => {
   const { isAuthenticated, isLoading, error } = useAuth();
@@ -19,9 +18,6 @@ const Router: React.FC = () => {
         </Route>
         <Route exact path="/login">
           <Login />
-        </Route>
-        <Route exact path="/time-series-graph">
-          <TimeSeriesGraph />
         </Route>
         <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
           <Campaign />
