@@ -23,7 +23,9 @@ export const getCenter = (
 
   // Find min and max values in a single pass
   reducedPoints.forEach((m) => {
+    // @ts-expect-error
     const lat = m.geometry?.coordinates[1];
+    // @ts-expect-error
     const lng = m.geometry?.coordinates[0];
     if (lat !== undefined && lng !== undefined) {
       minLat = Math.min(minLat, lat);

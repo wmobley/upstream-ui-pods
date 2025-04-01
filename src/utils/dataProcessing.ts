@@ -4,8 +4,6 @@
  * and time-based aggregation functions.
  */
 
-import { MeasurementItem } from '@upstream/upstream-api';
-
 export interface DataPoint {
   timestamp: Date;
   value: number;
@@ -178,7 +176,6 @@ export function calculateThreshold(containerWidth: number): number {
 export function getAppropriateResolution(
   startTime: Date,
   endTime: Date,
-  containerWidth: number,
 ): TimeInterval {
   const timeRange = endTime.getTime() - startTime.getTime();
   const millisecondsPerDay = 24 * 60 * 60 * 1000;

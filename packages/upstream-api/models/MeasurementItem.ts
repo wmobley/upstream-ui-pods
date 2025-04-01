@@ -38,6 +38,24 @@ export interface MeasurementItem {
      * @type {number}
      * @memberof MeasurementItem
      */
+    value: number;
+    /**
+     * 
+     * @type {Point}
+     * @memberof MeasurementItem
+     */
+    geometry: Point;
+    /**
+     * 
+     * @type {Date}
+     * @memberof MeasurementItem
+     */
+    collectiontime: Date;
+    /**
+     * 
+     * @type {number}
+     * @memberof MeasurementItem
+     */
     sensorid?: number | null;
     /**
      * 
@@ -45,12 +63,6 @@ export interface MeasurementItem {
      * @memberof MeasurementItem
      */
     variablename?: string | null;
-    /**
-     * 
-     * @type {Date}
-     * @memberof MeasurementItem
-     */
-    collectiontime: Date;
     /**
      * 
      * @type {string}
@@ -63,18 +75,6 @@ export interface MeasurementItem {
      * @memberof MeasurementItem
      */
     description?: string | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof MeasurementItem
-     */
-    value?: number | null;
-    /**
-     * 
-     * @type {Point}
-     * @memberof MeasurementItem
-     */
-    geometry?: Point | null;
 }
 
 /**
@@ -82,6 +82,8 @@ export interface MeasurementItem {
  */
 export function instanceOfMeasurementItem(value: object): value is MeasurementItem {
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('value' in value) || value['value'] === undefined) return false;
+    if (!('geometry' in value) || value['geometry'] === undefined) return false;
     if (!('collectiontime' in value) || value['collectiontime'] === undefined) return false;
     return true;
 }
@@ -97,13 +99,13 @@ export function MeasurementItemFromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'id': json['id'],
+        'value': json['value'],
+        'geometry': PointFromJSON(json['geometry']),
+        'collectiontime': (new Date(json['collectiontime'])),
         'sensorid': json['sensorid'] == null ? undefined : json['sensorid'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
-        'collectiontime': (new Date(json['collectiontime'])),
         'variabletype': json['variabletype'] == null ? undefined : json['variabletype'],
         'description': json['description'] == null ? undefined : json['description'],
-        'value': json['value'] == null ? undefined : json['value'],
-        'geometry': json['geometry'] == null ? undefined : PointFromJSON(json['geometry']),
     };
 }
 
@@ -119,13 +121,13 @@ export function MeasurementItemToJSONTyped(value?: MeasurementItem | null, ignor
     return {
         
         'id': value['id'],
-        'sensorid': value['sensorid'],
-        'variablename': value['variablename'],
-        'collectiontime': ((value['collectiontime']).toISOString()),
-        'variabletype': value['variabletype'],
-        'description': value['description'],
         'value': value['value'],
         'geometry': PointToJSON(value['geometry']),
+        'collectiontime': ((value['collectiontime']).toISOString()),
+        'sensorid': value['sensorid'],
+        'variablename': value['variablename'],
+        'variabletype': value['variabletype'],
+        'description': value['description'],
     };
 }
 

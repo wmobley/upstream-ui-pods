@@ -8,10 +8,11 @@ export default function CarLine({
 }) {
   return (
     <Polyline
-      positions={measurements.map((m) => [
-        m.geometry?.coordinates[0],
-        m.geometry?.coordinates[1],
-      ])}
+      positions={measurements.map((m) => {
+        const coordinates = m.geometry?.coordinates;
+        if (!Array.isArray(coordinates)) return [];
+        return [coordinates[0], coordinates[1]];
+      })}
       pathOptions={{ color: 'blue', weight: 2, opacity: 0.6 }}
     />
   );

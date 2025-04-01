@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { LatLngBounds, LatLngTuple, PM } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Modal from '../../../../../common/Modal';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
-import DrawLayer from './DrawLayer';
+import DrawLayer from '../CampaignFilterToolbar/_components/FilteringMapModal/DrawLayer';
+import Modal from '../../../common/Modal';
 
 interface FilteringModalProps {
   isOpen: boolean;
@@ -23,7 +23,9 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const handleCreate = (e: PM.CreateEventHandler) => {
+    // @ts-expect-error
     if (e.shape === 'Rectangle') {
+      // @ts-expect-error
       const bounds = e.layer.getBounds();
       setBounds(bounds);
     }
@@ -58,7 +60,6 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
             onCreate={handleCreate}
             onChange={handleChange}
             bounds={bounds}
-            setBounds={setBounds}
           />
         </MapContainer>
       </div>

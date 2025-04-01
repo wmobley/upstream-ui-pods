@@ -1,6 +1,5 @@
 import { useDetail } from '../../../../hooks/station/useDetail';
 import QueryWrapper from '../../../common/QueryWrapper';
-import { useDetail as useCampaignDetail } from '../../../../hooks/campaign/useDetail';
 import React, { useState } from 'react';
 import { SensorItem } from '@upstream/upstream-api';
 import StatsSection from './StatsSection';
@@ -16,21 +15,12 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   stationId,
 }) => {
   const { station, isLoading, error } = useDetail(campaignId, stationId);
-  const {
-    campaign,
-    isLoading: campaignLoading,
-    error: campaignError,
-  } = useCampaignDetail(campaignId);
 
   const [selectedSensor, setSelectedSensor] = useState<SensorItem | null>(null);
 
   return (
-    <QueryWrapper
-      isLoading={isLoading || campaignLoading}
-      error={error || campaignError}
-    >
+    <QueryWrapper isLoading={isLoading} error={error}>
       <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
-        {/* Header Section */}
         <header className="mb-8">
           <div className="mt-6">
             <h1 className="text-3xl font-bold">{station?.name}</h1>

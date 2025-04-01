@@ -6,20 +6,16 @@ interface DrawLayerProps {
   onCreate: (e: PM.CreateEventHandler) => void;
   onChange: (e: PM.ChangeEventHandler) => void;
   bounds: LatLngBounds | null;
-  setBounds: (bounds: LatLngBounds) => void;
 }
 
-const DrawLayer = ({
-  onCreate,
-  onChange,
-  bounds,
-  setBounds,
-}: DrawLayerProps) => {
+const DrawLayer = ({ onCreate, onChange, bounds }: DrawLayerProps) => {
   return (
     <FeatureGroup>
       <GeomanControls
-        onCreate={onCreate}
-        onChange={onChange}
+        // @ts-expect-error
+        onCreate={(e) => onCreate(e)}
+        // @ts-expect-error
+        onChange={(e) => onChange(e)}
         options={{
           drawRectangle: bounds === null ? true : false,
           drawCircle: false,

@@ -1,7 +1,6 @@
 import { MapContainer, TileLayer, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
-import { useDetail } from '../../hooks/campaign/useDetail';
 import { MeasurementItem } from '@upstream/upstream-api';
 import { getCenter } from '../../utils/mapRendering';
 
@@ -11,7 +10,9 @@ interface RouterMapProps {
 
 export default function RouterMap({ measurements }: RouterMapProps) {
   const coordinates = measurements.map((m) => [
+    // @ts-expect-error
     m.geometry?.coordinates[1],
+    // @ts-expect-error
     m.geometry?.coordinates[0],
   ]);
 

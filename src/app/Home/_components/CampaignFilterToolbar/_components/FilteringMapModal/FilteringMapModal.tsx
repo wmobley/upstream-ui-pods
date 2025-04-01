@@ -23,7 +23,9 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const handleCreate = (e: PM.CreateEventHandler) => {
+    // @ts-expect-error
     if (e.shape === 'Rectangle') {
+      // @ts-expect-error
       const bounds = e.layer.getBounds();
       setBounds(bounds);
     }
@@ -58,7 +60,6 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
             onCreate={handleCreate}
             onChange={handleChange}
             bounds={bounds}
-            setBounds={setBounds}
           />
         </MapContainer>
       </div>

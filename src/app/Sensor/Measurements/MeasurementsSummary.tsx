@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
 import { useList } from '../../../hooks/measurements/useList';
-import RouterMap from '../../RouterMap/RouterMap';
-import CarLine from '../../common/CarLine/CarLine';
 import QueryWrapper from '../../common/QueryWrapper';
 interface MeasurementsSummaryProps {
   campaignId: string;
