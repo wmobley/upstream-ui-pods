@@ -42,7 +42,7 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
           return (
             <CircleMarker
               key={index}
-              center={[m.geometry?.coordinates[1], m.geometry?.coordinates[0]]}
+              center={[m.geometry?.coordinates[0], m.geometry?.coordinates[1]]}
               radius={6}
               pathOptions={{
                 color: getColorByValue(value, intervals),
