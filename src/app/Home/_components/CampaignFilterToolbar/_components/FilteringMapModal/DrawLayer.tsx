@@ -12,8 +12,10 @@ const DrawLayer = ({ onCreate, onChange, bounds }: DrawLayerProps) => {
   return (
     <FeatureGroup>
       <GeomanControls
-        onCreate={onCreate}
-        onChange={onChange}
+        // @ts-expect-error
+        onCreate={(e) => onCreate(e)}
+        // @ts-expect-error
+        onChange={(e) => onChange(e)}
         options={{
           drawRectangle: bounds === null ? true : false,
           drawCircle: false,
