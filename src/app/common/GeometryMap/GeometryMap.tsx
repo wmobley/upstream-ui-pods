@@ -4,6 +4,9 @@ import { TileLayer } from 'react-leaflet';
 import { GeoJSON } from 'react-leaflet';
 import { MapContainer } from 'react-leaflet';
 
+type Position = GeoJSON.Position;
+type Coordinates = Position | Position[] | Position[][] | Position[][][];
+
 const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
   if (!geoJSON) {
     console.log('no geoJSON');
@@ -38,24 +41,44 @@ const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
     };
 
     const traverseCoordinates = (
-      coordinates: any[],
+      coordinates: Coordinates,
       geometry: GeoJSON.Geometry,
     ) => {
       if (geometry.type === 'Point') {
-        processCoordinates(coordinates as number[]);
-      } else if (Array.isArray(coordinates)) {
-        coordinates.forEach((coord) => {
-          if (Array.isArray(coord)) {
-            traverseCoordinates(coord, geometry);
-          } else if (typeof coord === 'number') {
-            processCoordinates(coordinates as number[]);
-            return;
+        processCoordinates(coordinates as Position);
+      } else if (
+        geometry.type === 'LineString' ||
+        geometry.type === 'MultiPoint'
+      ) {
+        (coordinates as Position[]).forEach((coord) =>
+          processCoordinates(coord),
+        );
+      } else if (
+        geometry.type === 'Polygon' ||
+        geometry.type === 'MultiLineString'
+      ) {
+        (coordinates as Position[][]).forEach((ring) => {
+          ring.forEach((coord) => processCoordinates(coord));
+        });
+      } else if (geometry.type === 'MultiPolygon') {
+        (coordinates as Position[][][]).forEach((polygon) => {
+          polygon.forEach((ring) => {
+            ring.forEach((coord) => processCoordinates(coord));
+          });
+        });
+      } else if (geometry.type === 'GeometryCollection') {
+        geometry.geometries.forEach((geom) => {
+          if ('coordinates' in geom) {
+            traverseCoordinates(geom.coordinates, geom);
           }
         });
       }
     };
 
-    traverseCoordinates(geometry.coordinates, geometry);
+    if ('coordinates' in geometry) {
+      traverseCoordinates(geometry.coordinates, geometry);
+    }
+
     return new LatLngBounds(
       new LatLng(minLat, minLng),
       new LatLng(maxLat, maxLng),
@@ -89,7 +112,6 @@ const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
       zoom={zoom}
       center={center}
       zoomControl={false}
-      bounds={bounds}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
