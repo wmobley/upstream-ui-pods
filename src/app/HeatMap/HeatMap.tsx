@@ -9,6 +9,7 @@ import { MeasurementItem } from '@upstream/upstream-api';
 import Legend from '../common/Legend/Legend';
 import { getColorByValue } from '../common/Intervals';
 import { getReducedPoints } from '../../utils/mapRendering';
+import '../../utils/leaflet';
 
 interface HeatMapProps {
   measurements: MeasurementItem[];

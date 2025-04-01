@@ -2,6 +2,7 @@ import React from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../utils/leaflet';
 
 interface LeafletPointMapProps {
   geoJSON: GeoJSON.FeatureCollection | GeoJSON.Feature;

@@ -3,6 +3,7 @@ import { LatLng, LatLngBounds } from 'leaflet';
 import { TileLayer } from 'react-leaflet';
 import { GeoJSON } from 'react-leaflet';
 import { MapContainer } from 'react-leaflet';
+import '../../../utils/leaflet';
 
 type Position = GeoJSON.Position;
 type Coordinates = Position | Position[] | Position[][] | Position[][][];
