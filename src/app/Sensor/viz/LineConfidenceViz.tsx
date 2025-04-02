@@ -1,4 +1,6 @@
 import { useList } from '../../../hooks/measurements/useList';
+import { useListConfidenceValues } from '../../../hooks/measurements/useListConfidenceValues';
+import LineConfidenceChart from '../../LineConfidenceChart';
 import RouterMap from '../../RouterMap/RouterMap';
 import QueryWrapper from '../../common/QueryWrapper';
 interface MeasurementsSummaryProps {
@@ -12,18 +14,16 @@ const LineConfidenceViz = ({
   stationId,
   sensorId,
 }: MeasurementsSummaryProps) => {
-  const { data, isLoading, error } = useList(
+  const { data, isLoading, error } = useListConfidenceValues(
     campaignId,
     stationId,
     sensorId,
-    500000,
-    5000,
   );
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
-      {data?.items && (
+      {data && (
         <>
-          <RouterMap measurements={data?.items} />
+          <LineConfidenceChart data={data} width={1600} height={800} />
         </>
       )}
     </QueryWrapper>

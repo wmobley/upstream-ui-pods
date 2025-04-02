@@ -4,6 +4,7 @@ import StationDashboard from '../_components/StationDashboard';
 import RouteMapViz from '../../Sensor/viz/RouteMapViz';
 import HeatMapViz from '../../Sensor/viz/HeatMapViz';
 import ScatterTimeViz from '../../Sensor/viz/ScatterTimeViz';
+import LineConfidenceViz from '../../Sensor/viz/LineConfidenceViz';
 const Router: React.FC = () => {
   return (
     <Switch>
@@ -66,6 +67,24 @@ const Router: React.FC = () => {
           sensorId: string;
         }>) => (
           <ScatterTimeViz
+            campaignId={campaignId}
+            stationId={stationId}
+            sensorId={sensorId}
+          />
+        )}
+      />
+      <Route
+        path={`/campaigns/:campaignId/stations/:stationId/sensors/:sensorId/viz/line-confidence`}
+        render={({
+          match: {
+            params: { campaignId, stationId, sensorId },
+          },
+        }: RouteComponentProps<{
+          campaignId: string;
+          stationId: string;
+          sensorId: string;
+        }>) => (
+          <LineConfidenceViz
             campaignId={campaignId}
             stationId={stationId}
             sensorId={sensorId}
