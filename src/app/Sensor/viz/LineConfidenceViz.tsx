@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useList } from '../../../hooks/measurements/useList';
 import { useListConfidenceValues } from '../../../hooks/measurements/useListConfidenceValues';
 import LineConfidenceChart from '../../LineConfidenceChart';
-import RouterMap from '../../RouterMap/RouterMap';
 import QueryWrapper from '../../common/QueryWrapper';
 interface MeasurementsSummaryProps {
   campaignId: string;
@@ -33,9 +31,6 @@ const LineConfidenceViz = ({
             width={1600}
             height={800}
             margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
-            showArea={false}
-            showLine={false}
-            showPoints={true}
             colors={{
               line: '#9a6fb0',
               area: '#9a6fb0',
