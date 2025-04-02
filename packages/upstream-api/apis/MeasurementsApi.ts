@@ -15,15 +15,30 @@
 
 import * as runtime from '../runtime';
 import type {
+  AggregatedMeasurement,
   HTTPValidationError,
   ListMeasurementsResponsePagination,
 } from '../models/index';
 import {
+    AggregatedMeasurementFromJSON,
+    AggregatedMeasurementToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
     ListMeasurementsResponsePaginationFromJSON,
     ListMeasurementsResponsePaginationToJSON,
 } from '../models/index';
+
+export interface GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest {
+    campaignId: number;
+    stationId: number;
+    sensorId: number;
+    interval?: string;
+    intervalValue?: number;
+    startDate?: Date | null;
+    endDate?: Date | null;
+    minValue?: number | null;
+    maxValue?: number | null;
+}
 
 export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest {
     campaignId: number;
@@ -42,6 +57,79 @@ export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdS
  * 
  */
 export class MeasurementsApi extends runtime.BaseAPI {
+
+    /**
+     * Get sensor measurements with confidence intervals for visualization.
+     * Get Measurements With Confidence Intervals
+     */
+    async getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRaw(requestParameters: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AggregatedMeasurement>>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet().'
+            );
+        }
+
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['interval'] != null) {
+            queryParameters['interval'] = requestParameters['interval'];
+        }
+
+        if (requestParameters['intervalValue'] != null) {
+            queryParameters['interval_value'] = requestParameters['intervalValue'];
+        }
+
+        if (requestParameters['startDate'] != null) {
+            queryParameters['start_date'] = (requestParameters['startDate'] as any).toISOString();
+        }
+
+        if (requestParameters['endDate'] != null) {
+            queryParameters['end_date'] = (requestParameters['endDate'] as any).toISOString();
+        }
+
+        if (requestParameters['minValue'] != null) {
+            queryParameters['min_value'] = requestParameters['minValue'];
+        }
+
+        if (requestParameters['maxValue'] != null) {
+            queryParameters['max_value'] = requestParameters['maxValue'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}/measurements/confidence-intervals`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AggregatedMeasurementFromJSON));
+    }
+
+    /**
+     * Get sensor measurements with confidence intervals for visualization.
+     * Get Measurements With Confidence Intervals
+     */
+    async getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet(requestParameters: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AggregatedMeasurement>> {
+        const response = await this.getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Get Sensor Measurements
