@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { extent } from 'd3-array';
+import { extent, min, max } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
 import { line, curveCatmullRom, area } from 'd3-shape';
@@ -122,7 +122,10 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   // Memoize scales for both charts
   const scales = React.useMemo(() => {
     const xExtent = extent(data, (d) => d.measurementTime.getTime());
-    const yExtent = extent(data, (d) => d.value);
+    const yExtent = [
+      min(data, (d) => d.parametricLowerBound) as number,
+      max(data, (d) => d.parametricUpperBound) as number,
+    ];
 
     if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
       return null;
@@ -134,7 +137,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       .range([0, dimensions.innerWidth]);
 
     const yScale = scaleLinear()
-      .domain([0, yExtent[1]])
+      .domain(yExtent)
       .range([dimensions.mainInnerHeight, 0]);
 
     // Overview chart scales
@@ -143,7 +146,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       .range([0, dimensions.innerWidth]);
 
     const overviewYScale = scaleLinear()
-      .domain([0, yExtent[1]])
+      .domain(yExtent)
       .range([dimensions.overviewInnerHeight, 0]);
 
     return { xScale, yScale, overviewXScale, overviewYScale };
@@ -161,8 +164,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
     const mainAreaGenerator = area<AggregatedMeasurement>()
       .x((d) => scales.xScale(d.measurementTime.getTime()))
-      .y0(() => scales.yScale(0))
-      .y1((d) => scales.yScale(d.value))
+      .y0((d) => scales.yScale(d.parametricLowerBound))
+      .y1((d) => scales.yScale(d.parametricUpperBound))
       .curve(curveCatmullRom.alpha(0.5));
 
     // Overview chart paths
@@ -173,8 +176,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
     const overviewAreaGenerator = area<AggregatedMeasurement>()
       .x((d) => scales.overviewXScale(d.measurementTime.getTime()))
-      .y0(() => scales.overviewYScale(0))
-      .y1((d) => scales.overviewYScale(d.value))
+      .y0((d) => scales.overviewYScale(d.parametricLowerBound))
+      .y1((d) => scales.overviewYScale(d.parametricUpperBound))
       .curve(curveCatmullRom.alpha(0.5));
 
     return {
@@ -291,35 +294,29 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
           {/* Data visualization layer */}
           <g className="data-layer">
-            {showArea && (
-              <path
-                d={paths.mainAreaPath || ''}
-                fill={colors.area}
-                fillOpacity={0.2}
-                stroke="none"
-              />
-            )}
-            {showLine && (
-              <path
-                d={paths.mainLinePath || ''}
-                fill="none"
-                stroke={colors.line}
-                strokeWidth={2}
-              />
-            )}
-            {showPoints && (
-              <g>
-                {data.map((d) => (
-                  <circle
-                    key={d.measurementTime.getTime()}
-                    cx={scales.xScale(d.measurementTime.getTime())}
-                    cy={scales.yScale(d.value)}
-                    r={pointRadius}
-                    fill={colors.point}
-                  />
-                ))}
-              </g>
-            )}
+            <path
+              d={paths.mainAreaPath || ''}
+              fill={colors.area}
+              fillOpacity={0.2}
+              stroke="none"
+            />
+            <path
+              d={paths.mainLinePath || ''}
+              fill="none"
+              stroke={colors.line}
+              strokeWidth={2}
+            />
+            <g>
+              {data.map((d) => (
+                <circle
+                  key={d.measurementTime.getTime()}
+                  cx={scales.xScale(d.measurementTime.getTime())}
+                  cy={scales.yScale(d.value)}
+                  r={pointRadius}
+                  fill={colors.point}
+                />
+              ))}
+            </g>
             {/* Interactive overlay for tooltip */}
             <g>
               {data.map((d) => (
