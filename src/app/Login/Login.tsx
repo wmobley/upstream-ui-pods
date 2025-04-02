@@ -36,7 +36,7 @@ const Login: React.FC = () => {
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="username" className="sr-only">
-                Username
+                TACC Username
               </label>
               <input
                 id="email"
@@ -44,7 +44,7 @@ const Login: React.FC = () => {
                 type="text"
                 required
                 className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Email"
+                placeholder="TACC Username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
