@@ -5,9 +5,6 @@ import { format } from 'd3-format';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
-import Modal from '../common/Modal/Modal';
-import { DataPoint } from '../../utils/dataProcessing';
-import GeometryMap from '../common/GeometryMap/GeometryMap';
 import { AggregatedMeasurement } from '@upstream/upstream-api';
 
 // Types
@@ -22,12 +19,8 @@ export interface LineConfidenceChartProps {
   width?: number;
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
-  showArea?: boolean;
-  showLine?: boolean;
-  showPoints?: boolean;
   showAreaOverview?: boolean;
   showLineOverview?: boolean;
-  showPointsOverview?: boolean;
   pointRadius?: number;
   colors?: {
     line?: string;
@@ -40,6 +33,7 @@ export interface LineConfidenceChartProps {
   xFormatterOverview?: (date: Date | number) => string;
   yFormatter?: (value: number) => string;
   onBrush?: (domain: [number, number]) => void;
+  gapThresholdMinutes?: number;
 }
 
 // Default props
@@ -47,9 +41,6 @@ const defaultProps: Partial<LineConfidenceChartProps> = {
   width: 800,
   height: 400,
   margin: { top: 20, right: 30, bottom: 30, left: 40 },
-  showArea: true,
-  showLine: true,
-  showPoints: false,
   showAreaOverview: true,
   showLineOverview: true,
   pointRadius: 3,
@@ -69,14 +60,40 @@ const defaultProps: Partial<LineConfidenceChartProps> = {
   yFormatter: format('.1f'),
 };
 
+const getDataSegments = (
+  data: AggregatedMeasurement[],
+  gapThresholdMinutes: number = 120, // 2 hours default
+): AggregatedMeasurement[][] => {
+  if (data.length === 0) return [];
+
+  const segments: AggregatedMeasurement[][] = [];
+  let currentSegment: AggregatedMeasurement[] = [data[0]];
+
+  for (let i = 1; i < data.length; i++) {
+    const timeDiff =
+      (data[i].measurementTime.getTime() -
+        data[i - 1].measurementTime.getTime()) /
+      (1000 * 60); // Convert to minutes
+
+    if (timeDiff > gapThresholdMinutes) {
+      segments.push(currentSegment);
+      currentSegment = [];
+    }
+    currentSegment.push(data[i]);
+  }
+
+  if (currentSegment.length > 0) {
+    segments.push(currentSegment);
+  }
+
+  return segments;
+};
+
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   data,
   width = defaultProps.width!,
   height = defaultProps.height!,
   margin = defaultProps.margin!,
-  showArea = defaultProps.showArea!,
-  showLine = defaultProps.showLine!,
-  showPoints = defaultProps.showPoints!,
   showAreaOverview = defaultProps.showAreaOverview!,
   showLineOverview = defaultProps.showLineOverview!,
   pointRadius = defaultProps.pointRadius!,
@@ -87,6 +104,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   xFormatterOverview = defaultProps.xFormatterOverview!,
   yFormatter = defaultProps.yFormatter!,
   onBrush,
+  gapThresholdMinutes = 120,
 }) => {
   // Add refs for brush
   const overviewRef = React.useRef<SVGGElement>(null);
@@ -98,6 +116,9 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
     null,
   );
+
+  // Add tooltip state
+  const [tooltip, setTooltip] = React.useState<TooltipData | null>(null);
 
   // Calculate dimensions for main and overview charts
   const dimensions = React.useMemo(() => {
@@ -156,6 +177,9 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   const paths = React.useMemo(() => {
     if (!scales) return null;
 
+    // Get data segments
+    const segments = getDataSegments(data, gapThresholdMinutes);
+
     // Main chart paths
     const mainLineGenerator = line<AggregatedMeasurement>()
       .x((d) => scales.xScale(d.measurementTime.getTime()))
@@ -180,13 +204,23 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       .y1((d) => scales.overviewYScale(d.parametricUpperBound))
       .curve(curveCatmullRom.alpha(0.5));
 
+    // Generate paths for each segment
+    const mainLinePaths = segments.map((segment) => mainLineGenerator(segment));
+    const mainAreaPaths = segments.map((segment) => mainAreaGenerator(segment));
+    const overviewLinePaths = segments.map((segment) =>
+      overviewLineGenerator(segment),
+    );
+    const overviewAreaPaths = segments.map((segment) =>
+      overviewAreaGenerator(segment),
+    );
+
     return {
-      mainLinePath: mainLineGenerator(data),
-      mainAreaPath: mainAreaGenerator(data),
-      overviewLinePath: overviewLineGenerator(data),
-      overviewAreaPath: overviewAreaGenerator(data),
+      mainLinePaths,
+      mainAreaPaths,
+      overviewLinePaths,
+      overviewAreaPaths,
     };
-  }, [data, scales]);
+  }, [data, scales, gapThresholdMinutes]);
 
   // Memoize axis ticks for main chart
   const axisTicks = React.useMemo(() => {
@@ -294,18 +328,27 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
           {/* Data visualization layer */}
           <g className="data-layer">
-            <path
-              d={paths.mainAreaPath || ''}
-              fill={colors.area}
-              fillOpacity={0.2}
-              stroke="none"
-            />
-            <path
-              d={paths.mainLinePath || ''}
-              fill="none"
-              stroke={colors.line}
-              strokeWidth={2}
-            />
+            {/* Render each segment's area */}
+            {paths?.mainAreaPaths.map((path, i) => (
+              <path
+                key={`area-${i}`}
+                d={path || ''}
+                fill={colors.area}
+                fillOpacity={0.2}
+                stroke="none"
+              />
+            ))}
+            {/* Render each segment's line */}
+            {paths?.mainLinePaths.map((path, i) => (
+              <path
+                key={`line-${i}`}
+                d={path || ''}
+                fill="none"
+                stroke={colors.line}
+                strokeWidth={2}
+              />
+            ))}
+            {/* Points */}
             <g>
               {data.map((d) => (
                 <circle
@@ -438,22 +481,28 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           transform={`translate(${margin.left},${dimensions.mainHeight + dimensions.spacing})`}
           className="overview-chart"
         >
-          {showAreaOverview && (
-            <path
-              d={paths.overviewAreaPath || ''}
-              fill={colors.area}
-              fillOpacity={0.2}
-              stroke="none"
-            />
-          )}
-          {showLineOverview && (
-            <path
-              d={paths.overviewLinePath || ''}
-              fill="none"
-              stroke={colors.line}
-              strokeWidth={1}
-            />
-          )}
+          {/* Render each segment's area in overview */}
+          {showAreaOverview &&
+            paths?.overviewAreaPaths.map((path, i) => (
+              <path
+                key={`overview-area-${i}`}
+                d={path || ''}
+                fill={colors.area}
+                fillOpacity={0.2}
+                stroke="none"
+              />
+            ))}
+          {/* Render each segment's line in overview */}
+          {showLineOverview &&
+            paths?.overviewLinePaths.map((path, i) => (
+              <path
+                key={`overview-line-${i}`}
+                d={path || ''}
+                fill="none"
+                stroke={colors.line}
+                strokeWidth={1}
+              />
+            ))}
           {/* Overview chart x-axis */}
           <g
             transform={`translate(0,${dimensions.overviewInnerHeight})`}
@@ -508,6 +557,47 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           />
         </g>
       </svg>
+      {tooltip && (
+        <div
+          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
+          style={{
+            left: tooltip.x + 10,
+            top: tooltip.y - 10,
+            pointerEvents: 'auto',
+          }}
+        >
+          <div className="flex justify-between items-start mb-2">
+            <div className="font-medium">Data Point Details</div>
+            <button
+              onClick={() => setTooltip(null)}
+              className="ml-2 text-gray-500 hover:text-gray-700"
+              aria-label="Close tooltip"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div>Time: {tooltip.data.measurementTime.toLocaleString()}</div>
+          <div>Value: {tooltip.data.value.toFixed(2)}</div>
+          <div>Median: {tooltip.data.medianValue.toFixed(2)}</div>
+          <div>
+            Confidence Interval: [{tooltip.data.parametricLowerBound.toFixed(2)}
+            , {tooltip.data.parametricUpperBound.toFixed(2)}]
+          </div>
+          <div>Point Count: {tooltip.data.pointCount}</div>
+        </div>
+      )}
     </div>
   );
 };
