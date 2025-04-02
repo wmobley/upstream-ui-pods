@@ -53,6 +53,13 @@ const MeasurementsSummary = ({
             View Scatter Time
           </button>
         </Link>
+        <Link
+          to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/line-confidence`}
+        >
+          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
+            View Line Confidence
+          </button>
+        </Link>
       </div>
     </QueryWrapper>
   );

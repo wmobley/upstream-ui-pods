@@ -7,6 +7,7 @@ apis/StationsApi.ts
 apis/UploadfileApi.ts
 apis/index.ts
 index.ts
+models/AggregatedMeasurement.ts
 models/Bbox.ts
 models/CampaignCreateResponse.ts
 models/CampaignsIn.ts

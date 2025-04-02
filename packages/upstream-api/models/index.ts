@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AggregatedMeasurement';
 export * from './Bbox';
 export * from './CampaignCreateResponse';
 export * from './CampaignsIn';
