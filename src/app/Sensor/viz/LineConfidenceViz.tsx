@@ -23,7 +23,12 @@ const LineConfidenceViz = ({
     <QueryWrapper isLoading={isLoading} error={error}>
       {data && (
         <>
-          <LineConfidenceChart data={data} width={1600} height={800} />
+          <LineConfidenceChart
+            data={data}
+            width={1600}
+            height={800}
+            gapThresholdMinutes={120}
+          />
         </>
       )}
     </QueryWrapper>

@@ -11,6 +11,7 @@ interface LineConfidenceChartProps {
   width?: number;
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
+  gapThresholdMinutes?: number; // Time gap threshold in minutes
 }
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
@@ -18,8 +19,38 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   width = 800,
   height = 400,
   margin = { top: 20, right: 30, bottom: 30, left: 40 },
+  gapThresholdMinutes = 60, // Default to 1 hour
 }) => {
   const svgRef = React.useRef<SVGSVGElement>(null);
+
+  // Split data into segments based on time gaps
+  const getDataSegments = (
+    data: AggregatedMeasurement[],
+  ): AggregatedMeasurement[][] => {
+    if (data.length === 0) return [];
+
+    const segments: AggregatedMeasurement[][] = [];
+    let currentSegment: AggregatedMeasurement[] = [data[0]];
+
+    for (let i = 1; i < data.length; i++) {
+      const timeDiff =
+        (data[i].measurementTime.getTime() -
+          data[i - 1].measurementTime.getTime()) /
+        (1000 * 60); // Convert to minutes
+
+      if (timeDiff > gapThresholdMinutes) {
+        segments.push(currentSegment);
+        currentSegment = [];
+      }
+      currentSegment.push(data[i]);
+    }
+
+    if (currentSegment.length > 0) {
+      segments.push(currentSegment);
+    }
+
+    return segments;
+  };
 
   React.useEffect(() => {
     if (!svgRef.current || !data.length) return;
@@ -61,36 +92,43 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Create confidence interval area
-    const confidenceArea = area<AggregatedMeasurement>()
-      .x((d: AggregatedMeasurement) => xScale(d.measurementTime))
-      .y0((d: AggregatedMeasurement) => yScale(d.parametricLowerBound))
-      .y1((d: AggregatedMeasurement) => yScale(d.parametricUpperBound));
+    // Split data into segments
+    const segments = getDataSegments(data);
 
-    svg
-      .append('path')
-      .datum(data)
-      .attr('fill', '#9a6fb0')
-      .attr('fill-opacity', 0.2)
-      .attr('d', confidenceArea);
+    // Create confidence interval areas and median lines for each segment
+    segments.forEach((segment) => {
+      // Create confidence interval area
+      const confidenceArea = area<AggregatedMeasurement>()
+        .x((d: AggregatedMeasurement) => xScale(d.measurementTime))
+        .y0((d: AggregatedMeasurement) => yScale(d.parametricLowerBound))
+        .y1((d: AggregatedMeasurement) => yScale(d.parametricUpperBound))
+        .curve(curveCatmullRom.alpha(0.5));
 
-    // Create median line
-    const medianLine = line<AggregatedMeasurement>()
-      .x((d: AggregatedMeasurement) => xScale(d.measurementTime))
-      .y((d: AggregatedMeasurement) => yScale(d.medianValue))
-      .curve(curveCatmullRom.alpha(0.5));
+      svg
+        .append('path')
+        .datum(segment)
+        .attr('fill', '#9a6fb0')
+        .attr('fill-opacity', 0.2)
+        .attr('d', confidenceArea);
 
-    svg
-      .append('path')
-      .datum(data)
-      .attr('fill', 'none')
-      .attr('stroke', '#9a6fb0')
-      .attr('stroke-width', 2)
-      .attr('d', medianLine);
+      // Create median line
+      const medianLine = line<AggregatedMeasurement>()
+        .x((d: AggregatedMeasurement) => xScale(d.measurementTime))
+        .y((d: AggregatedMeasurement) => yScale(d.value))
+        .curve(curveCatmullRom.alpha(0.5));
+
+      svg
+        .append('path')
+        .datum(segment)
+        .attr('fill', 'none')
+        .attr('stroke', '#9a6fb0')
+        .attr('stroke-width', 2)
+        .attr('d', medianLine);
+    });
 
     // Add points
     svg
-      .selectAll('circle')
+      .selectAll<SVGCircleElement, AggregatedMeasurement>('circle')
       .data(data)
       .join('circle')
       .attr('cx', (d: AggregatedMeasurement) => xScale(d.measurementTime))
@@ -157,7 +195,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     return () => {
       tooltip.remove();
     };
-  }, [data, width, height, margin]);
+  }, [data, width, height, margin, gapThresholdMinutes]);
 
   return (
     <div className="flex flex-col items-center justify-center">
