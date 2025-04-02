@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useList } from '../../../hooks/measurements/useList';
 import { useListConfidenceValues } from '../../../hooks/measurements/useListConfidenceValues';
 import LineConfidenceChart from '../../LineConfidenceChart';
@@ -19,17 +20,48 @@ const LineConfidenceViz = ({
     stationId,
     sensorId,
   );
+  const [selectedTimeRange, setSelectedTimeRange] = useState<
+    [number, number] | null
+  >(null);
+
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       {data && (
-        <>
+        <div className="flex flex-col items-center justify-center h-screen">
           <LineConfidenceChart
             data={data}
             width={1600}
             height={800}
-            gapThresholdMinutes={120}
+            margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
+            showArea={false}
+            showLine={false}
+            showPoints={true}
+            colors={{
+              line: '#9a6fb0',
+              area: '#9a6fb0',
+              point: '#9a6fb0',
+            }}
+            xAxisTitle="Date"
+            yAxisTitle="Value"
+            xFormatter={(date: Date | number) => {
+              const dateObj = date instanceof Date ? date : new Date(date);
+              // For main chart - show time
+              if (selectedTimeRange) {
+                return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
+              }
+              // For overview - show date
+              return dateObj.toLocaleDateString();
+            }}
+            xFormatterOverview={(date: Date | number) => {
+              const dateObj = date instanceof Date ? date : new Date(date);
+              return dateObj.toLocaleDateString();
+            }}
+            yFormatter={(value: number) => value.toFixed(1)}
+            onBrush={(domain) => {
+              setSelectedTimeRange(domain);
+            }}
           />
-        </>
+        </div>
       )}
     </QueryWrapper>
   );

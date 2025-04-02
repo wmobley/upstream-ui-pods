@@ -1,205 +1,516 @@
 import * as React from 'react';
-import { extent, min, max } from 'd3-array';
-import { scaleTime, scaleLinear } from 'd3-scale';
-import { line, area, curveCatmullRom } from 'd3-shape';
+import { extent } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
+import { format } from 'd3-format';
+import { line, curveCatmullRom, area } from 'd3-shape';
+import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
-import { axisBottom, axisLeft } from 'd3-axis';
+import Modal from '../common/Modal/Modal';
+import { DataPoint } from '../../utils/dataProcessing';
+import GeometryMap from '../common/GeometryMap/GeometryMap';
 import { AggregatedMeasurement } from '@upstream/upstream-api';
 
-interface LineConfidenceChartProps {
+// Types
+interface TooltipData {
+  x: number;
+  y: number;
+  data: AggregatedMeasurement;
+}
+
+export interface LineConfidenceChartProps {
   data: AggregatedMeasurement[];
   width?: number;
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
-  gapThresholdMinutes?: number; // Time gap threshold in minutes
+  showArea?: boolean;
+  showLine?: boolean;
+  showPoints?: boolean;
+  showAreaOverview?: boolean;
+  showLineOverview?: boolean;
+  showPointsOverview?: boolean;
+  pointRadius?: number;
+  colors?: {
+    line?: string;
+    area?: string;
+    point?: string;
+  };
+  xAxisTitle?: string;
+  yAxisTitle?: string;
+  xFormatter?: (date: Date | number) => string;
+  xFormatterOverview?: (date: Date | number) => string;
+  yFormatter?: (value: number) => string;
+  onBrush?: (domain: [number, number]) => void;
 }
+
+// Default props
+const defaultProps: Partial<LineConfidenceChartProps> = {
+  width: 800,
+  height: 400,
+  margin: { top: 20, right: 30, bottom: 30, left: 40 },
+  showArea: true,
+  showLine: true,
+  showPoints: false,
+  showAreaOverview: true,
+  showLineOverview: true,
+  pointRadius: 3,
+  colors: {
+    line: '#9a6fb0',
+    area: '#9a6fb0',
+    point: '#9a6fb0',
+  },
+  xAxisTitle: 'Time',
+  yAxisTitle: 'Value',
+  xFormatter: (date: Date | number) => {
+    if (date instanceof Date) {
+      return date.toLocaleTimeString();
+    }
+    return new Date(date).toLocaleTimeString();
+  },
+  yFormatter: format('.1f'),
+};
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   data,
-  width = 800,
-  height = 400,
-  margin = { top: 20, right: 30, bottom: 30, left: 40 },
-  gapThresholdMinutes = 60, // Default to 1 hour
+  width = defaultProps.width!,
+  height = defaultProps.height!,
+  margin = defaultProps.margin!,
+  showArea = defaultProps.showArea!,
+  showLine = defaultProps.showLine!,
+  showPoints = defaultProps.showPoints!,
+  showAreaOverview = defaultProps.showAreaOverview!,
+  showLineOverview = defaultProps.showLineOverview!,
+  pointRadius = defaultProps.pointRadius!,
+  colors = defaultProps.colors!,
+  xAxisTitle = defaultProps.xAxisTitle!,
+  yAxisTitle = defaultProps.yAxisTitle!,
+  xFormatter = defaultProps.xFormatter!,
+  xFormatterOverview = defaultProps.xFormatterOverview!,
+  yFormatter = defaultProps.yFormatter!,
+  onBrush,
 }) => {
-  const svgRef = React.useRef<SVGSVGElement>(null);
+  // Add refs for brush
+  const overviewRef = React.useRef<SVGGElement>(null);
 
-  // Split data into segments based on time gaps
-  const getDataSegments = (
-    data: AggregatedMeasurement[],
-  ): AggregatedMeasurement[][] => {
-    if (data.length === 0) return [];
+  // Track if initial selection has been set
+  const initialSelectionRef = React.useRef(false);
 
-    const segments: AggregatedMeasurement[][] = [];
-    let currentSegment: AggregatedMeasurement[] = [data[0]];
+  // Add state for view domain
+  const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
+    null,
+  );
 
-    for (let i = 1; i < data.length; i++) {
-      const timeDiff =
-        (data[i].measurementTime.getTime() -
-          data[i - 1].measurementTime.getTime()) /
-        (1000 * 60); // Convert to minutes
+  // Calculate dimensions for main and overview charts
+  const dimensions = React.useMemo(() => {
+    const mainHeight = height * 0.7; // Main chart takes 70% of total height
+    const overviewHeight = height * 0.2; // Overview takes 20% of total height
+    const spacing = height * 0.1; // 10% spacing between charts
 
-      if (timeDiff > gapThresholdMinutes) {
-        segments.push(currentSegment);
-        currentSegment = [];
-      }
-      currentSegment.push(data[i]);
-    }
-
-    if (currentSegment.length > 0) {
-      segments.push(currentSegment);
-    }
-
-    return segments;
-  };
-
-  React.useEffect(() => {
-    if (!svgRef.current || !data.length) return;
-
-    // Clear any existing content
-    select(svgRef.current).selectAll('*').remove();
-
-    // Calculate dimensions
     const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
+    const mainInnerHeight = mainHeight - margin.top - margin.bottom;
+    const overviewInnerHeight = overviewHeight - margin.top - margin.bottom;
 
-    // Create scales
-    const xScale = scaleTime()
-      .domain(
-        extent(data, (d: AggregatedMeasurement) => d.measurementTime) as [
-          Date,
-          Date,
-        ],
-      )
-      .range([0, innerWidth]);
+    return {
+      innerWidth,
+      mainHeight,
+      mainInnerHeight,
+      overviewHeight,
+      overviewInnerHeight,
+      spacing,
+    };
+  }, [width, height, margin]);
+
+  // Memoize scales for both charts
+  const scales = React.useMemo(() => {
+    const xExtent = extent(data, (d) => d.measurementTime.getTime());
+    const yExtent = extent(data, (d) => d.value);
+
+    if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
+      return null;
+    }
+
+    // Main chart scales - use viewDomain if available
+    const xScale = scaleLinear()
+      .domain(viewDomain || [xExtent[0], xExtent[1]])
+      .range([0, dimensions.innerWidth]);
 
     const yScale = scaleLinear()
-      .domain([
-        min(
-          data,
-          (d: AggregatedMeasurement) => d.parametricLowerBound,
-        ) as number,
-        max(
-          data,
-          (d: AggregatedMeasurement) => d.parametricUpperBound,
-        ) as number,
+      .domain([0, yExtent[1]])
+      .range([dimensions.mainInnerHeight, 0]);
+
+    // Overview chart scales
+    const overviewXScale = scaleLinear()
+      .domain([xExtent[0], xExtent[1]])
+      .range([0, dimensions.innerWidth]);
+
+    const overviewYScale = scaleLinear()
+      .domain([0, yExtent[1]])
+      .range([dimensions.overviewInnerHeight, 0]);
+
+    return { xScale, yScale, overviewXScale, overviewYScale };
+  }, [data, dimensions, viewDomain]);
+
+  // Memoize path generators for both charts
+  const paths = React.useMemo(() => {
+    if (!scales) return null;
+
+    // Main chart paths
+    const mainLineGenerator = line<AggregatedMeasurement>()
+      .x((d) => scales.xScale(d.measurementTime.getTime()))
+      .y((d) => scales.yScale(d.value))
+      .curve(curveCatmullRom.alpha(0.5));
+
+    const mainAreaGenerator = area<AggregatedMeasurement>()
+      .x((d) => scales.xScale(d.measurementTime.getTime()))
+      .y0(() => scales.yScale(0))
+      .y1((d) => scales.yScale(d.value))
+      .curve(curveCatmullRom.alpha(0.5));
+
+    // Overview chart paths
+    const overviewLineGenerator = line<AggregatedMeasurement>()
+      .x((d) => scales.overviewXScale(d.measurementTime.getTime()))
+      .y((d) => scales.overviewYScale(d.value))
+      .curve(curveCatmullRom.alpha(0.5));
+
+    const overviewAreaGenerator = area<AggregatedMeasurement>()
+      .x((d) => scales.overviewXScale(d.measurementTime.getTime()))
+      .y0(() => scales.overviewYScale(0))
+      .y1((d) => scales.overviewYScale(d.value))
+      .curve(curveCatmullRom.alpha(0.5));
+
+    return {
+      mainLinePath: mainLineGenerator(data),
+      mainAreaPath: mainAreaGenerator(data),
+      overviewLinePath: overviewLineGenerator(data),
+      overviewAreaPath: overviewAreaGenerator(data),
+    };
+  }, [data, scales]);
+
+  // Memoize axis ticks for main chart
+  const axisTicks = React.useMemo(() => {
+    if (!scales) return null;
+
+    const xTicks = scales.xScale.ticks(5).map((tick) => ({
+      value: tick,
+      label: xFormatter(tick),
+      x: scales.xScale(tick),
+    }));
+
+    const yTicks = scales.yScale.ticks(5).map((tick) => ({
+      value: tick,
+      label: yFormatter(tick),
+      y: scales.yScale(tick),
+    }));
+
+    return { xTicks, yTicks };
+  }, [scales, xFormatter, yFormatter]);
+
+  // Initialize brush
+  React.useEffect(() => {
+    if (!scales || !overviewRef.current) return;
+
+    // Create brush behavior
+    const brush = brushX<unknown>()
+      .extent([
+        [0, 0],
+        [dimensions.innerWidth, dimensions.overviewInnerHeight],
       ])
-      .range([innerHeight, 0]);
-
-    // Create SVG
-    const svg = select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // Split data into segments
-    const segments = getDataSegments(data);
-
-    // Create confidence interval areas and median lines for each segment
-    segments.forEach((segment) => {
-      // Create confidence interval area
-      const confidenceArea = area<AggregatedMeasurement>()
-        .x((d: AggregatedMeasurement) => xScale(d.measurementTime))
-        .y0((d: AggregatedMeasurement) => yScale(d.parametricLowerBound))
-        .y1((d: AggregatedMeasurement) => yScale(d.parametricUpperBound))
-        .curve(curveCatmullRom.alpha(0.5));
-
-      svg
-        .append('path')
-        .datum(segment)
-        .attr('fill', '#9a6fb0')
-        .attr('fill-opacity', 0.2)
-        .attr('d', confidenceArea);
-
-      // Create median line
-      const medianLine = line<AggregatedMeasurement>()
-        .x((d: AggregatedMeasurement) => xScale(d.measurementTime))
-        .y((d: AggregatedMeasurement) => yScale(d.value))
-        .curve(curveCatmullRom.alpha(0.5));
-
-      svg
-        .append('path')
-        .datum(segment)
-        .attr('fill', 'none')
-        .attr('stroke', '#9a6fb0')
-        .attr('stroke-width', 2)
-        .attr('d', medianLine);
-    });
-
-    // Add points
-    svg
-      .selectAll<SVGCircleElement, AggregatedMeasurement>('circle')
-      .data(data)
-      .join('circle')
-      .attr('cx', (d: AggregatedMeasurement) => xScale(d.measurementTime))
-      .attr('cy', (d: AggregatedMeasurement) => yScale(d.value))
-      .attr('r', 4)
-      .attr('fill', '#9a6fb0')
-      .attr('opacity', 0.6)
-      .on('mouseover', function () {
-        select(this).attr('r', 6).attr('opacity', 1);
+      .on('start', () => {
+        // Mark that user has started brushing
+        initialSelectionRef.current = true;
       })
-      .on('mouseout', function () {
-        select(this).attr('r', 4).attr('opacity', 0.6);
+      .on('brush', (event) => {
+        if (!event.selection) return;
+        const selection = event.selection as [number, number];
+
+        // Convert pixel coordinates to domain values
+        const domain: [number, number] = [
+          scales.overviewXScale.invert(selection[0]),
+          scales.overviewXScale.invert(selection[1]),
+        ];
+
+        // Update view domain
+        setViewDomain(domain);
+        onBrush?.(domain);
       });
 
-    // Add axes
-    const xAxis = axisBottom(xScale);
-    const yAxis = axisLeft(yScale);
+    // Apply brush to overview chart
+    const brushGroup = select(overviewRef.current);
+    brushGroup.call(brush);
 
-    svg
-      .append('g')
-      .attr('transform', `translate(0,${innerHeight})`)
-      .call(xAxis);
+    // Set initial selection if not already set
+    if (!initialSelectionRef.current) {
+      // Calculate 10% width selection centered in the middle
+      const selectionWidth = dimensions.innerWidth * 0.5;
+      const selectionStart = (dimensions.innerWidth - selectionWidth) / 2;
+      const selectionEnd = selectionStart + selectionWidth;
 
-    svg.append('g').call(yAxis);
+      brushGroup.call(brush.move, [selectionStart, selectionEnd]);
 
-    // Add tooltip
-    const tooltip = select('body')
-      .append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0)
-      .style('position', 'absolute')
-      .style('background-color', 'white')
-      .style('border', '1px solid #ddd')
-      .style('border-radius', '4px')
-      .style('padding', '8px')
-      .style('pointer-events', 'none');
-
-    // Add tooltip events to points
-    svg
-      .selectAll<SVGCircleElement, AggregatedMeasurement>('circle')
-      .on('mouseover', function (event: MouseEvent, d: AggregatedMeasurement) {
-        tooltip
-          .style('opacity', 1)
-          .html(
-            `Time: ${d.measurementTime.toLocaleString()}<br/>
-             Value: ${d.value.toFixed(2)}<br/>
-             Median: ${d.medianValue.toFixed(2)}<br/>
-             Confidence Interval: [${d.parametricLowerBound.toFixed(2)}, ${d.parametricUpperBound.toFixed(2)}]<br/>
-             Point Count: ${d.pointCount}`,
-          )
-          .style('left', event.pageX + 10 + 'px')
-          .style('top', event.pageY - 10 + 'px');
-      })
-      .on('mousemove', function (event: MouseEvent) {
-        tooltip
-          .style('left', event.pageX + 10 + 'px')
-          .style('top', event.pageY - 10 + 'px');
-      })
-      .on('mouseout', function () {
-        tooltip.style('opacity', 0);
-      });
+      // Trigger initial brush event with 10% domain
+      if (scales.overviewXScale) {
+        const domain: [number, number] = [
+          scales.overviewXScale.invert(selectionStart),
+          scales.overviewXScale.invert(selectionEnd),
+        ];
+        onBrush?.(domain);
+      }
+    }
 
     // Cleanup
     return () => {
-      tooltip.remove();
+      brushGroup.on('.brush', null);
     };
-  }, [data, width, height, margin, gapThresholdMinutes]);
+  }, [
+    scales,
+    dimensions.innerWidth,
+    dimensions.overviewInnerHeight,
+    onBrush,
+    setViewDomain,
+  ]);
+
+  if (!scales || !paths || !axisTicks) {
+    return <div>Invalid data</div>;
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <svg ref={svgRef}></svg>
+    <div className="flex flex-col items-center justify-center relative">
+      <svg width={width} height={height}>
+        {/* Main chart */}
+        <g
+          transform={`translate(${margin.left},${margin.top})`}
+          className="main-chart"
+        >
+          {/* Chart background */}
+          <rect
+            x={0}
+            y={0}
+            width={dimensions.innerWidth}
+            height={dimensions.mainInnerHeight}
+            fill="white"
+          />
+
+          {/* Data visualization layer */}
+          <g className="data-layer">
+            {showArea && (
+              <path
+                d={paths.mainAreaPath || ''}
+                fill={colors.area}
+                fillOpacity={0.2}
+                stroke="none"
+              />
+            )}
+            {showLine && (
+              <path
+                d={paths.mainLinePath || ''}
+                fill="none"
+                stroke={colors.line}
+                strokeWidth={2}
+              />
+            )}
+            {showPoints && (
+              <g>
+                {data.map((d) => (
+                  <circle
+                    key={d.measurementTime.getTime()}
+                    cx={scales.xScale(d.measurementTime.getTime())}
+                    cy={scales.yScale(d.value)}
+                    r={pointRadius}
+                    fill={colors.point}
+                  />
+                ))}
+              </g>
+            )}
+            {/* Interactive overlay for tooltip */}
+            <g>
+              {data.map((d) => (
+                <circle
+                  key={d.measurementTime.getTime()}
+                  cx={scales.xScale(d.measurementTime.getTime())}
+                  cy={scales.yScale(d.value)}
+                  r={pointRadius + 5}
+                  fill="transparent"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const svgRect = e.currentTarget
+                      .closest('svg')
+                      ?.getBoundingClientRect();
+                    if (!svgRect) return;
+
+                    setTooltip({
+                      x: rect.left - svgRect.left,
+                      y: rect.top - svgRect.top,
+                      data: d,
+                    });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+              ))}
+            </g>
+          </g>
+
+          {/* Axes layer - rendered last to be on top */}
+          <g className="axes-layer">
+            {/* X Axis */}
+            <g
+              transform={`translate(0,${dimensions.mainInnerHeight})`}
+              className="x-axis"
+            >
+              <rect
+                x={-margin.left}
+                y={0}
+                width={width}
+                height={margin.bottom}
+                fill="white"
+              />
+              <line
+                x1={0}
+                x2={dimensions.innerWidth}
+                y1={0}
+                y2={0}
+                stroke="var(--gray-400)"
+              />
+              {axisTicks.xTicks.map((tick) => (
+                <g key={tick.value} transform={`translate(${tick.x},0)`}>
+                  <line y1={0} y2={6} stroke="var(--gray-300)" />
+                  <text
+                    y={20}
+                    textAnchor="middle"
+                    fill="var(--gray-600)"
+                    className="text-xs"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
+              <text
+                x={dimensions.innerWidth}
+                y={dimensions.mainInnerHeight}
+                textAnchor="end"
+                fill="var(--gray-600)"
+                className="text-xs"
+              >
+                {xAxisTitle}
+              </text>
+            </g>
+            {/* Y Axis */}
+            <g className="y-axis">
+              <rect
+                x={-margin.left}
+                y={-margin.top}
+                width={margin.left}
+                height={dimensions.mainInnerHeight + margin.top + margin.bottom}
+                fill="white"
+              />
+              <line
+                x1={0}
+                x2={0}
+                y1={0}
+                y2={dimensions.mainInnerHeight}
+                stroke="var(--gray-400)"
+              />
+              {axisTicks.yTicks.map((tick) => (
+                <g key={tick.value} transform={`translate(0,${tick.y})`}>
+                  <line x1={-6} x2={0} stroke="var(--gray-300)" />
+                  <text
+                    x={-12}
+                    y={4}
+                    textAnchor="end"
+                    fill="var(--gray-600)"
+                    className="text-xs"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
+              <text
+                transform="rotate(-90)"
+                x={-dimensions.mainInnerHeight}
+                y={-30}
+                textAnchor="start"
+                fill="var(--gray-600)"
+                className="text-xs"
+              >
+                {yAxisTitle}
+              </text>
+            </g>
+          </g>
+        </g>
+
+        {/* Overview chart */}
+        <g
+          transform={`translate(${margin.left},${dimensions.mainHeight + dimensions.spacing})`}
+          className="overview-chart"
+        >
+          {showAreaOverview && (
+            <path
+              d={paths.overviewAreaPath || ''}
+              fill={colors.area}
+              fillOpacity={0.2}
+              stroke="none"
+            />
+          )}
+          {showLineOverview && (
+            <path
+              d={paths.overviewLinePath || ''}
+              fill="none"
+              stroke={colors.line}
+              strokeWidth={1}
+            />
+          )}
+          {/* Overview chart x-axis */}
+          <g
+            transform={`translate(0,${dimensions.overviewInnerHeight})`}
+            className="overview-x-axis"
+          >
+            <line
+              x1={0}
+              x2={dimensions.innerWidth}
+              y1={0}
+              y2={0}
+              stroke="var(--gray-400)"
+            />
+            {scales.overviewXScale.ticks(5).map((tick) => (
+              <g
+                key={tick}
+                transform={`translate(${scales.overviewXScale(tick)},0)`}
+              >
+                <line y1={0} y2={6} stroke="var(--gray-300)" />
+                <text
+                  y={20}
+                  textAnchor="middle"
+                  fill="var(--gray-600)"
+                  className="text-xs"
+                >
+                  {xFormatterOverview(tick)}
+                </text>
+              </g>
+            ))}
+            <text
+              x={dimensions.innerWidth / 2}
+              y={40}
+              textAnchor="middle"
+              fill="var(--gray-600)"
+              className="text-xs"
+            >
+              Overview
+            </text>
+          </g>
+          {/* Brush container */}
+
+          <g
+            ref={overviewRef}
+            className="brush"
+            style={
+              {
+                '--brush-selection-fill': 'var(--gray-200)',
+                '--brush-selection-stroke': 'var(--gray-400)',
+                '--brush-handle-fill': 'var(--gray-50)',
+                '--brush-handle-stroke': 'var(--gray-500)',
+              } as React.CSSProperties
+            }
+          />
+        </g>
+      </svg>
     </div>
   );
 };
