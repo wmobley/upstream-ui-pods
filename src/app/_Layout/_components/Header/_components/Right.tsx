@@ -1,5 +1,5 @@
 import { useHistory } from 'react-router-dom';
-import useAccessToken from '../../../../../hooks/auth/useAccessToken';
+import { useAuth } from '../../../../../contexts/AuthContext';
 
 interface RightProps {
   toggleMenu: () => void;
@@ -7,16 +7,16 @@ interface RightProps {
 
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
   const history = useHistory();
-  const { accessToken } = useAccessToken();
+  const { isAuthenticated, logout } = useAuth();
 
   return (
     <div className="flex items-center gap-4">
-      {accessToken ? (
+      {isAuthenticated ? (
         <div className="sm:flex sm:gap-4">
           <div className="flex items-center gap-4 text-primary-600">
             <button
               onClick={() => {
-                localStorage.removeItem('access_token');
+                logout();
                 window.location.href = '/login';
               }}
               className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
