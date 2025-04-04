@@ -37,7 +37,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // You might want to add an API call here to validate the token
           // For now, we'll just check if it exists
           setIsAuthenticated(true);
-        } catch (err) {
+        } catch (error) {
+          console.error('Error checking authentication:', error);
           localStorage.removeItem('access_token');
           setIsAuthenticated(false);
         }
@@ -60,7 +61,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('access_token', response.access_token);
       setIsAuthenticated(true);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to login'));
+      let errorMessage = 'Invalid username or password';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        // Try to extract error message from API response
+        interface ApiError {
+          body?: {
+            detail?: string;
+            message?: string;
+          };
+          status?: number;
+        }
+        const apiError = err as ApiError;
+
+        if (apiError.status === 401) {
+          errorMessage = 'Invalid username or password';
+        } else if (apiError.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (apiError.body && typeof apiError.body === 'object') {
+          errorMessage =
+            apiError.body.detail || apiError.body.message || errorMessage;
+        }
+      }
+      setError(new Error(errorMessage));
       console.error('Error during login:', err);
       throw err;
     } finally {

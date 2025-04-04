@@ -5,25 +5,26 @@ import Campaign from '../Campaign';
 import ProtectedRoute from '../common/ProtectedRoute';
 import Login from '../Login/Login';
 import { useAuth } from '../../contexts/AuthContext';
-import QueryWrapper from '../common/QueryWrapper';
+import { Loading } from '../common/Loading';
 
 const Router: React.FC = () => {
-  const { isAuthenticated, isLoading, error } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
-    <QueryWrapper isLoading={isLoading} error={error}>
-      <Switch>
-        <Route exact path="/">
-          <Home />
-        </Route>
-        <Route exact path="/login">
-          <Login />
-        </Route>
-        <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
-          <Campaign />
-        </ProtectedRoute>
-      </Switch>
-    </QueryWrapper>
+    <Switch>
+      <Route exact path="/login">
+        <Login />
+      </Route>
+      <ProtectedRoute isAuthenticated={isAuthenticated} path="/">
+        <Home />
+      </ProtectedRoute>
+      <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
+        <Campaign />
+      </ProtectedRoute>
+    </Switch>
   );
 };
 

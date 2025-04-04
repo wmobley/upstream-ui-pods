@@ -4,7 +4,7 @@ import Loading from '../Loading/Loading';
 interface QueryWrapperProps {
   isLoading: boolean;
   loadingMessage?: string;
-  error: any;
+  error: Error | null;
   children: React.ReactNode;
 }
 
@@ -14,7 +14,7 @@ const QueryWrapper: React.FC<QueryWrapperProps> = ({
   error,
   children,
 }) => {
-  if (isLoading) {
+  if (isLoading && !error) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
         <Loading loadingMessage={loadingMessage} />
