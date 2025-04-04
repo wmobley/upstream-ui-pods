@@ -6,6 +6,7 @@ import { Route, Redirect, RouteComponentProps } from 'react-router-dom';
 type ProtectedRouteProps = {
   isAuthenticated: boolean;
   path: string;
+  exact?: boolean;
 };
 
 const ProtectedRoute: React.FC<
@@ -14,6 +15,7 @@ const ProtectedRoute: React.FC<
   return (
     <Route
       {...rest}
+      exact={rest.exact}
       render={({ location }: RouteComponentProps) =>
         isAuthenticated ? (
           children
