@@ -18,7 +18,7 @@ const Router: React.FC = () => {
       <Route exact path="/login">
         <Login />
       </Route>
-      <ProtectedRoute isAuthenticated={isAuthenticated} path="/">
+      <ProtectedRoute isAuthenticated={isAuthenticated} exact path="/">
         <Home />
       </ProtectedRoute>
       <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
