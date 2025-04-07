@@ -6,8 +6,8 @@ import CampaignFilterToolbar from '../CampaignFilterToolbar';
 import { LatLngBounds } from 'leaflet';
 
 const CampaignList: React.FC = () => {
-  const [startDate, setStartDate] = useState<Date>(new Date('2020-01-01'));
-  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [sensorVariables, setSensorVariables] = useState<string[]>([]);
 
