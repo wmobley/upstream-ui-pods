@@ -1,5 +1,5 @@
 import { GetStationResponse } from '@upstream/upstream-api';
-import GeometryMap from '../../../common/GeometryMap/GeometryMap';
+import GeometryMap from '../../common/GeometryMap/GeometryMap';
 const StatsSection = ({ station }: { station: GetStationResponse }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">

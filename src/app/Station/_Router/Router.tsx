@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Switch, RouteComponentProps } from 'react-router-dom';
-import StationDashboard from '../_components/StationDashboard';
+import StationDashboard from '../../StationDashboard/StationDashboard';
 import RouteMapViz from '../../Sensor/viz/RouteMapViz';
 import HeatMapViz from '../../Sensor/viz/HeatMapViz';
 import ScatterTimeViz from '../../Sensor/viz/ScatterTimeViz';

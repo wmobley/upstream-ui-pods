@@ -1,13 +1,14 @@
-import { useDetail } from '../../../../hooks/station/useDetail';
-import QueryWrapper from '../../../common/QueryWrapper';
+import { useDetail } from '../../hooks/station/useDetail';
+import QueryWrapper from '../common/QueryWrapper';
 import React, { useMemo, useState } from 'react';
-import StatsSection from './StatsSection';
+import StatsSection from './_components/StatsSection';
 import FilterToolbar, {
   CustomFilterConfig,
-} from '../../../common/FilterToolbar/FilterToolbar';
-import { useList } from '../../../../hooks/sensor/useList';
-import FilteringVariablesButton from '../../../Home/_components/CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
+} from '../common/FilterToolbar/FilterToolbar';
+import { useList } from '../../hooks/sensor/useList';
+import FilteringVariablesButton from '../Home/_components/CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
 import { ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest } from '@upstream/upstream-api';
+import PaginatedList from '../common/Pagination/example/PaginatedList';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -94,9 +95,17 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
               Explore sensors
             </h2>
-
             <FilterToolbar title="Filters" filters={filterConfigs} />
-            {sensors && JSON.stringify(sensors)}
+            {sensors && (
+              <PaginatedList
+                data={sensors}
+                onPageChange={() => {}}
+                renderItem={() => {
+                  return <div>Sensor</div>;
+                }}
+                className="space-y-4"
+              />
+            )}
           </section>
         </QueryWrapper>
       </div>
