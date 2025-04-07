@@ -3,7 +3,11 @@ import CampaignCard from '../CampaignCard/CampaignCard';
 import QueryWrapper from '../../../common/QueryWrapper';
 import { useList } from '../../../../hooks/campaign/useList';
 import { LatLngBounds } from 'leaflet';
-import FilterToolbar from '../../../common/FilterToolbar/FilterToolbar';
+import FilterToolbar, {
+  DateFilterConfig,
+  MapFilterConfig,
+  CustomFilterConfig,
+} from '../../../common/FilterToolbar/FilterToolbar';
 import FilteringVariablesButton from '../CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
 
 const CampaignList: React.FC = () => {
@@ -37,6 +41,40 @@ const CampaignList: React.FC = () => {
     filters,
   });
 
+  // Define filter configurations with proper typing
+  const filterConfigs = [
+    {
+      type: 'date' as const,
+      id: 'start-date',
+      label: 'Start Date',
+      value: startDate,
+      onChange: setStartDate,
+    } as DateFilterConfig,
+    {
+      type: 'date' as const,
+      id: 'end-date',
+      label: 'End Date',
+      value: endDate,
+      onChange: setEndDate,
+    } as DateFilterConfig,
+    {
+      type: 'map' as const,
+      id: 'map-filter',
+      onChange: setBounds,
+    } as MapFilterConfig,
+    {
+      type: 'custom' as const,
+      id: 'variable-filter',
+      component: (
+        <FilteringVariablesButton
+          sensorVariables={sensorVariables}
+          onSubmit={setSensorVariables}
+          onClear={() => setSensorVariables([])}
+        />
+      ),
+    } as CustomFilterConfig,
+  ];
+
   return (
     <div
       className="px-4 md:px-8 lg:px-12 lg:my-12 lg:py-12 lg:h-5/6 my-12 py-12 bg-secondary-100"
@@ -47,23 +85,7 @@ const CampaignList: React.FC = () => {
           Explore campaigns
         </h2>
 
-        <FilterToolbar
-          title="Campaign Filters"
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-          onBoundsChange={setBounds}
-          showDateFilters={true}
-          showMapFilter={true}
-          showVariableFilter={true}
-        >
-          <FilteringVariablesButton
-            sensorVariables={sensorVariables}
-            onSubmit={setSensorVariables}
-            onClear={() => setSensorVariables([])}
-          />
-        </FilterToolbar>
+        <FilterToolbar title="Campaign Filters" filters={filterConfigs} />
 
         <QueryWrapper isLoading={isLoading} error={error}>
           {campaigns && (

@@ -1,10 +1,12 @@
 import { useDetail } from '../../../../hooks/station/useDetail';
 import QueryWrapper from '../../../common/QueryWrapper';
 import React, { useMemo, useState } from 'react';
-import { SensorItem } from '@upstream/upstream-api';
 import StatsSection from './StatsSection';
-import FilterToolbar from '../../../common/FilterToolbar/FilterToolbar';
+import FilterToolbar, {
+  CustomFilterConfig,
+} from '../../../common/FilterToolbar/FilterToolbar';
 import { useList } from '../../../../hooks/sensor/useList';
+import FilteringVariablesButton from '../../../Home/_components/CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -16,12 +18,6 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   stationId,
 }) => {
   const { station, isLoading, error } = useDetail(campaignId, stationId);
-
-  const {
-    data: sensors,
-    isLoading: sensorsLoading,
-    error: sensorsError,
-  } = useList(campaignId, stationId);
 
   /** Filtering by pre existing variables */
   const [variableNames, setVariableNames] = useState<string[]>([]);
@@ -37,6 +33,46 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
     undefined,
   );
 
+  const filters = useMemo(
+    () => ({
+      campaignId: parseInt(campaignId),
+      stationId: parseInt(stationId),
+      variableNames: variableNames.length > 0 ? variableNames : undefined,
+      variableUnit: variableUnit ? variableUnit : undefined,
+      variableDescription: variableDescription
+        ? variableDescription
+        : undefined,
+      variableAliases: variableAliases ? variableAliases : undefined,
+    }),
+    [
+      campaignId,
+      stationId,
+      variableNames,
+      variableUnit,
+      variableDescription,
+      variableAliases,
+    ],
+  );
+
+  const {
+    data: sensors,
+    isLoading: sensorsLoading,
+    error: sensorsError,
+  } = useList({ filters });
+
+  const filterConfigs = [
+    {
+      type: 'custom' as const,
+      id: 'variable-filter',
+      component: (
+        <FilteringVariablesButton
+          sensorVariables={variableNames}
+          onSubmit={setVariableNames}
+          onClear={() => setVariableNames([])}
+        />
+      ),
+    } as CustomFilterConfig,
+  ];
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
@@ -57,13 +93,8 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
               Explore sensors
             </h2>
 
-            <FilterToolbar title="Filters">
-              {/* <FilteringVariablesButton
-              sensorVariables={sensorVariables}
-              onSubmit={setSensorVariables}
-              onClear={() => setSensorVariables([])}
-            /> */}
-            </FilterToolbar>
+            <FilterToolbar title="Filters" filters={filterConfigs} />
+            {sensors && JSON.stringify(sensors)}
           </section>
         </QueryWrapper>
       </div>

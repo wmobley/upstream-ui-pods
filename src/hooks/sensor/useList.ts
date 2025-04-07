@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
+  ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest,
   ListSensorsResponsePagination,
   SensorsApi,
 } from '@upstream/upstream-api';
@@ -11,10 +12,11 @@ interface UseDetailReturn {
   error: Error | null;
 }
 
-export const useList = (
-  campaignId: string,
-  stationId: string,
-): UseDetailReturn => {
+interface UseListProps {
+  filters: ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest;
+}
+
+export const useList = ({ filters }: UseListProps): UseDetailReturn => {
   const config = useConfiguration();
   const sensorsApi = new SensorsApi(config);
   const [data, setData] = useState<ListSensorsResponsePagination | null>(null);
@@ -26,10 +28,7 @@ export const useList = (
       try {
         const response =
           await sensorsApi.listSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet(
-            {
-              campaignId: parseInt(campaignId),
-              stationId: parseInt(stationId),
-            },
+            filters,
           );
         setData(response);
       } catch (err) {
