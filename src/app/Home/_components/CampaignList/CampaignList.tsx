@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react';
 import CampaignCard from '../CampaignCard/CampaignCard';
 import QueryWrapper from '../../../common/QueryWrapper';
 import { useList } from '../../../../hooks/campaign/useList';
-import CampaignFilterToolbar from '../CampaignFilterToolbar';
 import { LatLngBounds } from 'leaflet';
+import FilterToolbar from '../../../common/FilterToolbar/FilterToolbar';
+import FilteringVariablesButton from '../CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
 
 const CampaignList: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -46,15 +47,20 @@ const CampaignList: React.FC = () => {
           Explore campaigns
         </h2>
 
-        <CampaignFilterToolbar
+        <FilterToolbar
+          title="Campaign Filters"
           startDate={startDate}
           endDate={endDate}
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
           onBoundsChange={setBounds}
-          sensorVariables={sensorVariables}
-          setSensorVariables={setSensorVariables}
-        />
+        >
+          <FilteringVariablesButton
+            sensorVariables={sensorVariables}
+            onSubmit={setSensorVariables}
+            onClear={() => setSensorVariables([])}
+          />
+        </FilterToolbar>
 
         <QueryWrapper isLoading={isLoading} error={error}>
           {campaigns && (

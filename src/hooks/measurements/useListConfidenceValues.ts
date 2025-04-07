@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { AggregatedMeasurement, MeasurementsApi } from '@upstream/upstream-api';
+import {
+  AggregatedMeasurement,
+  GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest,
+  MeasurementsApi,
+} from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 
 interface UseDetailReturn {
@@ -22,13 +26,17 @@ export const useListConfidenceValues = (
   useEffect(() => {
     const fetchSensors = async () => {
       try {
+        const requestParams: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest =
+          {
+            campaignId: parseInt(campaignId),
+            stationId: parseInt(stationId),
+            sensorId: parseInt(sensorId),
+            interval: 'minute',
+            intervalValue: 10,
+          };
         const response =
           await measurementsApi.getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet(
-            {
-              campaignId: parseInt(campaignId),
-              stationId: parseInt(stationId),
-              sensorId: parseInt(sensorId),
-            },
+            requestParams,
           );
         setData(response);
       } catch (err) {
