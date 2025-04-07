@@ -54,7 +54,6 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
 
   const handleCancel = () => {
     setLocalSelectedVariables(selectedVariables);
-    onClear();
     onClose();
   };
 
@@ -157,7 +156,6 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={localSelectedVariables.length === 0}
               className="rounded-md bg-primary-500 px-4 py-2 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Apply
