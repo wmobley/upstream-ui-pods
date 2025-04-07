@@ -1,10 +1,12 @@
 apis/AuthApi.ts
 apis/CampaignsApi.ts
 apis/MeasurementsApi.ts
+apis/ProjectsApi.ts
 apis/SensorVariablesApi.ts
 apis/SensorsApi.ts
 apis/StationsApi.ts
 apis/UploadfileApi.ts
+apis/UploadfileCsvApi.ts
 apis/index.ts
 index.ts
 models/AggregatedMeasurement.ts
@@ -33,6 +35,11 @@ models/MultiPoint.ts
 models/MultiPolygon.ts
 models/Point.ts
 models/Polygon.ts
+models/PyTASAllocation.ts
+models/PyTASPi.ts
+models/PyTASProject.ts
+models/PyTASUser.ts
+models/ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValue.ts
 models/SensorItem.ts
 models/SensorSummaryForStations.ts
 models/StationCreate.ts

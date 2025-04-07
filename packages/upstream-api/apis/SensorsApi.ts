@@ -39,6 +39,11 @@ export interface ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetR
     stationId: number;
     page?: number;
     limit?: number;
+    variableName?: string | null;
+    units?: string | null;
+    alias?: string | null;
+    descriptionContains?: string | null;
+    postprocess?: boolean | null;
 }
 
 /**
@@ -124,6 +129,26 @@ export class SensorsApi extends runtime.BaseAPI {
 
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['variableName'] != null) {
+            queryParameters['variable_name'] = requestParameters['variableName'];
+        }
+
+        if (requestParameters['units'] != null) {
+            queryParameters['units'] = requestParameters['units'];
+        }
+
+        if (requestParameters['alias'] != null) {
+            queryParameters['alias'] = requestParameters['alias'];
+        }
+
+        if (requestParameters['descriptionContains'] != null) {
+            queryParameters['description_contains'] = requestParameters['descriptionContains'];
+        }
+
+        if (requestParameters['postprocess'] != null) {
+            queryParameters['postprocess'] = requestParameters['postprocess'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
