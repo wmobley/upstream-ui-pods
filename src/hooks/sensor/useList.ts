@@ -40,7 +40,7 @@ export const useList = ({ filters }: UseListProps): UseDetailReturn => {
       }
     };
     fetchSensors();
-  }, []);
+  }, [filters]);
 
   return { data, isLoading, error };
 };

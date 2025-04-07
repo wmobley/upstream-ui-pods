@@ -7,6 +7,7 @@ import FilterToolbar, {
 } from '../../../common/FilterToolbar/FilterToolbar';
 import { useList } from '../../../../hooks/sensor/useList';
 import FilteringVariablesButton from '../../../Home/_components/CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
+import { ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest } from '@upstream/upstream-api';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -33,26 +34,27 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
     undefined,
   );
 
-  const filters = useMemo(
-    () => ({
-      campaignId: parseInt(campaignId),
-      stationId: parseInt(stationId),
-      variableNames: variableNames.length > 0 ? variableNames : undefined,
-      variableUnit: variableUnit ? variableUnit : undefined,
-      variableDescription: variableDescription
-        ? variableDescription
-        : undefined,
-      variableAliases: variableAliases ? variableAliases : undefined,
-    }),
-    [
-      campaignId,
-      stationId,
-      variableNames,
-      variableUnit,
-      variableDescription,
-      variableAliases,
-    ],
-  );
+  const filters: ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest =
+    useMemo(
+      () => ({
+        campaignId: parseInt(campaignId),
+        stationId: parseInt(stationId),
+        variableName: variableNames.length > 0 ? variableNames[0] : undefined,
+        units: variableUnit ? variableUnit : undefined,
+        descriptionContains: variableDescription
+          ? variableDescription
+          : undefined,
+        alias: variableAliases ? variableAliases : undefined,
+      }),
+      [
+        campaignId,
+        stationId,
+        variableNames,
+        variableUnit,
+        variableDescription,
+        variableAliases,
+      ],
+    );
 
   const {
     data: sensors,
