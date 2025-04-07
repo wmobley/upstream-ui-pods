@@ -38,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       <div
         className="fixed inset-0 bg-black bg-opacity-50"
         onClick={onClose}
@@ -46,7 +46,7 @@ const Modal: React.FC<ModalProps> = ({
       />
       <div
         ref={modalRef}
-        className={`relative z-50 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border-2 border-black bg-white p-6 shadow-lg ${className}`}
+        className={`relative z-[10000] max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border-2 border-black bg-white p-6 shadow-lg ${className}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
