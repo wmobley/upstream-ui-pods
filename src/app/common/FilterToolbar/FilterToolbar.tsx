@@ -22,9 +22,9 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
   onStartDateChange,
   onEndDateChange,
   onBoundsChange,
-  showDateFilters = true,
-  showMapFilter = true,
-  showVariableFilter = true,
+  showDateFilters = false,
+  showMapFilter = false,
+  showVariableFilter = false,
   children,
 }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);

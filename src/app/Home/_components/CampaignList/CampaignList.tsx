@@ -54,6 +54,9 @@ const CampaignList: React.FC = () => {
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
           onBoundsChange={setBounds}
+          showDateFilters={true}
+          showMapFilter={true}
+          showVariableFilter={true}
         >
           <FilteringVariablesButton
             sensorVariables={sensorVariables}

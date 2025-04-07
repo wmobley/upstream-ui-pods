@@ -1,9 +1,10 @@
 import { useDetail } from '../../../../hooks/station/useDetail';
 import QueryWrapper from '../../../common/QueryWrapper';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SensorItem } from '@upstream/upstream-api';
 import StatsSection from './StatsSection';
-import SensorDetails from '../../../Sensor/SensorDetails/SensorDetails';
+import FilterToolbar from '../../../common/FilterToolbar/FilterToolbar';
+import { useList } from '../../../../hooks/sensor/useList';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -16,7 +17,25 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
 }) => {
   const { station, isLoading, error } = useDetail(campaignId, stationId);
 
-  const [selectedSensor, setSelectedSensor] = useState<SensorItem | null>(null);
+  const {
+    data: sensors,
+    isLoading: sensorsLoading,
+    error: sensorsError,
+  } = useList(campaignId, stationId);
+
+  /** Filtering by pre existing variables */
+  const [variableNames, setVariableNames] = useState<string[]>([]);
+
+  /** Free text filter */
+  const [variableUnit, setVariableUnit] = useState<string | undefined>(
+    undefined,
+  );
+  const [variableDescription, setVariableDescription] = useState<
+    string | undefined
+  >(undefined);
+  const [variableAliases, setVariableAliases] = useState<string | undefined>(
+    undefined,
+  );
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
@@ -32,41 +51,21 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
           {station && <StatsSection station={station} />}
         </section>
 
-        <div className="flex gap-8">
-          {/* Left Sidebar */}
-          <div className="w-1/4 min-w-[250px]">
-            <section className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Sensors</h2>
-              <div className="space-y-2">
-                {station?.sensors?.map((sensor) => (
-                  <button
-                    key={sensor.id}
-                    onClick={() => setSelectedSensor(sensor)}
-                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                      selectedSensor?.id === sensor.id
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'hover:bg-gray-50 text-gray-600'
-                    }`}
-                  >
-                    {sensor.variablename}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
+        <QueryWrapper isLoading={sensorsLoading} error={sensorsError}>
+          <section className="flex flex-col gap-10">
+            <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+              Explore sensors
+            </h2>
 
-          {/* Right Content Area */}
-          <div className="flex-1">
-            {selectedSensor && (
-              <SensorDetails
-                key={selectedSensor.id}
-                campaignId={campaignId}
-                stationId={stationId}
-                sensorId={selectedSensor.id.toString()}
-              />
-            )}
-          </div>
-        </div>
+            <FilterToolbar title="Filters">
+              {/* <FilteringVariablesButton
+              sensorVariables={sensorVariables}
+              onSubmit={setSensorVariables}
+              onClear={() => setSensorVariables([])}
+            /> */}
+            </FilterToolbar>
+          </section>
+        </QueryWrapper>
       </div>
     </QueryWrapper>
   );
