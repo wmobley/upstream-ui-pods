@@ -47,6 +47,11 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
     });
   };
 
+  const handleClear = () => {
+    setLocalSelectedVariables([]);
+    onClear();
+  };
+
   const handleSubmit = () => {
     onSubmit(localSelectedVariables);
     onClose();
@@ -148,6 +153,12 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
             {localSelectedVariables.length} variables selected
           </span>
           <div className="flex gap-2">
+            <button
+              onClick={handleClear}
+              className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-100"
+            >
+              Clear
+            </button>
             <button
               onClick={handleCancel}
               className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-100"
