@@ -27,7 +27,7 @@ function PaginatedList<T>({
   return (
     <div className={className}>
       {/* Render your list of items */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {data.items.map((item, index) => (
           <div key={index}>{renderItem(item)}</div>
         ))}

@@ -39,7 +39,10 @@ const Pagination: React.FC<PaginationProps> = ({
       pages.push(
         <button
           key={i}
-          onClick={() => onPageChange(i)}
+          onClick={() => {
+            console.log(i);
+            onPageChange(i);
+          }}
           className={`px-3 py-1 rounded-md ${
             currentPage === i
               ? 'bg-primary-500 text-white'

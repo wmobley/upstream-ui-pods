@@ -9,6 +9,7 @@ import { useList } from '../../hooks/sensor/useList';
 import FilteringVariablesButton from '../Home/_components/CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
 import { ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest } from '@upstream/upstream-api';
 import PaginatedList from '../common/Pagination/example/PaginatedList';
+import SensorCard from './_components/SensorCard';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -34,6 +35,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const [variableAliases, setVariableAliases] = useState<string | undefined>(
     undefined,
   );
+  const [page, setPage] = useState<number>(1);
 
   const filters: ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest =
     useMemo(
@@ -46,6 +48,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
           ? variableDescription
           : undefined,
         alias: variableAliases ? variableAliases : undefined,
+        page: page,
       }),
       [
         campaignId,
@@ -54,6 +57,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
         variableUnit,
         variableDescription,
         variableAliases,
+        page,
       ],
     );
 
@@ -99,11 +103,16 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             {sensors && (
               <PaginatedList
                 data={sensors}
-                onPageChange={() => {}}
-                renderItem={() => {
-                  return <div>Sensor</div>;
+                onPageChange={setPage}
+                renderItem={(sensor) => {
+                  return (
+                    <SensorCard
+                      sensor={sensor}
+                      campaignId={campaignId}
+                      stationId={stationId}
+                    />
+                  );
                 }}
-                className="space-y-4"
               />
             )}
           </section>
