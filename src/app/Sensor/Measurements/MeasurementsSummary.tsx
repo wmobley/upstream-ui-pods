@@ -1,67 +1,82 @@
 import { Link } from 'react-router-dom';
-import { useList } from '../../../hooks/measurements/useList';
-import QueryWrapper from '../../common/QueryWrapper';
+import { FaRoute, FaFire, FaChartLine } from 'react-icons/fa';
+import { MdScatterPlot } from 'react-icons/md';
+import { ListMeasurementsResponsePagination } from '@upstream/upstream-api';
+
 interface MeasurementsSummaryProps {
+  data: ListMeasurementsResponsePagination | null;
   campaignId: string;
   stationId: string;
   sensorId: string;
 }
 
 const MeasurementsSummary = ({
+  data,
   campaignId,
   stationId,
   sensorId,
 }: MeasurementsSummaryProps) => {
-  const { data, isLoading, error } = useList(
-    campaignId,
-    stationId,
-    sensorId,
-    5000,
-  );
   return (
-    <QueryWrapper isLoading={isLoading} error={error}>
+    <>
       <h2 className="text-xl font-semibold mb-4">Measurements</h2>
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-600">Total</p>
-        <p className="font-medium">{data?.total}</p>
-        <p className="text-sm text-gray-600">Average</p>
-        <p className="font-medium">{data?.averageValue}</p>
-        <p className="text-sm text-gray-600">Minimum</p>
-        <p className="font-medium">{data?.minValue}</p>
-        <p className="text-sm text-gray-600">Maximum</p>
-        <p className="font-medium">{data?.maxValue}</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg mb-6">
+        <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
+          <p className="text-sm text-gray-600 mb-1">Total</p>
+          <p className="font-medium text-lg">{data?.total}</p>
+        </div>
+        <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
+          <p className="text-sm text-gray-600 mb-1">Average</p>
+          <p className="font-medium text-lg">{data?.averageValue}</p>
+        </div>
+        <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
+          <p className="text-sm text-gray-600 mb-1">Minimum</p>
+          <p className="font-medium text-lg">{data?.minValue}</p>
+        </div>
+        <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
+          <p className="text-sm text-gray-600 mb-1">Maximum</p>
+          <p className="font-medium text-lg">{data?.maxValue}</p>
+        </div>
       </div>
-      <div className="flex flex-col gap-4">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/route-map`}
+          className="block"
         >
-          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
-            View Route Map
+          <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
+            <FaRoute className="text-lg" />
+            <span>View Route Map</span>
           </button>
         </Link>
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/heat-map`}
+          className="block"
         >
-          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
-            View Heat Map
+          <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
+            <FaFire className="text-lg" />
+            <span>View Heat Map</span>
           </button>
         </Link>
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/scatter-time`}
+          className="block"
         >
-          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
-            View Scatter Time
+          <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
+            <MdScatterPlot className="text-lg" />
+            <span>View Scatter Time</span>
           </button>
         </Link>
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/line-confidence`}
+          className="block"
         >
-          <button className="bg-primary-500 text-white px-4 py-2 rounded-md">
-            View Line Confidence
+          <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
+            <FaChartLine className="text-lg" />
+            <span>View Line Confidence</span>
           </button>
         </Link>
       </div>
-    </QueryWrapper>
+    </>
   );
 };
 
