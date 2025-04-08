@@ -10,6 +10,7 @@ import FilteringVariablesButton from '../Home/_components/CampaignFilterToolbar/
 import { ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest } from '@upstream/upstream-api';
 import PaginatedList from '../common/Pagination/example/PaginatedList';
 import SensorCard from './_components/SensorCard';
+import { FilteringButton } from './_components/FilteringModal';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -67,6 +68,22 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
     error: sensorsError,
   } = useList({ filters });
 
+  const handleTextFiltersSubmit = (filters: {
+    unit?: string;
+    description?: string;
+    alias?: string;
+  }) => {
+    setVariableUnit(filters.unit);
+    setVariableDescription(filters.description);
+    setVariableAliases(filters.alias);
+  };
+
+  const handleTextFiltersClear = () => {
+    setVariableUnit(undefined);
+    setVariableDescription(undefined);
+    setVariableAliases(undefined);
+  };
+
   const filterConfigs = [
     {
       type: 'custom' as const,
@@ -79,7 +96,23 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
         />
       ),
     } as CustomFilterConfig,
+    {
+      type: 'custom' as const,
+      id: 'text-filter',
+      component: (
+        <FilteringButton
+          onSubmit={handleTextFiltersSubmit}
+          onClear={handleTextFiltersClear}
+          initialFilters={{
+            unit: variableUnit,
+            description: variableDescription,
+            alias: variableAliases,
+          }}
+        />
+      ),
+    } as CustomFilterConfig,
   ];
+
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       <div className="mx-auto max-w-screen-xl px-4 lg:px-8">

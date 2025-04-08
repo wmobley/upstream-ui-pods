@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 interface CardProps {
   title: string;
   subtitle?: string;
+  subtitleChildren?: React.ReactNode;
   tags?: string[];
   to: string;
   maxTags?: number;
@@ -18,6 +19,7 @@ const Card: React.FC<CardProps> = ({
   to,
   className = '',
   children,
+  subtitleChildren,
 }) => {
   return (
     <Link to={to} className="h-64 sm:h-80 lg:h-96">
@@ -28,6 +30,7 @@ const Card: React.FC<CardProps> = ({
           <div className="flex flex-col h-full">
             <h2 className="mt-4 text-xl font-medium sm:text-2xl">{title}</h2>
             {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+            {subtitleChildren && subtitleChildren}
             {tags && (
               <div className="flex flex-wrap gap-2">
                 {tags.slice(0, maxTags).map((tag) => (

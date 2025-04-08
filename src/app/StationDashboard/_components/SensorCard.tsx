@@ -17,7 +17,12 @@ const SensorCard: React.FC<SensorCardProps> = ({
   return (
     <Card
       title={sensor.variablename ?? ''}
-      subtitle={sensor.alias ?? ''} // Assuming station has a location property
+      subtitleChildren={
+        <div className="flex flex-col gap-2">
+          <span className="text-gray-500">Units: {sensor.units}</span>
+          <span className="text-gray-500">Alias: {sensor.alias}</span>
+        </div>
+      }
       to={
         to ??
         `/campaigns/${campaignId}/stations/${stationId}/sensors/${sensor.id}`
