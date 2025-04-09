@@ -1,16 +1,8 @@
 import { useDetail } from '../../hooks/station/useDetail';
 import QueryWrapper from '../common/QueryWrapper';
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import StatsSection from './_components/StatsSection';
-import FilterToolbar, {
-  CustomFilterConfig,
-} from '../common/FilterToolbar/FilterToolbar';
-import { useList } from '../../hooks/sensor/useList';
-import FilteringVariablesButton from '../Home/_components/CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
-import { ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest } from '@upstream/upstream-api';
-import PaginatedList from '../common/Pagination/example/PaginatedList';
-import SensorCard from './_components/SensorCard';
-import { FilteringButton } from './_components/FilteringModal';
+import { SensorTable } from './_components/SensorTable';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -22,96 +14,6 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   stationId,
 }) => {
   const { station, isLoading, error } = useDetail(campaignId, stationId);
-
-  /** Filtering by pre existing variables */
-  const [variableNames, setVariableNames] = useState<string[]>([]);
-
-  /** Free text filter */
-  const [variableUnit, setVariableUnit] = useState<string | undefined>(
-    undefined,
-  );
-  const [variableDescription, setVariableDescription] = useState<
-    string | undefined
-  >(undefined);
-  const [variableAliases, setVariableAliases] = useState<string | undefined>(
-    undefined,
-  );
-  const [page, setPage] = useState<number>(1);
-
-  const filters: ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest =
-    useMemo(
-      () => ({
-        campaignId: parseInt(campaignId),
-        stationId: parseInt(stationId),
-        variableName: variableNames.length > 0 ? variableNames[0] : undefined,
-        units: variableUnit ? variableUnit : undefined,
-        descriptionContains: variableDescription
-          ? variableDescription
-          : undefined,
-        alias: variableAliases ? variableAliases : undefined,
-        page: page,
-      }),
-      [
-        campaignId,
-        stationId,
-        variableNames,
-        variableUnit,
-        variableDescription,
-        variableAliases,
-        page,
-      ],
-    );
-
-  const {
-    data: sensors,
-    isLoading: sensorsLoading,
-    error: sensorsError,
-  } = useList({ filters });
-
-  const handleTextFiltersSubmit = (filters: {
-    unit?: string;
-    description?: string;
-    alias?: string;
-  }) => {
-    setVariableUnit(filters.unit);
-    setVariableDescription(filters.description);
-    setVariableAliases(filters.alias);
-  };
-
-  const handleTextFiltersClear = () => {
-    setVariableUnit(undefined);
-    setVariableDescription(undefined);
-    setVariableAliases(undefined);
-  };
-
-  const filterConfigs = [
-    {
-      type: 'custom' as const,
-      id: 'variable-filter',
-      component: (
-        <FilteringVariablesButton
-          sensorVariables={variableNames}
-          onSubmit={setVariableNames}
-          onClear={() => setVariableNames([])}
-        />
-      ),
-    } as CustomFilterConfig,
-    {
-      type: 'custom' as const,
-      id: 'text-filter',
-      component: (
-        <FilteringButton
-          onSubmit={handleTextFiltersSubmit}
-          onClear={handleTextFiltersClear}
-          initialFilters={{
-            unit: variableUnit,
-            description: variableDescription,
-            alias: variableAliases,
-          }}
-        />
-      ),
-    } as CustomFilterConfig,
-  ];
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
@@ -127,29 +29,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
           {station && <StatsSection station={station} />}
         </section>
 
-        <QueryWrapper isLoading={sensorsLoading} error={sensorsError}>
-          <section className="flex flex-col gap-10">
-            <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              Explore sensors
-            </h2>
-            <FilterToolbar title="Filters" filters={filterConfigs} />
-            {sensors && (
-              <PaginatedList
-                data={sensors}
-                onPageChange={setPage}
-                renderItem={(sensor) => {
-                  return (
-                    <SensorCard
-                      sensor={sensor}
-                      campaignId={campaignId}
-                      stationId={stationId}
-                    />
-                  );
-                }}
-              />
-            )}
-          </section>
-        </QueryWrapper>
+        <SensorTable campaignId={campaignId} stationId={stationId} />
       </div>
     </QueryWrapper>
   );
