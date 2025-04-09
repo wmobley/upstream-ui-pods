@@ -1,7 +1,11 @@
 import { useState } from 'react';
-import { ListSensorsResponsePagination } from '@upstream/upstream-api';
+import {
+  ListSensorsResponsePagination,
+  SensorItem,
+} from '@upstream/upstream-api';
 import { PageButtons } from './PageButtons';
 import { ItemsPerPage } from './ItemsPerPage';
+import { Link } from 'react-router-dom';
 interface DataTableProps<
   T extends Record<string, string | number | boolean | null>,
 > {
@@ -12,7 +16,28 @@ interface DataTableProps<
   setCurrentPage: (page: number) => void;
   itemsPerPage: number;
   setItemsPerPage: (page: number) => void;
+  getRowLink?: (item: SensorItem) => string;
 }
+
+const DataCell = ({
+  item,
+  column,
+  getRowLink,
+}: {
+  item: SensorItem;
+  column: string;
+  getRowLink?: (item: SensorItem) => string;
+}) => {
+  return (
+    <td className="px-6 py-4 whitespace-nowrap">
+      {getRowLink ? (
+        <Link to={getRowLink(item)}>{item[column]}</Link>
+      ) : (
+        item[column]
+      )}
+    </td>
+  );
+};
 
 const DataTable = <T extends Record<string, string | number | boolean | null>>({
   data,
@@ -22,6 +47,7 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
   setCurrentPage,
   itemsPerPage,
   setItemsPerPage,
+  getRowLink,
 }: DataTableProps<T>) => {
   const totalPages = data.pages;
   const paginatedData = data.items;
@@ -65,12 +91,12 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
               paginatedData.map((item, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   {columns.map((column) => (
-                    <td
+                    <DataCell
                       key={column.key}
-                      className="px-6 py-4 whitespace-nowrap"
-                    >
-                      {item[column.key]}
-                    </td>
+                      item={item}
+                      column={column.key}
+                      getRowLink={getRowLink}
+                    />
                   ))}
                 </tr>
               ))

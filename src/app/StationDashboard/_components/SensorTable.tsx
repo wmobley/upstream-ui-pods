@@ -129,6 +129,9 @@ export const SensorTable: React.FC<SensorTableProps> = ({
             setCurrentPage={setPage}
             itemsPerPage={10}
             setItemsPerPage={(page) => console.log(page)}
+            getRowLink={(item) =>
+              `/campaigns/${campaignId}/stations/${stationId}/sensors/${item.id}`
+            }
           />
         )}
       </QueryWrapper>
