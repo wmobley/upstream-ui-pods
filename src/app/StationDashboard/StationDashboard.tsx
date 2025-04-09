@@ -11,6 +11,7 @@ import { ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest }
 import PaginatedList from '../common/Pagination/example/PaginatedList';
 import SensorCard from './_components/SensorCard';
 import { FilteringButton } from './_components/FilteringModal';
+import DataTable from '../common/DataTable';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -134,18 +135,19 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             </h2>
             <FilterToolbar title="Filters" filters={filterConfigs} />
             {sensors && (
-              <PaginatedList
+              <DataTable
                 data={sensors}
-                onPageChange={setPage}
-                renderItem={(sensor) => {
-                  return (
-                    <SensorCard
-                      sensor={sensor}
-                      campaignId={campaignId}
-                      stationId={stationId}
-                    />
-                  );
-                }}
+                columns={[
+                  { key: 'variablename', label: 'Variable Name' },
+                  { key: 'units', label: 'Units' },
+                  { key: 'alias', label: 'Alias' },
+                  { key: 'postprocess', label: 'Postprocess' },
+                  { key: 'postprocessscript', label: 'Postprocess Script' },
+                ]}
+                currentPage={page}
+                setCurrentPage={setPage}
+                itemsPerPage={10}
+                setItemsPerPage={(page) => console.log(page)}
               />
             )}
           </section>
