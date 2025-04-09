@@ -25,6 +25,7 @@ export const useList = ({ filters }: UseListProps): UseDetailReturn => {
 
   useEffect(() => {
     const fetchSensors = async () => {
+      setLoading(true);
       try {
         const response =
           await sensorsApi.listSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGet(
