@@ -1,9 +1,6 @@
-import { ListSensorsResponsePagination } from '@upstream/upstream-api';
-
 interface PageButtonsProps {
   currentPage: number;
   setCurrentPage: (page: number) => void;
-  itemsPerPage: number;
   totalPages: number;
   totalEntries: number;
   pageSize: number;
@@ -12,7 +9,6 @@ interface PageButtonsProps {
 export const PageButtons = ({
   currentPage,
   setCurrentPage,
-  itemsPerPage,
   totalPages,
   totalEntries,
   pageSize,

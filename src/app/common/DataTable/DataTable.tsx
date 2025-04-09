@@ -31,8 +31,10 @@ const DataCell = ({
   return (
     <td className="px-6 py-4 whitespace-nowrap">
       {getRowLink ? (
+        // @ts-ignore
         <Link to={getRowLink(item)}>{item[column]}</Link>
       ) : (
+        // @ts-ignore
         item[column]
       )}
     </td>
@@ -57,7 +59,6 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
     <div className="w-full">
       {hideItemsPerPage && (
         <ItemsPerPage
-          currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           itemsPerPage={itemsPerPage}
           setItemsPerPage={setItemsPerPage}
@@ -67,7 +68,6 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
       <PageButtons
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
-        itemsPerPage={itemsPerPage}
         totalPages={totalPages}
         totalEntries={data.total}
         pageSize={data.size}

@@ -1,7 +1,6 @@
 interface ItemsPerPageProps {
   itemsPerPage: number;
   setItemsPerPage: (itemsPerPage: number) => void;
-  currentPage: number;
   setCurrentPage: (currentPage: number) => void;
   itemsPerPageOptions: number[];
 }
@@ -9,7 +8,6 @@ interface ItemsPerPageProps {
 export const ItemsPerPage = ({
   itemsPerPage,
   setItemsPerPage,
-  currentPage,
   setCurrentPage,
   itemsPerPageOptions,
 }: ItemsPerPageProps) => {
