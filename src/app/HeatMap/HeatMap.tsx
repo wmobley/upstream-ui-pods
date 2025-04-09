@@ -10,6 +10,7 @@ import Legend from '../common/Legend/Legend';
 import { getColorByValue } from '../common/Intervals';
 import { getReducedPoints } from '../../utils/mapRendering';
 import '../../utils/leaflet';
+import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 
 interface HeatMapProps {
   measurements: MeasurementItem[];
@@ -30,9 +31,9 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
   if (!measurements) return null;
 
   const center: LatLngExpression = [
-    // @ts-expect-error
+    // @ts-expect-error - Geometry coordinates type is not properly defined in the API
     measurements[0].geometry?.coordinates[1],
-    // @ts-expect-error
+    // @ts-expect-error - Geometry coordinates type is not properly defined in the API
     measurements[0].geometry?.coordinates[0],
   ];
 
@@ -44,9 +45,9 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
         {getReducedPoints(measurements).map((m, index) => {
           const value = m.value;
           const position: LatLngExpression = [
-            // @ts-expect-error
+            // @ts-expect-error - Geometry coordinates type is not properly defined in the API
             m.geometry?.coordinates[1],
-            // @ts-expect-error
+            // @ts-expect-error - Geometry coordinates type is not properly defined in the API
             m.geometry?.coordinates[0],
           ];
 
@@ -76,9 +77,10 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
         {selectedPoint && (
           <Marker position={selectedPoint.position as LatLngExpression}>
             <Tooltip direction="bottom" offset={[0, 20]} opacity={1} permanent>
-              Value: {selectedPoint.value.toFixed(2)}
-              <br />
-              Position: {selectedPoint.position.toString()}
+              <SensorTooltip
+                value={selectedPoint.value}
+                className="min-w-[200px]"
+              />
             </Tooltip>
           </Marker>
         )}

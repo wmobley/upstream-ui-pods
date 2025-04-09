@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useList } from '../../hooks/measurements/useList';
 import QueryWrapper from '../common/QueryWrapper';
 import { DataPoint } from '../../utils/dataProcessing';
-
+import { formatNumber } from '../common/NumberFormatter/NumberFortatterUtils';
 interface TimeSeriesGraphProps {
   campaignId: string;
   stationId: string;
@@ -93,7 +93,7 @@ const TimeSeriesGraph = ({
             const dateObj = date instanceof Date ? date : new Date(date);
             return dateObj.toLocaleDateString();
           }}
-          yFormatter={(value: number) => value.toFixed(1)}
+          yFormatter={(value: number) => formatNumber(value)}
           onBrush={(domain) => {
             setSelectedTimeRange(domain);
             console.log(
