@@ -1,5 +1,6 @@
 import { Interval } from '../../common/types';
 import { getColorByPercentile } from '../Intervals';
+import { formatNumber } from '../NumberFormatter/NumberFortatterUtils';
 
 interface LegendProps {
   title: React.ReactNode;
@@ -47,7 +48,8 @@ export default function Legend({
             />
             <span className="text-sm">
               {interval.minPercentile}% - {interval.maxPercentile}% (
-              {interval.minValue.toFixed(2)} - {interval.maxValue.toFixed(2)})
+              {formatNumber(interval.minValue)} -{' '}
+              {formatNumber(interval.maxValue)})
             </span>
           </div>
         ))}

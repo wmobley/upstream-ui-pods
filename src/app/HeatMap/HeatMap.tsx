@@ -2,13 +2,12 @@ import { MapContainer, CircleMarker, Marker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { Interval } from '../../app/common/types';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Tile from '../common/Tile/Tile';
 import CarLine from '../common/CarLine/CarLine';
 import { MeasurementItem } from '@upstream/upstream-api';
 import Legend from '../common/Legend/Legend';
-import { getColorByValue } from '../common/Intervals';
-import { getReducedPoints } from '../../utils/mapRendering';
+import { getColorByValue, getIntervalByValue } from '../common/Intervals';
 import '../../utils/leaflet';
 import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 
@@ -28,7 +27,19 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
     position: LatLngExpression;
   } | null>(null);
 
-  if (!measurements) return null;
+  // Filter measurements based on selected interval
+  const filteredMeasurements = useMemo(() => {
+    if (!measurements) return [];
+    if (!selectedInterval) return measurements;
+
+    return measurements.filter((m) => {
+      if (m.value === null) return false;
+      const interval = getIntervalByValue(m.value, intervals);
+      return interval === selectedInterval;
+    });
+  }, [measurements, selectedInterval, intervals]);
+
+  if (!measurements || measurements.length === 0) return null;
 
   const center: LatLngExpression = [
     // @ts-expect-error - Geometry coordinates type is not properly defined in the API
@@ -41,9 +52,11 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
     <div className="h-screen w-full ">
       <MapContainer center={center} zoom={9} className="h-full w-full">
         <Tile />
-        <CarLine measurements={measurements} />
-        {getReducedPoints(measurements).map((m, index) => {
+        <CarLine measurements={filteredMeasurements} />
+        {filteredMeasurements.map((m, index) => {
           const value = m.value;
+          if (value === null) return null;
+
           const position: LatLngExpression = [
             // @ts-expect-error - Geometry coordinates type is not properly defined in the API
             m.geometry?.coordinates[1],
@@ -85,6 +98,7 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
           </Marker>
         )}
       </MapContainer>
+
       <Legend
         title={title ? title : ''}
         intervals={intervals}
