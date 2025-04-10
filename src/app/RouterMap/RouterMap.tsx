@@ -9,6 +9,7 @@ import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
 import { MeasurementItem } from '@upstream/upstream-api';
 import { getCenter, getReducedPoints } from '../../utils/mapRendering';
+import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 
 interface RouterMapProps {
   measurements: MeasurementItem[];
@@ -16,9 +17,9 @@ interface RouterMapProps {
 
 export default function RouterMap({ measurements }: RouterMapProps) {
   const coordinates = measurements.map((m) => [
-    // @ts-expect-error
+    // @ts-expect-error - Geometry coordinates type is not properly defined in the API
     m.geometry?.coordinates[1],
-    // @ts-expect-error
+    // @ts-expect-error - Geometry coordinates type is not properly defined in the API
     m.geometry?.coordinates[0],
   ]);
 
@@ -37,9 +38,9 @@ export default function RouterMap({ measurements }: RouterMapProps) {
       />
       {getReducedPoints(measurements).map((measurement, index) => {
         const position: LatLngExpression = [
-          // @ts-expect-error
+          // @ts-expect-error - Geometry coordinates type is not properly defined in the API
           measurement.geometry?.coordinates[1],
-          // @ts-expect-error
+          // @ts-expect-error - Geometry coordinates type is not properly defined in the API
           measurement.geometry?.coordinates[0],
         ];
 
@@ -56,13 +57,12 @@ export default function RouterMap({ measurements }: RouterMapProps) {
             }}
           >
             <Tooltip>
-              Point {index + 1}
-              {measurement.value !== undefined && (
-                <>
-                  <br />
-                  Value: {measurement.value.toFixed(2)}
-                </>
-              )}
+              <SensorTooltip
+                value={measurement.value}
+                timestamp={measurement.collectiontime}
+                precision={10}
+                className="min-w-[200px]"
+              />
             </Tooltip>
           </CircleMarker>
         );

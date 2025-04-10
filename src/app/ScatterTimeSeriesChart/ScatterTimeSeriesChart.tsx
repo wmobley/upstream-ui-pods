@@ -8,6 +8,7 @@ import { select } from 'd3-selection';
 import Modal from '../common/Modal/Modal';
 import { DataPoint } from '../../utils/dataProcessing';
 import GeometryMap from '../common/GeometryMap/GeometryMap';
+import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 
 // Types
 interface TooltipData {
@@ -522,8 +523,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         <div className="p-4">
           {tooltip && (
             <div>
-              <p>Timestamp: {tooltip.data.timestamp.toLocaleString()}</p>
-              <p>Value: {yFormatter(tooltip.data.value)}</p>
+              <SensorTooltip
+                value={tooltip.data.value}
+                timestamp={tooltip.data.timestamp}
+                className="min-w-[200px]"
+              />
               {tooltip.data.geometry && (
                 <div className="h-80 w-80">
                   <GeometryMap geoJSON={tooltip.data.geometry} />

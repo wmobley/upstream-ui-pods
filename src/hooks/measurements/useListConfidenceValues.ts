@@ -33,6 +33,7 @@ export const useListConfidenceValues = (
             sensorId: parseInt(sensorId),
             interval: 'minute',
             intervalValue: 10,
+            minValue: 0,
           };
         const response =
           await measurementsApi.getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet(
