@@ -12,9 +12,9 @@ interface StatsWidgetProps {
 const StatsWidget: React.FC<StatsWidgetProps> = () => {
   // Mock data - replace with actual API calls later
   const stats = {
-    totalDistance: '127.5 km',
-    duration: '5 days, 4 hours',
-    avgVOC: '2.3 ppm',
+    totalDistance: '127.5 [unit]',
+    duration: '5 [unit]',
+    avgVOC: '2.3 [unit]',
     hotspots: 8,
   };
 
@@ -24,7 +24,7 @@ const StatsWidget: React.FC<StatsWidgetProps> = () => {
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex items-center gap-3 mb-2">
           <FaRoute className="text-blue-500 text-xl" />
-          <h3 className="text-gray-600 font-medium">Total Distance</h3>
+          <h3 className="text-gray-600 font-medium">Metric Example 1</h3>
         </div>
         <p className="text-2xl font-bold">{stats.totalDistance}</p>
       </div>
@@ -33,7 +33,7 @@ const StatsWidget: React.FC<StatsWidgetProps> = () => {
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex items-center gap-3 mb-2">
           <FaClock className="text-blue-500 text-xl" />
-          <h3 className="text-gray-600 font-medium">Duration</h3>
+          <h3 className="text-gray-600 font-medium">Metric Example 2</h3>
         </div>
         <p className="text-2xl font-bold">{stats.duration}</p>
       </div>
@@ -42,15 +42,7 @@ const StatsWidget: React.FC<StatsWidgetProps> = () => {
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex items-center gap-3 mb-2">
           <FaChartLine className="text-blue-500 text-xl" />
-          <h3 className="text-gray-600 font-medium">
-            Average VOC
-            <span
-              className="ml-2 text-sm text-gray-500 cursor-help"
-              title="Volatile Organic Compounds - measured in parts per million"
-            >
-              ⓘ
-            </span>
-          </h3>
+          <h3 className="text-gray-600 font-medium">Metric Example 3</h3>
         </div>
         <p className="text-2xl font-bold">{stats.avgVOC}</p>
       </div>
@@ -59,7 +51,7 @@ const StatsWidget: React.FC<StatsWidgetProps> = () => {
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex items-center gap-3 mb-2">
           <FaExclamationTriangle className="text-orange-500 text-xl" />
-          <h3 className="text-gray-600 font-medium">Hotspots Detected</h3>
+          <h3 className="text-gray-600 font-medium">Metric Example 4</h3>
         </div>
         <p className="text-2xl font-bold">{stats.hotspots}</p>
       </div>
