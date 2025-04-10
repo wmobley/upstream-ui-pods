@@ -41,8 +41,6 @@ export const Chart = ({
       {data && (
         <LineConfidenceChart
           data={data}
-          width={1600}
-          height={800}
           margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
           colors={{
             line: '#9a6fb0',

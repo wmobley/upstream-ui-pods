@@ -39,8 +39,6 @@ export interface LineConfidenceChartProps {
 
 // Default props
 const defaultProps: Partial<LineConfidenceChartProps> = {
-  width: 800,
-  height: 400,
   margin: { top: 20, right: 30, bottom: 30, left: 40 },
   showAreaOverview: true,
   showLineOverview: true,
@@ -93,8 +91,8 @@ const getDataSegments = (
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   data,
-  width = defaultProps.width!,
-  height = defaultProps.height!,
+  width,
+  height,
   margin = defaultProps.margin!,
   showAreaOverview = defaultProps.showAreaOverview!,
   showLineOverview = defaultProps.showLineOverview!,
@@ -108,8 +106,15 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   onBrush,
   gapThresholdMinutes = 120,
 }) => {
-  // Add refs for brush
+  // Add refs for brush and container
   const overviewRef = React.useRef<SVGGElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Add state for dimensions
+  const [dimensions, setDimensions] = React.useState({
+    width: width || 800,
+    height: height || 400,
+  });
 
   // Track if initial selection has been set
   const initialSelectionRef = React.useRef(false);
@@ -122,13 +127,31 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   // Add tooltip state
   const [tooltip, setTooltip] = React.useState<TooltipData | null>(null);
 
-  // Calculate dimensions for main and overview charts
-  const dimensions = React.useMemo(() => {
-    const mainHeight = height * 0.7; // Main chart takes 70% of total height
-    const overviewHeight = height * 0.2; // Overview takes 20% of total height
-    const spacing = height * 0.1; // 10% spacing between charts
+  // Use resize observer to update dimensions when container size changes
+  React.useEffect(() => {
+    if (!containerRef.current || width || height) return;
 
-    const innerWidth = width - margin.left - margin.right;
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        const { width, height } = entries[0].contentRect;
+        setDimensions({ width, height });
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [width, height]);
+
+  // Calculate dimensions for main and overview charts
+  const chartDimensions = React.useMemo(() => {
+    const mainHeight = dimensions.height * 0.7; // Main chart takes 70% of total height
+    const overviewHeight = dimensions.height * 0.2; // Overview takes 20% of total height
+    const spacing = dimensions.height * 0.1; // 10% spacing between charts
+
+    const innerWidth = dimensions.width - margin.left - margin.right;
     const mainInnerHeight = mainHeight - margin.top - margin.bottom;
     const overviewInnerHeight = overviewHeight - margin.top - margin.bottom;
 
@@ -140,7 +163,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       overviewInnerHeight,
       spacing,
     };
-  }, [width, height, margin]);
+  }, [dimensions, margin]);
 
   // Memoize scales for both charts
   const scales = React.useMemo(() => {
@@ -154,26 +177,29 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       return null;
     }
 
+    // Add padding to the x-axis range to ensure points at the edges are fully visible
+    const xPadding = chartDimensions.innerWidth * 0.01; // 5% padding on each side
+
     // Main chart scales - use viewDomain if available
     const xScale = scaleLinear()
       .domain(viewDomain || [xExtent[0], xExtent[1]])
-      .range([0, dimensions.innerWidth]);
+      .range([xPadding, chartDimensions.innerWidth - xPadding]);
 
     const yScale = scaleLinear()
       .domain(yExtent)
-      .range([dimensions.mainInnerHeight, 0]);
+      .range([chartDimensions.mainInnerHeight, 0]);
 
     // Overview chart scales
     const overviewXScale = scaleLinear()
       .domain([xExtent[0], xExtent[1]])
-      .range([0, dimensions.innerWidth]);
+      .range([xPadding, chartDimensions.innerWidth - xPadding]);
 
     const overviewYScale = scaleLinear()
       .domain(yExtent)
-      .range([dimensions.overviewInnerHeight, 0]);
+      .range([chartDimensions.overviewInnerHeight, 0]);
 
     return { xScale, yScale, overviewXScale, overviewYScale };
-  }, [data, dimensions, viewDomain]);
+  }, [data, chartDimensions, viewDomain]);
 
   // Memoize path generators for both charts
   const paths = React.useMemo(() => {
@@ -251,7 +277,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     const brush = brushX<unknown>()
       .extent([
         [0, 0],
-        [dimensions.innerWidth, dimensions.overviewInnerHeight],
+        [chartDimensions.innerWidth, chartDimensions.overviewInnerHeight],
       ])
       .on('start', () => {
         // Mark that user has started brushing
@@ -279,8 +305,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     // Set initial selection if not already set
     if (!initialSelectionRef.current) {
       // Calculate 10% width selection centered in the middle
-      const selectionWidth = dimensions.innerWidth * 0.5;
-      const selectionStart = (dimensions.innerWidth - selectionWidth) / 2;
+      const selectionWidth = chartDimensions.innerWidth * 0.5;
+      const selectionStart = (chartDimensions.innerWidth - selectionWidth) / 2;
       const selectionEnd = selectionStart + selectionWidth;
 
       brushGroup.call(brush.move, [selectionStart, selectionEnd]);
@@ -301,8 +327,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     };
   }, [
     scales,
-    dimensions.innerWidth,
-    dimensions.overviewInnerHeight,
+    chartDimensions.innerWidth,
+    chartDimensions.overviewInnerHeight,
     onBrush,
     setViewDomain,
   ]);
@@ -320,8 +346,11 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center relative">
-      <svg width={width} height={height}>
+    <div
+      ref={containerRef}
+      className="flex flex-col items-center justify-center relative w-full h-full"
+    >
+      <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
         <g
           transform={`translate(${margin.left},${margin.top})`}
@@ -331,8 +360,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           <rect
             x={0}
             y={0}
-            width={dimensions.innerWidth}
-            height={dimensions.mainInnerHeight}
+            width={chartDimensions.innerWidth}
+            height={chartDimensions.mainInnerHeight}
             fill="white"
           />
 
@@ -402,19 +431,19 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           <g className="axes-layer">
             {/* X Axis */}
             <g
-              transform={`translate(0,${dimensions.mainInnerHeight})`}
+              transform={`translate(0,${chartDimensions.mainInnerHeight})`}
               className="x-axis"
             >
               <rect
                 x={-margin.left}
                 y={0}
-                width={width}
+                width={dimensions.width}
                 height={margin.bottom}
                 fill="white"
               />
               <line
                 x1={0}
-                x2={dimensions.innerWidth}
+                x2={chartDimensions.innerWidth}
                 y1={0}
                 y2={0}
                 stroke="var(--gray-400)"
@@ -433,8 +462,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
                 </g>
               ))}
               <text
-                x={dimensions.innerWidth}
-                y={dimensions.mainInnerHeight}
+                x={chartDimensions.innerWidth}
+                y={chartDimensions.mainInnerHeight}
                 textAnchor="end"
                 fill="var(--gray-600)"
                 className="text-xs"
@@ -448,14 +477,16 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
                 x={-margin.left}
                 y={-margin.top}
                 width={margin.left}
-                height={dimensions.mainInnerHeight + margin.top + margin.bottom}
+                height={
+                  chartDimensions.mainInnerHeight + margin.top + margin.bottom
+                }
                 fill="white"
               />
               <line
                 x1={0}
                 x2={0}
                 y1={0}
-                y2={dimensions.mainInnerHeight}
+                y2={chartDimensions.mainInnerHeight}
                 stroke="var(--gray-400)"
               />
               {axisTicks.yTicks.map((tick) => (
@@ -474,7 +505,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
               ))}
               <text
                 transform="rotate(-90)"
-                x={-dimensions.mainInnerHeight}
+                x={-chartDimensions.mainInnerHeight}
                 y={-30}
                 textAnchor="start"
                 fill="var(--gray-600)"
@@ -488,7 +519,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
         {/* Overview chart */}
         <g
-          transform={`translate(${margin.left},${dimensions.mainHeight + dimensions.spacing})`}
+          transform={`translate(${margin.left},${chartDimensions.mainHeight + chartDimensions.spacing})`}
           className="overview-chart"
         >
           {/* Render each segment's area in overview */}
@@ -515,12 +546,12 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             ))}
           {/* Overview chart x-axis */}
           <g
-            transform={`translate(0,${dimensions.overviewInnerHeight})`}
+            transform={`translate(0,${chartDimensions.overviewInnerHeight})`}
             className="overview-x-axis"
           >
             <line
               x1={0}
-              x2={dimensions.innerWidth}
+              x2={chartDimensions.innerWidth}
               y1={0}
               y2={0}
               stroke="var(--gray-400)"
@@ -542,7 +573,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
               </g>
             ))}
             <text
-              x={dimensions.innerWidth / 2}
+              x={chartDimensions.innerWidth / 2}
               y={40}
               textAnchor="middle"
               fill="var(--gray-600)"
@@ -566,6 +597,15 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             }
           />
         </g>
+
+        {/* Right margin background */}
+        <rect
+          x={dimensions.width - margin.right}
+          y={0}
+          width={margin.right}
+          height={dimensions.height}
+          fill="white"
+        />
       </svg>
       {tooltip && (
         <div
