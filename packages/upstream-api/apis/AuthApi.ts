@@ -39,7 +39,7 @@ export class AuthApi extends runtime.BaseAPI {
     /**
      * Login
      */
-    async loginApiV1TokenPostRaw(requestParameters: LoginApiV1TokenPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async loginApiV1TokenPostRaw(requestParameters: LoginApiV1TokenPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: string | null; }>> {
         if (requestParameters['username'] == null) {
             throw new runtime.RequiredError(
                 'username',
@@ -104,17 +104,13 @@ export class AuthApi extends runtime.BaseAPI {
             body: formParams,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Login
      */
-    async loginApiV1TokenPost(requestParameters: LoginApiV1TokenPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async loginApiV1TokenPost(requestParameters: LoginApiV1TokenPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: string | null; }> {
         const response = await this.loginApiV1TokenPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
