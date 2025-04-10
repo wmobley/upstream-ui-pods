@@ -9,7 +9,6 @@ const StatsSection = ({
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold mb-4">Sensor Route</h2>
-
       <div className="h-3/4 w-full">
         <RouterMap measurements={data?.items} />
       </div>

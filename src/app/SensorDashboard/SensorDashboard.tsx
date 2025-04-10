@@ -35,7 +35,7 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
           </div>
         </header>
 
-        <section className="h-[400px] grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <section className="h-[400px] grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
           <StatsSection data={measurements} />
         </section>
 

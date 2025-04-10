@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FaRoute, FaFire, FaChartLine } from 'react-icons/fa';
+import { FaFire, FaChartLine } from 'react-icons/fa';
 import { MdScatterPlot } from 'react-icons/md';
 import { GetSensorResponse } from '@upstream/upstream-api';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
@@ -44,16 +44,7 @@ const MeasurementsSummary = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link
-          to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/route-map`}
-          className="block"
-        >
-          <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
-            <FaRoute className="text-lg" />
-            <span>View Route Map</span>
-          </button>
-        </Link>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/heat-map`}
           className="block"
