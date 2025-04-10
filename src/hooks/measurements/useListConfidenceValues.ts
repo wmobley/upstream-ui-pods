@@ -28,6 +28,7 @@ export const useListConfidenceValues = (
   useEffect(() => {
     const fetchSensors = async () => {
       try {
+        setLoading(true);
         const requestParams: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest =
           {
             campaignId: parseInt(campaignId),
