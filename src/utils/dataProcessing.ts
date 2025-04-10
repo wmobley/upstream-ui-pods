@@ -110,13 +110,22 @@ export interface TimeAggregation {
   count: number;
 }
 
-export type TimeInterval = 'minute' | 'hour' | 'day';
+export type TimeInterval =
+  | 'second'
+  | 'minute'
+  | 'hour'
+  | 'day'
+  | 'week'
+  | 'month';
 
 function getIntervalMilliseconds(interval: TimeInterval): number {
   const intervals = {
+    second: 1000,
     minute: 60 * 1000,
     hour: 60 * 60 * 1000,
     day: 24 * 60 * 60 * 1000,
+    week: 7 * 24 * 60 * 60 * 1000,
+    month: 30 * 24 * 60 * 60 * 1000,
   };
   return intervals[interval];
 }
@@ -178,13 +187,25 @@ export function getAppropriateResolution(
   endTime: Date,
 ): TimeInterval {
   const timeRange = endTime.getTime() - startTime.getTime();
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const millisecondsPerSecond = 1000;
+  const millisecondsPerMinute = 60 * millisecondsPerSecond;
+  const millisecondsPerHour = 60 * millisecondsPerMinute;
+  const millisecondsPerDay = 24 * millisecondsPerHour;
+  const millisecondsPerWeek = 7 * millisecondsPerDay;
+  const millisecondsPerMonth = 30 * millisecondsPerDay;
+  const millisecondsPerYear = 365 * millisecondsPerDay;
 
-  if (timeRange > millisecondsPerDay * 30) {
+  if (timeRange > millisecondsPerYear) {
+    return 'month';
+  } else if (timeRange > 3 * millisecondsPerMonth) {
+    return 'week';
+  } else if (timeRange > millisecondsPerWeek) {
     return 'day';
   } else if (timeRange > millisecondsPerDay) {
     return 'hour';
-  } else {
+  } else if (timeRange > millisecondsPerHour) {
     return 'minute';
+  } else {
+    return 'second';
   }
 }

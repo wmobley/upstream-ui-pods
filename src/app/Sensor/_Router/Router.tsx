@@ -2,7 +2,7 @@ import React from 'react';
 import { Route, Switch, RouteComponentProps } from 'react-router-dom';
 import HeatMapViz from '../../Sensor/viz/HeatMapViz';
 import ScatterTimeViz from '../../Sensor/viz/ScatterTimeViz';
-import LineConfidenceViz from '../../Sensor/viz/LineConfidenceViz';
+import LineConfidenceViz from '../viz/LineConfidenceViz/LineConfidenceViz';
 import SensorDashboard from '../../SensorDashboard/SensorDashboard';
 const Router: React.FC = () => {
   return (

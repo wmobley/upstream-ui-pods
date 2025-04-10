@@ -68,7 +68,6 @@ const getDataSegments = (
   gapThresholdMinutes: number = 120, // 2 hours default
 ): AggregatedMeasurement[][] => {
   if (data.length === 0) return [];
-
   const segments: AggregatedMeasurement[][] = [];
   let currentSegment: AggregatedMeasurement[] = [data[0]];
 
@@ -308,8 +307,16 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     setViewDomain,
   ]);
 
-  if (!scales || !paths || !axisTicks) {
-    return <div>Invalid data</div>;
+  if (data.length === 0) {
+    return <div>Data is empty</div>;
+  }
+
+  if (!scales) {
+    return <div>Invalid data - no scales</div>;
+  }
+
+  if (!paths || !axisTicks) {
+    return <div>Invalid data - no paths or axis ticks</div>;
   }
 
   return (
