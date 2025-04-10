@@ -58,8 +58,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password: password,
       });
 
-      localStorage.setItem('access_token', response.access_token);
-      setIsAuthenticated(true);
+      if (response.access_token) {
+        localStorage.setItem('access_token', response.access_token);
+        setIsAuthenticated(true);
+      } else {
+        throw new Error('No access token received');
+      }
     } catch (err) {
       let errorMessage = 'Invalid username or password';
       if (err instanceof Error) {

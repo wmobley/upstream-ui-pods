@@ -48,7 +48,7 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
               campaignId={campaignId}
               stationId={stationId}
               sensorId={sensorId}
-              data={measurements}
+              data={data}
             />
           </QueryWrapper>
         </section>

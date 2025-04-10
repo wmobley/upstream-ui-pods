@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
 import { FaRoute, FaFire, FaChartLine } from 'react-icons/fa';
 import { MdScatterPlot } from 'react-icons/md';
-import { ListMeasurementsResponsePagination } from '@upstream/upstream-api';
-
+import { GetSensorResponse } from '@upstream/upstream-api';
 interface MeasurementsSummaryProps {
-  data: ListMeasurementsResponsePagination | null;
+  data: GetSensorResponse | null;
   campaignId: string;
   stationId: string;
   sensorId: string;
@@ -22,11 +21,11 @@ const MeasurementsSummary = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg mb-6">
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Total</p>
-          <p className="font-medium text-lg">{data?.total}</p>
+          <p className="font-medium text-lg">{data?.count}</p>
         </div>
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Average</p>
-          <p className="font-medium text-lg">{data?.averageValue}</p>
+          <p className="font-medium text-lg">{data?.avgValue}</p>
         </div>
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Minimum</p>
