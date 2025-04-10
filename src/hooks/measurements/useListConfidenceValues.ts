@@ -16,6 +16,8 @@ export const useListConfidenceValues = (
   campaignId: string,
   stationId: string,
   sensorId: string,
+  interval: string,
+  intervalValue: number,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
@@ -31,8 +33,8 @@ export const useListConfidenceValues = (
             campaignId: parseInt(campaignId),
             stationId: parseInt(stationId),
             sensorId: parseInt(sensorId),
-            interval: 'minute',
-            intervalValue: 10,
+            interval: interval,
+            intervalValue: intervalValue,
             minValue: 0,
           };
         const response =
@@ -49,7 +51,7 @@ export const useListConfidenceValues = (
       }
     };
     fetchSensors();
-  }, []);
+  }, [campaignId, stationId, sensorId, interval, intervalValue]);
 
   return { data, isLoading, error };
 };
