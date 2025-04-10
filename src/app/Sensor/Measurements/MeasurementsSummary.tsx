@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { FaRoute, FaFire, FaChartLine } from 'react-icons/fa';
 import { MdScatterPlot } from 'react-icons/md';
 import { GetSensorResponse } from '@upstream/upstream-api';
-import { ListMeasurementsResponsePagination } from '@upstream/upstream-api';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 interface MeasurementsSummaryProps {
   data: GetSensorResponse | null;
@@ -28,16 +27,20 @@ const MeasurementsSummary = ({
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Average</p>
           <p className="font-medium text-lg">
-            {formatNumber(data?.avgValue)}
+            {data?.avgValue ? formatNumber(data?.avgValue) : 'N/A'}
           </p>
         </div>
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Minimum</p>
-          <p className="font-medium text-lg">{formatNumber(data?.minValue)}</p>
+          <p className="font-medium text-lg">
+            {data?.minValue ? formatNumber(data?.minValue) : 'N/A'}
+          </p>
         </div>
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Maximum</p>
-          <p className="font-medium text-lg">{formatNumber(data?.maxValue)}</p>
+          <p className="font-medium text-lg">
+            {data?.maxValue ? formatNumber(data?.maxValue) : 'N/A'}
+          </p>
         </div>
       </div>
 
