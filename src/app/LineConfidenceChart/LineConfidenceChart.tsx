@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { extent, min, max } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
-import { format } from 'd3-format';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
 import { AggregatedMeasurement } from '@upstream/upstream-api';
+import NumberFormatter from '../common/NumberFormatter/NumberFormatter';
+import { formatNumber } from '../common/NumberFormatter/NumberFortatterUtils';
 
 // Types
 interface TooltipData {
@@ -57,7 +58,9 @@ const defaultProps: Partial<LineConfidenceChartProps> = {
     }
     return new Date(date).toLocaleTimeString();
   },
-  yFormatter: format('.1f'),
+  yFormatter: (value: number) => {
+    return formatNumber(value);
+  },
 };
 
 const getDataSegments = (
@@ -589,11 +592,16 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             </button>
           </div>
           <div>Time: {tooltip.data.measurementTime.toLocaleString()}</div>
-          <div>Value: {tooltip.data.value.toFixed(2)}</div>
-          <div>Median: {tooltip.data.medianValue.toFixed(2)}</div>
           <div>
-            Confidence Interval: [{tooltip.data.parametricLowerBound.toFixed(2)}
-            , {tooltip.data.parametricUpperBound.toFixed(2)}]
+            Value: <NumberFormatter value={tooltip.data.value} />
+          </div>
+          <div>
+            Median: <NumberFormatter value={tooltip.data.medianValue} />
+          </div>
+          <div>
+            Confidence Interval: [
+            <NumberFormatter value={tooltip.data.parametricLowerBound} />,
+            <NumberFormatter value={tooltip.data.parametricUpperBound} /> ]
           </div>
           <div>Point Count: {tooltip.data.pointCount}</div>
         </div>

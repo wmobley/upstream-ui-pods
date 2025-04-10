@@ -36,6 +36,7 @@ export const useList = (
               stationId: parseInt(stationId),
               sensorId: parseInt(sensorId),
               downsampleThreshold,
+              minMeasurementValue: 0,
               limit,
             },
           );

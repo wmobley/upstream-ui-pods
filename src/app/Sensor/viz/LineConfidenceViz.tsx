@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useListConfidenceValues } from '../../../hooks/measurements/useListConfidenceValues';
 import LineConfidenceChart from '../../LineConfidenceChart';
 import QueryWrapper from '../../common/QueryWrapper';
+import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 interface MeasurementsSummaryProps {
   campaignId: string;
   stationId: string;
@@ -51,7 +52,9 @@ const LineConfidenceViz = ({
               const dateObj = date instanceof Date ? date : new Date(date);
               return dateObj.toLocaleDateString();
             }}
-            yFormatter={(value: number) => value.toFixed(1)}
+            yFormatter={(value: number) => {
+              return formatNumber(value);
+            }}
             onBrush={(domain) => {
               setSelectedTimeRange(domain);
             }}
