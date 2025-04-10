@@ -64,11 +64,8 @@ const TimeSeriesGraph = ({
   return (
     <QueryWrapper isLoading={isLoading || !downsampledData} error={error}>
       <div className="flex flex-col items-center justify-center h-screen">
-        <p>Number of points: {displayData.length}</p>
         <TimeSeriesChart
           data={downsampledData}
-          width={1600}
-          height={800}
           margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
           showArea={false}
           showLine={false}
