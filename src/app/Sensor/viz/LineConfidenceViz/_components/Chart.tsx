@@ -35,6 +35,7 @@ export const Chart = ({
     aggregationInterval,
     aggregationValue,
   );
+
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       {data && (

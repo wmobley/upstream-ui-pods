@@ -307,6 +307,10 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     setViewDomain,
   ]);
 
+  if (data.length === 0) {
+    return <div>Data is empty</div>;
+  }
+
   if (!scales) {
     return <div>Invalid data - no scales</div>;
   }
