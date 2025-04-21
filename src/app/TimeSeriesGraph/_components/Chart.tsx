@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useList } from '../../../hooks/measurements/useList';
+import { useList as useListDownsampled } from '../../../hooks/measurements/useList';
 import QueryWrapper from '../../common/QueryWrapper';
 import { DataPoint } from '../../../utils/dataProcessing';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
@@ -20,12 +20,12 @@ const Chart = ({
   const [downsampleThreshold] = useState<number>(
     initialDownsampleThreshold ?? 10000,
   );
-  const { data, isLoading, error } = useList(
+  const { data, isLoading, error } = useListDownsampled(
     campaignId,
     stationId,
     sensorId,
     500000,
-    downsampleThreshold,
+    100,
   );
   const downsampledData = data?.items.map(
     (item) =>
