@@ -6,7 +6,7 @@ import ProtectedRoute from '../common/ProtectedRoute';
 import Login from '../Login/Login';
 import { useAuth } from '../../contexts/AuthContext';
 import { Loading } from '../common/Loading';
-
+import ConfidenceMethodExplanation from '../Sensor/viz/ConfidenceMethodExplanation';
 const Router: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) {
@@ -23,6 +23,12 @@ const Router: React.FC = () => {
       </ProtectedRoute>
       <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
         <Campaign />
+      </ProtectedRoute>
+      <ProtectedRoute
+        isAuthenticated={isAuthenticated}
+        path="/docs/confidence-explanation"
+      >
+        <ConfidenceMethodExplanation />
       </ProtectedRoute>
     </Switch>
   );
