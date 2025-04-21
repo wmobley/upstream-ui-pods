@@ -84,11 +84,11 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
     };
   }, [data, scales]);
 
-  // Initialize brush
-  React.useEffect(() => {
+  // Initialize brush - using useLayoutEffect to ensure it runs before render
+  React.useLayoutEffect(() => {
     if (!scales || !overviewRef.current) return;
 
-    // Create brush behavior
+    // Create brush behavior with explicit styles
     const brush = brushX<unknown>()
       .extent([
         [0, 0],
@@ -98,7 +98,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
         // Mark that user has started brushing
         initialSelectionRef.current = true;
       })
-      .on('brush', (event) => {
+      .on('brush end', (event) => {
         if (!event.selection) return;
         const selection = event.selection as [number, number];
 
@@ -114,32 +114,53 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
 
     // Apply brush to overview chart
     const brushGroup = select(overviewRef.current);
+
+    // Remove any existing brush before adding a new one
+    brushGroup.selectAll('.brush').remove();
+
+    // Apply the brush
     brushGroup.call(brush);
+
+    // Add explicit styles to make the brush visible
+    brushGroup
+      .selectAll('.selection')
+      .attr('fill', '#f0f0f0')
+      .attr('fill-opacity', 0.3)
+      .attr('stroke', '#888')
+      .attr('stroke-width', 1);
+
+    brushGroup
+      .selectAll('.handle')
+      .attr('fill', '#fff')
+      .attr('stroke', '#666')
+      .attr('stroke-width', 1);
 
     // Set initial selection if not already set
     if (!initialSelectionRef.current) {
-      // Calculate 10% width selection centered in the middle
-      const selectionWidth = innerWidth * 0.1;
+      // Calculate 30% width selection centered in the middle for better visibility
+      const selectionWidth = innerWidth * 0.3;
       const selectionStart = (innerWidth - selectionWidth) / 2;
       const selectionEnd = selectionStart + selectionWidth;
 
-      brushGroup.call(brush.move, [selectionStart, selectionEnd]);
+      // Force move the brush selection to be visible
+      setTimeout(() => {
+        brushGroup.call(brush.move, [selectionStart, selectionEnd]);
+      }, 100);
 
-      // Trigger initial brush event with 10% domain
-      if (scales.xScale) {
-        const domain: [number, number] = [
-          scales.xScale.invert(selectionStart),
-          scales.xScale.invert(selectionEnd),
-        ];
-        onBrush(domain);
-      }
+      // Trigger initial brush event
+      const domain: [number, number] = [
+        scales.xScale.invert(selectionStart),
+        scales.xScale.invert(selectionEnd),
+      ];
+      onBrush(domain);
+      initialSelectionRef.current = true;
     }
 
     // Cleanup
     return () => {
       brushGroup.on('.brush', null);
     };
-  }, [scales, innerWidth, innerHeight, onBrush]);
+  }, [scales, innerWidth, innerHeight, onBrush, data]);
 
   if (!scales || !paths) {
     return null;
@@ -194,18 +215,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
       </g>
 
       {/* Brush container */}
-      <g
-        ref={overviewRef}
-        className="brush"
-        style={
-          {
-            '--brush-selection-fill': 'var(--gray-200)',
-            '--brush-selection-stroke': 'var(--gray-400)',
-            '--brush-handle-fill': 'var(--gray-50)',
-            '--brush-handle-stroke': 'var(--gray-500)',
-          } as React.CSSProperties
-        }
-      />
+      <g ref={overviewRef} className="brush" />
     </g>
   );
 };
