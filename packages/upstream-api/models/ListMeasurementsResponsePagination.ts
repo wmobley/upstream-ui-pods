@@ -75,6 +75,18 @@ export interface ListMeasurementsResponsePagination {
      * @memberof ListMeasurementsResponsePagination
      */
     averageValue: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListMeasurementsResponsePagination
+     */
+    downsampled: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof ListMeasurementsResponsePagination
+     */
+    downsampledTotal?: number | null;
 }
 
 /**
@@ -89,6 +101,7 @@ export function instanceOfListMeasurementsResponsePagination(value: object): val
     if (!('minValue' in value) || value['minValue'] === undefined) return false;
     if (!('maxValue' in value) || value['maxValue'] === undefined) return false;
     if (!('averageValue' in value) || value['averageValue'] === undefined) return false;
+    if (!('downsampled' in value) || value['downsampled'] === undefined) return false;
     return true;
 }
 
@@ -110,6 +123,8 @@ export function ListMeasurementsResponsePaginationFromJSONTyped(json: any, ignor
         'minValue': json['min_value'],
         'maxValue': json['max_value'],
         'averageValue': json['average_value'],
+        'downsampled': json['downsampled'],
+        'downsampledTotal': json['downsampled_total'] == null ? undefined : json['downsampled_total'],
     };
 }
 
@@ -132,6 +147,8 @@ export function ListMeasurementsResponsePaginationToJSONTyped(value?: ListMeasur
         'min_value': value['minValue'],
         'max_value': value['maxValue'],
         'average_value': value['averageValue'],
+        'downsampled': value['downsampled'],
+        'downsampled_total': value['downsampledTotal'],
     };
 }
 

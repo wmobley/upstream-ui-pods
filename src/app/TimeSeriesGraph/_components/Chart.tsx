@@ -18,7 +18,7 @@ const Chart = ({
   initialDownsampleThreshold,
 }: TimeSeriesGraphProps) => {
   const [downsampleThreshold] = useState<number>(
-    initialDownsampleThreshold ?? 5000,
+    initialDownsampleThreshold ?? 10000,
   );
   const { data, isLoading, error } = useList(
     campaignId,
@@ -54,7 +54,20 @@ const Chart = ({
 
   return (
     <QueryWrapper isLoading={isLoading || !downsampledData} error={error}>
-      <div className="p-4 w-full h-full">
+      <div className="p-4 w-full h-full flex flex-col">
+        <div className="text-center mt-2 text-sm text-gray-600 italic">
+          <p>
+            <span className="font-semibold">Note:</span> Data has been
+            downsampled using the LTTB algorithm. Displaying{' '}
+            {data?.downsampledTotal} of {data?.total} points.
+            <span
+              className="ml-2 text-xs cursor-help"
+              title="Largest-Triangle-Three-Buckets (LTTB) is a downsampling algorithm that preserves the visual characteristics of the original data while reducing the number of points."
+            >
+              ⓘ
+            </span>
+          </p>
+        </div>
         <TimeSeriesChart
           data={downsampledData}
           margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
