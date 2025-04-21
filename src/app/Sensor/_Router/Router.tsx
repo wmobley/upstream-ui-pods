@@ -3,6 +3,7 @@ import { Route, Switch, RouteComponentProps } from 'react-router-dom';
 import HeatMapViz from '../../Sensor/viz/HeatMapViz';
 import ScatterTimeViz from '../../Sensor/viz/ScatterTimeViz';
 import LineConfidenceViz from '../viz/LineConfidenceViz/LineConfidenceViz';
+import { ConfidenceMethodExplanation } from '../viz';
 import SensorDashboard from '../../SensorDashboard/SensorDashboard';
 const Router: React.FC = () => {
   return (
@@ -79,6 +80,11 @@ const Router: React.FC = () => {
             sensorId={sensorId}
           />
         )}
+      />
+      <Route
+        exact
+        path={`/docs/confidence-explanation`}
+        component={ConfidenceMethodExplanation}
       />
     </Switch>
   );
