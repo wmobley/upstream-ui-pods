@@ -1,76 +1,86 @@
 import * as React from 'react';
+import { extent } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
 import { DataPoint } from '../../utils/dataProcessing';
 
-interface ChartDimensions {
-  innerWidth: number;
-  mainHeight: number;
-  mainInnerHeight: number;
-  overviewHeight: number;
-  overviewInnerHeight: number;
-  spacing: number;
-}
-
-interface Scales {
-  xScale: d3.ScaleLinear<number, number>;
-  yScale: d3.ScaleLinear<number, number>;
-  overviewXScale: d3.ScaleLinear<number, number>;
-  overviewYScale: d3.ScaleLinear<number, number>;
-}
-
-interface OverviewChartProps {
+export interface OverviewChartProps {
   data: DataPoint[];
-  scales: Scales;
-  chartDimensions: ChartDimensions;
+  width: number;
+  height: number;
   margin: { top: number; right: number; bottom: number; left: number };
-  showAreaOverview: boolean;
-  showLineOverview: boolean;
+  showAreaOverview?: boolean;
+  showLineOverview?: boolean;
   colors: {
     line?: string;
     area?: string;
     point?: string;
   };
   xFormatterOverview: (date: Date | number) => string;
-  initialSelectionRef: React.MutableRefObject<boolean>;
   onBrush: (domain: [number, number]) => void;
-  onInitialSelection: (wasInitialized: boolean) => void;
 }
 
 const OverviewChart: React.FC<OverviewChartProps> = ({
   data,
-  scales,
-  chartDimensions,
+  width,
+  height,
   margin,
-  showAreaOverview,
-  showLineOverview,
+  showAreaOverview = true,
+  showLineOverview = true,
   colors,
   xFormatterOverview,
-  initialSelectionRef,
   onBrush,
-  onInitialSelection,
 }) => {
-  // Add ref for brush
+  // Add refs for brush
   const overviewRef = React.useRef<SVGGElement>(null);
 
-  // Memoize path generators for overview chart
+  // Track if initial selection has been set
+  const initialSelectionRef = React.useRef(false);
+
+  // Calculate dimensions
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+
+  // Calculate scales
+  const scales = React.useMemo(() => {
+    const xExtent = extent(data, (d) => d.timestamp.getTime());
+    const yExtent = extent(data, (d) => d.value);
+
+    if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
+      return null;
+    }
+
+    const xScale = scaleLinear()
+      .domain([xExtent[0], xExtent[1]])
+      .range([0, innerWidth]);
+
+    const yScale = scaleLinear()
+      .domain([0, yExtent[1]])
+      .range([innerHeight, 0]);
+
+    return { xScale, yScale };
+  }, [data, innerWidth, innerHeight]);
+
+  // Memoize path generators
   const paths = React.useMemo(() => {
-    // Overview chart paths
-    const overviewLineGenerator = line<DataPoint>()
-      .x((d) => scales.overviewXScale(d.timestamp.getTime()))
-      .y((d) => scales.overviewYScale(d.value))
+    if (!scales) return null;
+
+    const lineGenerator = line<DataPoint>()
+      .x((d) => scales.xScale(d.timestamp.getTime()))
+      .y((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
-    const overviewAreaGenerator = area<DataPoint>()
-      .x((d) => scales.overviewXScale(d.timestamp.getTime()))
-      .y0(() => scales.overviewYScale(0))
-      .y1((d) => scales.overviewYScale(d.value))
+    const areaGenerator = area<DataPoint>()
+      .x((d) => scales.xScale(d.timestamp.getTime()))
+      .y0(() => scales.yScale(0))
+      .y1((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
     return {
-      overviewLinePath: overviewLineGenerator(data),
-      overviewAreaPath: overviewAreaGenerator(data),
+      linePath: lineGenerator(data),
+      areaPath: areaGenerator(data),
     };
   }, [data, scales]);
 
@@ -82,12 +92,11 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
     const brush = brushX<unknown>()
       .extent([
         [0, 0],
-        [chartDimensions.innerWidth, chartDimensions.overviewInnerHeight],
+        [innerWidth, innerHeight],
       ])
       .on('start', () => {
         // Mark that user has started brushing
         initialSelectionRef.current = true;
-        onInitialSelection(true);
       })
       .on('brush', (event) => {
         if (!event.selection) return;
@@ -95,8 +104,8 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
 
         // Convert pixel coordinates to domain values
         const domain: [number, number] = [
-          scales.overviewXScale.invert(selection[0]),
-          scales.overviewXScale.invert(selection[1]),
+          scales.xScale.invert(selection[0]),
+          scales.xScale.invert(selection[1]),
         ];
 
         // Update view domain
@@ -110,17 +119,17 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
     // Set initial selection if not already set
     if (!initialSelectionRef.current) {
       // Calculate 10% width selection centered in the middle
-      const selectionWidth = chartDimensions.innerWidth * 0.1;
-      const selectionStart = (chartDimensions.innerWidth - selectionWidth) / 2;
+      const selectionWidth = innerWidth * 0.1;
+      const selectionStart = (innerWidth - selectionWidth) / 2;
       const selectionEnd = selectionStart + selectionWidth;
 
       brushGroup.call(brush.move, [selectionStart, selectionEnd]);
 
       // Trigger initial brush event with 10% domain
-      if (scales.overviewXScale) {
+      if (scales.xScale) {
         const domain: [number, number] = [
-          scales.overviewXScale.invert(selectionStart),
-          scales.overviewXScale.invert(selectionEnd),
+          scales.xScale.invert(selectionStart),
+          scales.xScale.invert(selectionEnd),
         ];
         onBrush(domain);
       }
@@ -130,25 +139,20 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
     return () => {
       brushGroup.on('.brush', null);
     };
-  }, [
-    scales,
-    chartDimensions.innerWidth,
-    chartDimensions.overviewInnerHeight,
-    initialSelectionRef,
-    onBrush,
-    onInitialSelection,
-  ]);
+  }, [scales, innerWidth, innerHeight, onBrush]);
+
+  if (!scales || !paths) {
+    return null;
+  }
 
   return (
     <g
-      transform={`translate(${margin.left},${
-        chartDimensions.mainHeight + chartDimensions.spacing
-      })`}
+      transform={`translate(${margin.left},${margin.top})`}
       className="overview-chart"
     >
       {showAreaOverview && (
         <path
-          d={paths.overviewAreaPath || ''}
+          d={paths.areaPath || ''}
           fill={colors.area}
           fillOpacity={0.2}
           stroke="none"
@@ -156,29 +160,17 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
       )}
       {showLineOverview && (
         <path
-          d={paths.overviewLinePath || ''}
+          d={paths.linePath || ''}
           fill="none"
           stroke={colors.line}
           strokeWidth={1}
         />
       )}
       {/* Overview chart x-axis */}
-      <g
-        transform={`translate(0,${chartDimensions.overviewInnerHeight})`}
-        className="overview-x-axis"
-      >
-        <line
-          x1={0}
-          x2={chartDimensions.innerWidth}
-          y1={0}
-          y2={0}
-          stroke="var(--gray-400)"
-        />
-        {scales.overviewXScale.ticks(5).map((tick) => (
-          <g
-            key={tick}
-            transform={`translate(${scales.overviewXScale(tick)},0)`}
-          >
+      <g transform={`translate(0,${innerHeight})`} className="overview-x-axis">
+        <line x1={0} x2={innerWidth} y1={0} y2={0} stroke="var(--gray-400)" />
+        {scales.xScale.ticks(5).map((tick) => (
+          <g key={tick} transform={`translate(${scales.xScale(tick)},0)`}>
             <line y1={0} y2={6} stroke="var(--gray-300)" />
             <text
               y={20}
@@ -191,7 +183,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
           </g>
         ))}
         <text
-          x={chartDimensions.innerWidth / 2}
+          x={innerWidth / 2}
           y={40}
           textAnchor="middle"
           fill="var(--gray-600)"
@@ -200,6 +192,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
           Overview
         </text>
       </g>
+
       {/* Brush container */}
       <g
         ref={overviewRef}

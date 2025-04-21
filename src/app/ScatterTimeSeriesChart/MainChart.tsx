@@ -1,22 +1,8 @@
 import * as React from 'react';
+import { extent } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { DataPoint } from '../../utils/dataProcessing';
-
-interface ChartDimensions {
-  innerWidth: number;
-  mainHeight: number;
-  mainInnerHeight: number;
-  overviewHeight: number;
-  overviewInnerHeight: number;
-  spacing: number;
-}
-
-interface Scales {
-  xScale: d3.ScaleLinear<number, number>;
-  yScale: d3.ScaleLinear<number, number>;
-  overviewXScale: d3.ScaleLinear<number, number>;
-  overviewYScale: d3.ScaleLinear<number, number>;
-}
 
 interface TooltipData {
   x: number;
@@ -24,16 +10,15 @@ interface TooltipData {
   data: DataPoint;
 }
 
-interface MainChartProps {
+export interface MainChartProps {
   data: DataPoint[];
-  scales: Scales;
-  chartDimensions: ChartDimensions;
+  width: number;
+  height: number;
   margin: { top: number; right: number; bottom: number; left: number };
-  dimensions: { width: number; height: number };
-  showArea: boolean;
-  showLine: boolean;
-  showPoints: boolean;
-  pointRadius: number;
+  showArea?: boolean;
+  showLine?: boolean;
+  showPoints?: boolean;
+  pointRadius?: number;
   colors: {
     line?: string;
     area?: string;
@@ -43,48 +28,77 @@ interface MainChartProps {
   yAxisTitle: string;
   xFormatter: (date: Date | number) => string;
   yFormatter: (value: number) => string;
-  setTooltip: React.Dispatch<React.SetStateAction<TooltipData | null>>;
+  viewDomain: [number, number] | null;
+  setTooltip: (tooltip: TooltipData | null) => void;
 }
 
 const MainChart: React.FC<MainChartProps> = ({
   data,
-  scales,
-  chartDimensions,
+  width,
+  height,
   margin,
-  dimensions,
-  showArea,
-  showLine,
-  showPoints,
-  pointRadius,
+  showArea = true,
+  showLine = true,
+  showPoints = false,
+  pointRadius = 3,
   colors,
   xAxisTitle,
   yAxisTitle,
   xFormatter,
   yFormatter,
+  viewDomain,
   setTooltip,
 }) => {
-  // Memoize path generators for main chart
+  // Calculate chart dimensions
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+
+  // Calculate scales
+  const scales = React.useMemo(() => {
+    const xExtent = extent(data, (d) => d.timestamp.getTime());
+    const yExtent = extent(data, (d) => d.value);
+
+    if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
+      return null;
+    }
+
+    // Use viewDomain if available, otherwise use full extent
+    const xScale = scaleLinear()
+      .domain(viewDomain || [xExtent[0], xExtent[1]])
+      .range([0, innerWidth]);
+
+    const yScale = scaleLinear()
+      .domain([0, yExtent[1]])
+      .range([innerHeight, 0]);
+
+    return { xScale, yScale };
+  }, [data, innerWidth, innerHeight, viewDomain]);
+
+  // Memoize path generators
   const paths = React.useMemo(() => {
-    // Main chart paths
-    const mainLineGenerator = line<DataPoint>()
+    if (!scales) return null;
+
+    const lineGenerator = line<DataPoint>()
       .x((d) => scales.xScale(d.timestamp.getTime()))
       .y((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
-    const mainAreaGenerator = area<DataPoint>()
+    const areaGenerator = area<DataPoint>()
       .x((d) => scales.xScale(d.timestamp.getTime()))
       .y0(() => scales.yScale(0))
       .y1((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
     return {
-      mainLinePath: mainLineGenerator(data),
-      mainAreaPath: mainAreaGenerator(data),
+      linePath: lineGenerator(data),
+      areaPath: areaGenerator(data),
     };
   }, [data, scales]);
 
-  // Memoize axis ticks for main chart
+  // Memoize axis ticks
   const axisTicks = React.useMemo(() => {
+    if (!scales) return null;
+
     const xTicks = scales.xScale.ticks(5).map((tick) => ({
       value: tick,
       label: xFormatter(tick),
@@ -100,6 +114,10 @@ const MainChart: React.FC<MainChartProps> = ({
     return { xTicks, yTicks };
   }, [scales, xFormatter, yFormatter]);
 
+  if (!scales || !paths || !axisTicks) {
+    return null;
+  }
+
   return (
     <g
       transform={`translate(${margin.left},${margin.top})`}
@@ -109,7 +127,7 @@ const MainChart: React.FC<MainChartProps> = ({
       <g className="data-layer">
         {showArea && (
           <path
-            d={paths.mainAreaPath || ''}
+            d={paths.areaPath || ''}
             fill={colors.area}
             fillOpacity={0.2}
             stroke="none"
@@ -117,7 +135,7 @@ const MainChart: React.FC<MainChartProps> = ({
         )}
         {showLine && (
           <path
-            d={paths.mainLinePath || ''}
+            d={paths.linePath || ''}
             fill="none"
             stroke={colors.line}
             strokeWidth={2}
@@ -167,24 +185,15 @@ const MainChart: React.FC<MainChartProps> = ({
       {/* Axes layer - rendered last to be on top */}
       <g className="axes-layer">
         {/* X Axis */}
-        <g
-          transform={`translate(0,${chartDimensions.mainInnerHeight})`}
-          className="x-axis"
-        >
+        <g transform={`translate(0,${innerHeight})`} className="x-axis">
           <rect
             x={-margin.left}
             y={0}
-            width={dimensions.width}
+            width={width}
             height={margin.bottom}
             fill="white"
           />
-          <line
-            x1={0}
-            x2={chartDimensions.innerWidth}
-            y1={0}
-            y2={0}
-            stroke="var(--gray-400)"
-          />
+          <line x1={0} x2={innerWidth} y1={0} y2={0} stroke="var(--gray-400)" />
           {axisTicks.xTicks.map((tick) => (
             <g key={tick.value} transform={`translate(${tick.x},0)`}>
               <line y1={0} y2={6} stroke="var(--gray-300)" />
@@ -199,8 +208,8 @@ const MainChart: React.FC<MainChartProps> = ({
             </g>
           ))}
           <text
-            x={chartDimensions.innerWidth}
-            y={chartDimensions.mainInnerHeight}
+            x={innerWidth}
+            y={innerHeight}
             textAnchor="end"
             fill="var(--gray-600)"
             className="text-xs"
@@ -214,16 +223,14 @@ const MainChart: React.FC<MainChartProps> = ({
             x={-margin.left}
             y={-margin.top}
             width={margin.left}
-            height={
-              chartDimensions.mainInnerHeight + margin.top + margin.bottom
-            }
+            height={innerHeight + margin.top + margin.bottom}
             fill="white"
           />
           <line
             x1={0}
             x2={0}
             y1={0}
-            y2={chartDimensions.mainInnerHeight}
+            y2={innerHeight}
             stroke="var(--gray-400)"
           />
           {axisTicks.yTicks.map((tick) => (
@@ -242,7 +249,7 @@ const MainChart: React.FC<MainChartProps> = ({
           ))}
           <text
             transform="rotate(-90)"
-            x={-chartDimensions.mainInnerHeight}
+            x={-innerHeight}
             y={-30}
             textAnchor="start"
             fill="var(--gray-600)"
