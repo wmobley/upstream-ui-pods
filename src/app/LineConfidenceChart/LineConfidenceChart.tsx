@@ -4,7 +4,7 @@ import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
-import { AggregatedMeasurement } from '@upstream/upstream-api';
+import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import NumberFormatter from '../common/NumberFormatter/NumberFormatter';
 import { formatNumber } from '../common/NumberFormatter/NumberFortatterUtils';
 import MainChart from './components/MainChart';
@@ -17,8 +17,14 @@ interface TooltipData {
   data: AggregatedMeasurement;
 }
 
+interface PointTooltipData extends Partial<MeasurementItem> {
+  x: number;
+  y: number;
+}
+
 export interface LineConfidenceChartProps {
   data: AggregatedMeasurement[];
+  allPoints: MeasurementItem[];
   width?: number;
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -93,6 +99,7 @@ const getDataSegments = (
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   data,
+  allPoints,
   width,
   height,
   margin = defaultProps.margin!,
@@ -127,7 +134,12 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   );
 
   // Add tooltip state
-  const [tooltip, setTooltip] = React.useState<TooltipData | null>(null);
+  const [tooltip, setTooltipAggregation] = React.useState<TooltipData | null>(
+    null,
+  );
+
+  const [tooltipPoint, setTooltipPoint] =
+    React.useState<PointTooltipData | null>(null);
 
   // Use resize observer to update dimensions when container size changes
   React.useEffect(() => {
@@ -356,6 +368,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
         {/* Main chart */}
         <MainChart
           data={data}
+          allPoints={allPoints}
           scales={scales}
           chartDimensions={chartDimensions}
           paths={paths}
@@ -366,7 +379,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           pointRadius={pointRadius}
           xAxisTitle={xAxisTitle}
           yAxisTitle={yAxisTitle}
-          setTooltip={setTooltip}
+          setTooltipAggregation={setTooltipAggregation}
+          setTooltipPoint={setTooltipPoint}
         />
 
         {/* Overview chart */}
@@ -403,7 +417,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           <div className="flex justify-between items-start mb-2">
             <div className="font-medium">Data Point Details</div>
             <button
-              onClick={() => setTooltip(null)}
+              onClick={() => setTooltipAggregation(null)}
               className="ml-2 text-gray-500 hover:text-gray-700"
               aria-label="Close tooltip"
             >
@@ -435,6 +449,43 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             <NumberFormatter value={tooltip.data.parametricUpperBound} /> ]
           </div>
           <div>Point Count: {tooltip.data.pointCount}</div>
+        </div>
+      )}
+      {tooltipPoint && (
+        <div
+          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
+          style={{
+            left: tooltipPoint.x + 10,
+            top: tooltipPoint.y - 10,
+            pointerEvents: 'auto',
+          }}
+        >
+          <div className="flex justify-between items-start mb-2">
+            <div className="font-medium">Individual Point Details</div>
+            <button
+              onClick={() => setTooltipPoint(null)}
+              className="ml-2 text-gray-500 hover:text-gray-700"
+              aria-label="Close tooltip"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div>Time: {tooltipPoint.collectiontime?.toLocaleString()}</div>
+          <div>
+            Value: <NumberFormatter value={tooltipPoint.value ?? 0} />
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AggregatedMeasurement } from '@upstream/upstream-api';
+import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
 
 // Types
@@ -9,8 +9,14 @@ interface TooltipData {
   data: AggregatedMeasurement;
 }
 
+interface PointTooltipData extends Partial<MeasurementItem> {
+  x: number;
+  y: number;
+}
+
 interface MainChartProps {
   data: AggregatedMeasurement[];
+  allPoints?: MeasurementItem[];
   scales: {
     xScale: ScaleLinear<number, number>;
     yScale: ScaleLinear<number, number>;
@@ -37,11 +43,17 @@ interface MainChartProps {
   pointRadius: number;
   xAxisTitle: string;
   yAxisTitle: string;
-  setTooltip: React.Dispatch<React.SetStateAction<TooltipData | null>>;
+  setTooltipAggregation: React.Dispatch<
+    React.SetStateAction<TooltipData | null>
+  >;
+  setTooltipPoint?: React.Dispatch<
+    React.SetStateAction<PointTooltipData | null>
+  >;
 }
 
 const MainChart: React.FC<MainChartProps> = ({
   data,
+  allPoints,
   scales,
   chartDimensions,
   paths,
@@ -52,7 +64,8 @@ const MainChart: React.FC<MainChartProps> = ({
   pointRadius,
   xAxisTitle,
   yAxisTitle,
-  setTooltip,
+  setTooltipAggregation,
+  setTooltipPoint,
 }) => {
   return (
     <g
@@ -90,18 +103,35 @@ const MainChart: React.FC<MainChartProps> = ({
             strokeWidth={2}
           />
         ))}
-        {/* Points */}
-        <g>
-          {data.map((d) => (
-            <circle
-              key={d.measurementTime.getTime()}
-              cx={scales.xScale(d.measurementTime.getTime())}
-              cy={scales.yScale(d.value)}
-              r={pointRadius}
-              fill={colors.point}
-            />
-          ))}
-        </g>
+        {/* Individual Points */}
+        {allPoints && setTooltipPoint && (
+          <g>
+            {allPoints.map((d) => (
+              <circle
+                key={`point-${d.collectiontime.getTime()}-${d.value}`}
+                cx={scales.xScale(d.collectiontime.getTime())}
+                cy={scales.yScale(d.value)}
+                r={pointRadius}
+                fill={colors.point}
+                opacity={1}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const svgRect = e.currentTarget
+                    .closest('svg')
+                    ?.getBoundingClientRect();
+                  if (!svgRect) return;
+
+                  setTooltipPoint({
+                    ...d,
+                    x: rect.left - svgRect.left,
+                    y: rect.top - svgRect.top,
+                  });
+                }}
+                style={{ cursor: 'pointer' }}
+              />
+            ))}
+          </g>
+        )}
         {/* Interactive overlay for tooltip */}
         <g>
           {data.map((d) => (
@@ -118,7 +148,7 @@ const MainChart: React.FC<MainChartProps> = ({
                   ?.getBoundingClientRect();
                 if (!svgRect) return;
 
-                setTooltip({
+                setTooltipAggregation({
                   x: rect.left - svgRect.left,
                   y: rect.top - svgRect.top,
                   data: d,
