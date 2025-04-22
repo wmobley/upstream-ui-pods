@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useList } from '../../../hooks/measurements/useList';
+import { useList as useListDownsampled } from '../../../hooks/measurements/useList';
 import QueryWrapper from '../../common/QueryWrapper';
 import { DataPoint } from '../../../utils/dataProcessing';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
@@ -9,23 +9,14 @@ interface TimeSeriesGraphProps {
   campaignId: string;
   stationId: string;
   sensorId: string;
-  initialDownsampleThreshold?: number;
 }
-const Chart = ({
-  campaignId,
-  stationId,
-  sensorId,
-  initialDownsampleThreshold,
-}: TimeSeriesGraphProps) => {
-  const [downsampleThreshold] = useState<number>(
-    initialDownsampleThreshold ?? 10000,
-  );
-  const { data, isLoading, error } = useList(
+const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
+  const { data, isLoading, error } = useListDownsampled(
     campaignId,
     stationId,
     sensorId,
     500000,
-    downsampleThreshold,
+    100,
   );
   const downsampledData = data?.items.map(
     (item) =>
@@ -55,20 +46,10 @@ const Chart = ({
   return (
     <QueryWrapper isLoading={isLoading || !downsampledData} error={error}>
       <div className="p-4 w-full h-full flex flex-col">
-        <div className="text-center mt-2 text-sm text-gray-600 italic">
-          <p>
-            <span className="font-semibold">Note:</span> Data has been
-            downsampled using the LTTB algorithm. Displaying{' '}
-            {data?.downsampledTotal} of {data?.total} points.
-            <span
-              className="ml-2 text-xs cursor-help"
-              title="Largest-Triangle-Three-Buckets (LTTB) is a downsampling algorithm that preserves the visual characteristics of the original data while reducing the number of points."
-            >
-              ⓘ
-            </span>
-          </p>
-        </div>
         <TimeSeriesChart
+          campaignId={campaignId}
+          stationId={stationId}
+          sensorId={sensorId}
           data={downsampledData}
           margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
           showArea={false}

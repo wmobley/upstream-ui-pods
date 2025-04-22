@@ -1,3 +1,4 @@
+import { useList } from '../../../../../hooks/measurements/useList';
 import { useListConfidenceValues } from '../../../../../hooks/measurements/useListConfidenceValues';
 import LineConfidenceChart from '../../../../LineConfidenceChart';
 import { formatNumber } from '../../../../common/NumberFormatter/NumberFortatterUtils';
@@ -36,11 +37,14 @@ export const Chart = ({
     aggregationValue,
   );
 
+  const { data: allPoints } = useList(campaignId, stationId, sensorId);
+
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       {data && (
         <LineConfidenceChart
           data={data}
+          allPoints={allPoints?.items ?? []}
           margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
           colors={{
             line: '#9a6fb0',

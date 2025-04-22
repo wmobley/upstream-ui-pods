@@ -4,9 +4,11 @@ import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { brushX } from 'd3-brush';
 import { select } from 'd3-selection';
-import { AggregatedMeasurement } from '@upstream/upstream-api';
+import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import NumberFormatter from '../common/NumberFormatter/NumberFormatter';
 import { formatNumber } from '../common/NumberFormatter/NumberFortatterUtils';
+import MainChart from './components/MainChart';
+import OverviewChart from './components/OverviewChart';
 
 // Types
 interface TooltipData {
@@ -15,8 +17,14 @@ interface TooltipData {
   data: AggregatedMeasurement;
 }
 
+interface PointTooltipData extends Partial<MeasurementItem> {
+  x: number;
+  y: number;
+}
+
 export interface LineConfidenceChartProps {
   data: AggregatedMeasurement[];
+  allPoints: MeasurementItem[];
   width?: number;
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -91,6 +99,7 @@ const getDataSegments = (
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   data,
+  allPoints,
   width,
   height,
   margin = defaultProps.margin!,
@@ -125,7 +134,12 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   );
 
   // Add tooltip state
-  const [tooltip, setTooltip] = React.useState<TooltipData | null>(null);
+  const [tooltip, setTooltipAggregation] = React.useState<TooltipData | null>(
+    null,
+  );
+
+  const [tooltipPoint, setTooltipPoint] =
+    React.useState<PointTooltipData | null>(null);
 
   // Use resize observer to update dimensions when container size changes
   React.useEffect(() => {
@@ -352,251 +366,35 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     >
       <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
-        <g
-          transform={`translate(${margin.left},${margin.top})`}
-          className="main-chart"
-        >
-          {/* Chart background */}
-          <rect
-            x={0}
-            y={0}
-            width={chartDimensions.innerWidth}
-            height={chartDimensions.mainInnerHeight}
-            fill="white"
-          />
-
-          {/* Data visualization layer */}
-          <g className="data-layer">
-            {/* Render each segment's area */}
-            {paths?.mainAreaPaths.map((path, i) => (
-              <path
-                key={`area-${i}`}
-                d={path || ''}
-                fill={colors.area}
-                fillOpacity={0.2}
-                stroke="none"
-              />
-            ))}
-            {/* Render each segment's line */}
-            {paths?.mainLinePaths.map((path, i) => (
-              <path
-                key={`line-${i}`}
-                d={path || ''}
-                fill="none"
-                stroke={colors.line}
-                strokeWidth={2}
-              />
-            ))}
-            {/* Points */}
-            <g>
-              {data.map((d) => (
-                <circle
-                  key={d.measurementTime.getTime()}
-                  cx={scales.xScale(d.measurementTime.getTime())}
-                  cy={scales.yScale(d.value)}
-                  r={pointRadius}
-                  fill={colors.point}
-                />
-              ))}
-            </g>
-            {/* Interactive overlay for tooltip */}
-            <g>
-              {data.map((d) => (
-                <circle
-                  key={d.measurementTime.getTime()}
-                  cx={scales.xScale(d.measurementTime.getTime())}
-                  cy={scales.yScale(d.value)}
-                  r={pointRadius + 5}
-                  fill="transparent"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const svgRect = e.currentTarget
-                      .closest('svg')
-                      ?.getBoundingClientRect();
-                    if (!svgRect) return;
-
-                    setTooltip({
-                      x: rect.left - svgRect.left,
-                      y: rect.top - svgRect.top,
-                      data: d,
-                    });
-                  }}
-                  style={{ cursor: 'pointer' }}
-                />
-              ))}
-            </g>
-          </g>
-
-          {/* Axes layer - rendered last to be on top */}
-          <g className="axes-layer">
-            {/* X Axis */}
-            <g
-              transform={`translate(0,${chartDimensions.mainInnerHeight})`}
-              className="x-axis"
-            >
-              <rect
-                x={-margin.left}
-                y={0}
-                width={dimensions.width}
-                height={margin.bottom}
-                fill="white"
-              />
-              <line
-                x1={0}
-                x2={chartDimensions.innerWidth}
-                y1={0}
-                y2={0}
-                stroke="var(--gray-400)"
-              />
-              {axisTicks.xTicks.map((tick) => (
-                <g key={tick.value} transform={`translate(${tick.x},0)`}>
-                  <line y1={0} y2={6} stroke="var(--gray-300)" />
-                  <text
-                    y={20}
-                    textAnchor="middle"
-                    fill="var(--gray-600)"
-                    className="text-xs"
-                  >
-                    {tick.label}
-                  </text>
-                </g>
-              ))}
-              <text
-                x={chartDimensions.innerWidth}
-                y={chartDimensions.mainInnerHeight}
-                textAnchor="end"
-                fill="var(--gray-600)"
-                className="text-xs"
-              >
-                {xAxisTitle}
-              </text>
-            </g>
-            {/* Y Axis */}
-            <g className="y-axis">
-              <rect
-                x={-margin.left}
-                y={-margin.top}
-                width={margin.left}
-                height={
-                  chartDimensions.mainInnerHeight + margin.top + margin.bottom
-                }
-                fill="white"
-              />
-              <line
-                x1={0}
-                x2={0}
-                y1={0}
-                y2={chartDimensions.mainInnerHeight}
-                stroke="var(--gray-400)"
-              />
-              {axisTicks.yTicks.map((tick) => (
-                <g key={tick.value} transform={`translate(0,${tick.y})`}>
-                  <line x1={-6} x2={0} stroke="var(--gray-300)" />
-                  <text
-                    x={-12}
-                    y={4}
-                    textAnchor="end"
-                    fill="var(--gray-600)"
-                    className="text-xs"
-                  >
-                    {tick.label}
-                  </text>
-                </g>
-              ))}
-              <text
-                transform="rotate(-90)"
-                x={-chartDimensions.mainInnerHeight}
-                y={-30}
-                textAnchor="start"
-                fill="var(--gray-600)"
-                className="text-xs"
-              >
-                {yAxisTitle}
-              </text>
-            </g>
-          </g>
-        </g>
+        <MainChart
+          data={data}
+          allPoints={allPoints}
+          scales={scales}
+          chartDimensions={chartDimensions}
+          paths={paths}
+          axisTicks={axisTicks}
+          margin={margin}
+          dimensions={dimensions}
+          colors={colors}
+          pointRadius={pointRadius}
+          xAxisTitle={xAxisTitle}
+          yAxisTitle={yAxisTitle}
+          setTooltipAggregation={setTooltipAggregation}
+          setTooltipPoint={setTooltipPoint}
+        />
 
         {/* Overview chart */}
-        <g
-          transform={`translate(${margin.left},${chartDimensions.mainHeight + chartDimensions.spacing})`}
-          className="overview-chart"
-        >
-          {/* Render each segment's area in overview */}
-          {showAreaOverview &&
-            paths?.overviewAreaPaths.map((path, i) => (
-              <path
-                key={`overview-area-${i}`}
-                d={path || ''}
-                fill={colors.area}
-                fillOpacity={0.2}
-                stroke="none"
-              />
-            ))}
-          {/* Render each segment's line in overview */}
-          {showLineOverview &&
-            paths?.overviewLinePaths.map((path, i) => (
-              <path
-                key={`overview-line-${i}`}
-                d={path || ''}
-                fill="none"
-                stroke={colors.line}
-                strokeWidth={1}
-              />
-            ))}
-          {/* Overview chart x-axis */}
-          <g
-            transform={`translate(0,${chartDimensions.overviewInnerHeight})`}
-            className="overview-x-axis"
-          >
-            <line
-              x1={0}
-              x2={chartDimensions.innerWidth}
-              y1={0}
-              y2={0}
-              stroke="var(--gray-400)"
-            />
-            {scales.overviewXScale.ticks(5).map((tick) => (
-              <g
-                key={tick}
-                transform={`translate(${scales.overviewXScale(tick)},0)`}
-              >
-                <line y1={0} y2={6} stroke="var(--gray-300)" />
-                <text
-                  y={20}
-                  textAnchor="middle"
-                  fill="var(--gray-600)"
-                  className="text-xs"
-                >
-                  {xFormatterOverview(tick)}
-                </text>
-              </g>
-            ))}
-            <text
-              x={chartDimensions.innerWidth / 2}
-              y={40}
-              textAnchor="middle"
-              fill="var(--gray-600)"
-              className="text-xs"
-            >
-              Overview
-            </text>
-          </g>
-          {/* Brush container */}
-
-          <g
-            ref={overviewRef}
-            className="brush"
-            style={
-              {
-                '--brush-selection-fill': 'var(--gray-200)',
-                '--brush-selection-stroke': 'var(--gray-400)',
-                '--brush-handle-fill': 'var(--gray-50)',
-                '--brush-handle-stroke': 'var(--gray-500)',
-              } as React.CSSProperties
-            }
-          />
-        </g>
+        <OverviewChart
+          showAreaOverview={showAreaOverview}
+          showLineOverview={showLineOverview}
+          paths={paths}
+          chartDimensions={chartDimensions}
+          scales={scales}
+          margin={margin}
+          colors={colors}
+          xFormatterOverview={xFormatterOverview}
+          overviewRef={overviewRef}
+        />
 
         {/* Right margin background */}
         <rect
@@ -619,7 +417,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           <div className="flex justify-between items-start mb-2">
             <div className="font-medium">Data Point Details</div>
             <button
-              onClick={() => setTooltip(null)}
+              onClick={() => setTooltipAggregation(null)}
               className="ml-2 text-gray-500 hover:text-gray-700"
               aria-label="Close tooltip"
             >
@@ -651,6 +449,43 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             <NumberFormatter value={tooltip.data.parametricUpperBound} /> ]
           </div>
           <div>Point Count: {tooltip.data.pointCount}</div>
+        </div>
+      )}
+      {tooltipPoint && (
+        <div
+          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
+          style={{
+            left: tooltipPoint.x + 10,
+            top: tooltipPoint.y - 10,
+            pointerEvents: 'auto',
+          }}
+        >
+          <div className="flex justify-between items-start mb-2">
+            <div className="font-medium">Individual Point Details</div>
+            <button
+              onClick={() => setTooltipPoint(null)}
+              className="ml-2 text-gray-500 hover:text-gray-700"
+              aria-label="Close tooltip"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div>Time: {tooltipPoint.collectiontime?.toLocaleString()}</div>
+          <div>
+            Value: <NumberFormatter value={tooltipPoint.value ?? 0} />
+          </div>
         </div>
       )}
     </div>
