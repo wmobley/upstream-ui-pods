@@ -285,6 +285,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // Initialize brush
   React.useEffect(() => {
+    console.log('initializing brush');
     if (!scales || !overviewRef.current) return;
 
     // Create brush behavior

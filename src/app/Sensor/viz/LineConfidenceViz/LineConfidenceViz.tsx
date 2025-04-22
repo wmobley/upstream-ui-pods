@@ -53,7 +53,7 @@ const LineConfidenceViz = ({
           ),
         );
       } else {
-        setAggregationInterval('minute');
+        throw new Error('No measurement time range found');
       }
     }
   }, [data]);
