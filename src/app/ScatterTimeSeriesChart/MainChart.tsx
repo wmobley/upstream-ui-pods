@@ -3,7 +3,6 @@ import { extent } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { DataPoint } from '../../utils/dataProcessing';
-import { useListFilterDate } from '../../hooks/measurements/useListFilterDate';
 
 interface TooltipData {
   x: number;
@@ -13,9 +12,6 @@ interface TooltipData {
 
 export interface MainChartProps {
   data: DataPoint[];
-  campaignId: string;
-  stationId: string;
-  sensorId: string;
   width: number;
   height: number;
   margin: { top: number; right: number; bottom: number; left: number };
@@ -37,9 +33,6 @@ export interface MainChartProps {
 }
 
 const MainChart: React.FC<MainChartProps> = ({
-  campaignId,
-  stationId,
-  sensorId,
   data,
   width,
   height,
@@ -56,15 +49,6 @@ const MainChart: React.FC<MainChartProps> = ({
   viewDomain,
   setTooltip,
 }) => {
-  const { data: response } = useListFilterDate(
-    campaignId,
-    stationId,
-    sensorId,
-    500000,
-    undefined,
-    new Date(viewDomain?.[0] ?? 0),
-    new Date(viewDomain?.[1] ?? 0),
-  );
   // Calculate chart dimensions
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;

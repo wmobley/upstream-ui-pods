@@ -6,8 +6,6 @@ import GeometryMap from '../common/GeometryMap/GeometryMap';
 import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 import MainChart from './MainChart';
 import OverviewChart from './OverviewChart';
-import { useListFilterDate } from '../../hooks/measurements/useListFilterDate';
-import { MeasurementItem } from '@upstream/upstream-api';
 
 // Types
 interface TooltipData {
@@ -18,9 +16,6 @@ interface TooltipData {
 
 export interface TimeSeriesChartProps {
   data: DataPoint[];
-  campaignId: string;
-  stationId: string;
-  sensorId: string;
   // For future implementation of data downsampling
   downsampledData?: DataPoint[];
   width?: number;
@@ -75,9 +70,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   data,
   // downsampledData is currently unused but will be used for performance optimization in the future
   // downsampledData,
-  campaignId,
-  stationId,
-  sensorId,
   width,
   height,
   margin = defaultProps.margin!,
@@ -113,36 +105,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   // Add tooltip state
   const [tooltip, setTooltip] = React.useState<TooltipData | null>(null);
 
-  // Add state for filtered data
-  const [filteredData, setFilteredData] = React.useState<DataPoint[]>(data);
-
-  // Call useListFilterDate when viewDomain changes
-  const { data: filteredApiData, isLoading } = useListFilterDate(
-    campaignId,
-    stationId,
-    sensorId,
-    500000,
-    1000,
-    viewDomain ? new Date(viewDomain[0]) : new Date(0),
-    viewDomain ? new Date(viewDomain[1]) : new Date(),
-  );
-
-  // Update filtered data when API data changes
-  React.useEffect(() => {
-    if (filteredApiData && filteredApiData.items) {
-      // Transform API data to DataPoint format if needed
-      const transformedData = filteredApiData.items.map(
-        (item: MeasurementItem) => ({
-          timestamp: new Date(item.collectiontime),
-          value: item.value,
-          geometry: item.geometry,
-        }),
-      ) as DataPoint[];
-
-      setFilteredData(transformedData);
-    }
-  }, [filteredApiData]);
-
   // Use resize observer to update dimensions when container size changes
   React.useEffect(() => {
     if (!containerRef.current || width || height) return;
@@ -176,36 +138,19 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   // Handle brush updates
   const handleBrush = (domain: [number, number]) => {
-    // Debounce the domain update to avoid too many API calls
-    setTimeout(() => {
-      setViewDomain(domain);
-      onBrush?.(domain);
-    }, 500); // Reduce from 1000ms to 500ms for better responsiveness
+    setViewDomain(domain);
+    onBrush?.(domain);
   };
-
-  // The data to render is either the filtered data (if viewDomain is set) or the original data
-  const dataToRender = viewDomain ? filteredData : data;
 
   return (
     <div
       ref={containerRef}
       className="flex flex-col items-center justify-center relative w-full h-full"
     >
-      {isLoading && viewDomain && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-60 z-10">
-          <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-            <div className="text-lg">Loading filtered data...</div>
-          </div>
-        </div>
-      )}
       <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
         <MainChart
-          campaignId={campaignId}
-          stationId={stationId}
-          sensorId={sensorId}
-          data={dataToRender}
+          data={data}
           width={dimensions.width}
           height={chartDimensions.mainHeight}
           margin={margin}
