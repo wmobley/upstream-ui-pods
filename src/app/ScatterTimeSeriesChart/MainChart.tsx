@@ -3,8 +3,6 @@ import { extent } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { DataPoint } from '../../utils/dataProcessing';
-import QueryWrapper from '../common/QueryWrapper';
-import { useListFilterDate } from '../../hooks/measurements/useListFilterDate';
 import { useList } from '../../hooks/measurements/useList';
 
 interface TooltipData {

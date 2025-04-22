@@ -13,7 +13,6 @@ const TimeSeriesGraph = ({
   campaignId,
   stationId,
   sensorId,
-  initialDownsampleThreshold,
 }: TimeSeriesGraphProps) => {
   const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
   return (
@@ -24,7 +23,6 @@ const TimeSeriesGraph = ({
           campaignId={campaignId}
           stationId={stationId}
           sensorId={sensorId}
-          initialDownsampleThreshold={initialDownsampleThreshold}
         />
       </div>
     </QueryWrapper>

@@ -9,17 +9,8 @@ interface TimeSeriesGraphProps {
   campaignId: string;
   stationId: string;
   sensorId: string;
-  initialDownsampleThreshold?: number;
 }
-const Chart = ({
-  campaignId,
-  stationId,
-  sensorId,
-  initialDownsampleThreshold,
-}: TimeSeriesGraphProps) => {
-  const [downsampleThreshold] = useState<number>(
-    initialDownsampleThreshold ?? 10000,
-  );
+const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
   const { data, isLoading, error } = useListDownsampled(
     campaignId,
     stationId,

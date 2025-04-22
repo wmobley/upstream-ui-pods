@@ -37,11 +37,7 @@ export const Chart = ({
     aggregationValue,
   );
 
-  const {
-    data: allPoints,
-    isLoading: isLoadingAllPoints,
-    error: errorAllPoints,
-  } = useList(campaignId, stationId, sensorId);
+  const { data: allPoints } = useList(campaignId, stationId, sensorId);
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
