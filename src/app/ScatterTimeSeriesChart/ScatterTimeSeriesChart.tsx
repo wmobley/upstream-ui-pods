@@ -155,25 +155,27 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     >
       <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
-        <MainChart
-          campaignId={campaignId}
-          stationId={stationId}
-          sensorId={sensorId}
-          width={dimensions.width}
-          height={chartDimensions.mainHeight}
-          margin={margin}
-          showArea={showArea}
-          showLine={showLine}
-          showPoints={showPoints}
-          pointRadius={pointRadius}
-          colors={colors}
-          xAxisTitle={xAxisTitle}
-          yAxisTitle={yAxisTitle}
-          xFormatter={xFormatter}
-          yFormatter={yFormatter}
-          viewDomain={viewDomain}
-          setTooltip={setTooltip}
-        />
+        {viewDomain && (
+          <MainChart
+            campaignId={campaignId}
+            stationId={stationId}
+            sensorId={sensorId}
+            width={dimensions.width}
+            height={chartDimensions.mainHeight}
+            margin={margin}
+            showArea={showArea}
+            showLine={showLine}
+            showPoints={showPoints}
+            pointRadius={pointRadius}
+            colors={colors}
+            xAxisTitle={xAxisTitle}
+            yAxisTitle={yAxisTitle}
+            xFormatter={xFormatter}
+            yFormatter={yFormatter}
+            viewDomain={viewDomain}
+            setTooltip={setTooltip}
+          />
+        )}
 
         {/* Overview chart */}
         <g
