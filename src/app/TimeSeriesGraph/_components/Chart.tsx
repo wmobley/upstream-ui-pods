@@ -70,6 +70,9 @@ const Chart = ({
         </div>
         <TimeSeriesChart
           data={downsampledData}
+          campaignId={campaignId}
+          stationId={stationId}
+          sensorId={sensorId}
           margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
           showArea={false}
           showLine={false}
