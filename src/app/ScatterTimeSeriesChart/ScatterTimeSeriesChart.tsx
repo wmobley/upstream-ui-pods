@@ -16,6 +16,9 @@ interface TooltipData {
 
 export interface TimeSeriesChartProps {
   data: DataPoint[];
+  campaignId: string;
+  stationId: string;
+  sensorId: string;
   // For future implementation of data downsampling
   downsampledData?: DataPoint[];
   width?: number;
@@ -70,6 +73,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   data,
   // downsampledData is currently unused but will be used for performance optimization in the future
   // downsampledData,
+  campaignId,
+  stationId,
+  sensorId,
   width,
   height,
   margin = defaultProps.margin!,
@@ -150,7 +156,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
         <MainChart
-          data={data}
+          campaignId={campaignId}
+          stationId={stationId}
+          sensorId={sensorId}
           width={dimensions.width}
           height={chartDimensions.mainHeight}
           margin={margin}
