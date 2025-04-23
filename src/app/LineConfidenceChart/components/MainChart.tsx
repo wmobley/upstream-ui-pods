@@ -34,7 +34,6 @@ interface MainChartProps {
     yTicks: { value: number; label: string; y: number }[];
   };
   margin: { top: number; right: number; bottom: number; left: number };
-  dimensions: { width: number; height: number };
   colors: {
     line?: string;
     area?: string;
@@ -59,7 +58,6 @@ const MainChart: React.FC<MainChartProps> = ({
   paths,
   axisTicks,
   margin,
-  dimensions,
   colors,
   pointRadius,
   xAxisTitle,
@@ -103,6 +101,18 @@ const MainChart: React.FC<MainChartProps> = ({
             strokeWidth={2}
           />
         ))}
+        {/* Aggregated Points */}
+        {data.map((d) => (
+          <circle
+            key={`point-${d.measurementTime.getTime()}`}
+            cx={scales.xScale(d.measurementTime.getTime())}
+            cy={scales.yScale(d.value)}
+            r={pointRadius * 2}
+            fill={colors.point}
+            opacity={1}
+          />
+        ))}
+
         {/* Individual Points */}
         {allPoints && setTooltipPoint && (
           <g>
@@ -170,7 +180,7 @@ const MainChart: React.FC<MainChartProps> = ({
           <rect
             x={-margin.left}
             y={0}
-            width={dimensions.width}
+            width={chartDimensions.innerWidth}
             height={margin.bottom}
             fill="white"
           />

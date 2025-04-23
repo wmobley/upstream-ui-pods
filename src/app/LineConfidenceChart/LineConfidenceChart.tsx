@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { extent, min, max } from 'd3-array';
+import { extent } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { brushX } from 'd3-brush';
@@ -43,6 +43,8 @@ export interface LineConfidenceChartProps {
   yFormatter?: (value: number) => string;
   onBrush?: (domain: [number, number]) => void;
   gapThresholdMinutes?: number;
+  maxValue: number;
+  minValue: number;
 }
 
 // Default props
@@ -114,6 +116,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   yFormatter = defaultProps.yFormatter!,
   onBrush,
   gapThresholdMinutes = 120,
+  maxValue,
+  minValue,
 }) => {
   // Add refs for brush and container
   const overviewRef = React.useRef<SVGGElement>(null);
@@ -121,8 +125,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // Add state for dimensions
   const [dimensions, setDimensions] = React.useState({
-    width: width || 800,
-    height: height || 400,
+    width: width || 1000,
+    height: height || 800,
   });
 
   // Track if initial selection has been set
@@ -161,9 +165,9 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // Calculate dimensions for main and overview charts
   const chartDimensions = React.useMemo(() => {
-    const mainHeight = dimensions.height * 0.7; // Main chart takes 70% of total height
+    const mainHeight = dimensions.height * 0.75; // Main chart takes 70% of total height
     const overviewHeight = dimensions.height * 0.2; // Overview takes 20% of total height
-    const spacing = dimensions.height * 0.1; // 10% spacing between charts
+    const spacing = dimensions.height * 0.05; // 5% spacing between charts
 
     const innerWidth = dimensions.width - margin.left - margin.right;
     const mainInnerHeight = mainHeight - margin.top - margin.bottom;
@@ -182,10 +186,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   // Memoize scales for both charts
   const scales = React.useMemo(() => {
     const xExtent = extent(data, (d) => d.measurementTime.getTime());
-    const yExtent = [
-      min(data, (d) => d.parametricLowerBound) as number,
-      max(data, (d) => d.parametricUpperBound) as number,
-    ];
+    const yExtent = [minValue, maxValue];
 
     if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
       return null;
@@ -285,6 +286,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // Initialize brush
   React.useEffect(() => {
+    console.log('initializing brush');
     if (!scales || !overviewRef.current) return;
 
     // Create brush behavior
@@ -374,7 +376,6 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           paths={paths}
           axisTicks={axisTicks}
           margin={margin}
-          dimensions={dimensions}
           colors={colors}
           pointRadius={pointRadius}
           xAxisTitle={xAxisTitle}
@@ -415,7 +416,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           }}
         >
           <div className="flex justify-between items-start mb-2">
-            <div className="font-medium">Data Point Details</div>
+            <div className="font-medium">Aggregated Point Details</div>
             <button
               onClick={() => setTooltipAggregation(null)}
               className="ml-2 text-gray-500 hover:text-gray-700"
