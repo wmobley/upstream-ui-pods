@@ -88,7 +88,7 @@ const LineConfidenceViz = ({
               </select>
             </div>
             <Link
-              to={`/sensor/confidence-explanation`}
+              to={`/docs/confidence-explanation`}
               className="text-indigo-600 hover:text-indigo-800 flex items-center"
             >
               <svg
