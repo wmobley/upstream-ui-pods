@@ -121,8 +121,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // Add state for dimensions
   const [dimensions, setDimensions] = React.useState({
-    width: width || 800,
-    height: height || 400,
+    width: width || 1000,
+    height: height || 800,
   });
 
   // Track if initial selection has been set
@@ -161,7 +161,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // Calculate dimensions for main and overview charts
   const chartDimensions = React.useMemo(() => {
-    const mainHeight = dimensions.height * 0.7; // Main chart takes 70% of total height
+    const mainHeight = dimensions.height * 0.6; // Main chart takes 70% of total height
     const overviewHeight = dimensions.height * 0.2; // Overview takes 20% of total height
     const spacing = dimensions.height * 0.1; // 10% spacing between charts
 
