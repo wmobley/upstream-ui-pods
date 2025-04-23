@@ -69,6 +69,7 @@ const LineConfidenceViz = ({
       {data && (
         <div className="flex flex-col items-center h-screen">
           <MeasurementSummary data={data} />
+
           <div className="mb-4 flex items-center justify-between w-full max-w-4xl">
             <div className="flex items-center">
               <label htmlFor="aggregationInterval" className="mr-2">
@@ -88,7 +89,7 @@ const LineConfidenceViz = ({
               </select>
             </div>
             <Link
-              to={`/sensor/confidence-explanation`}
+              to={`/docs/confidence-explanation`}
               className="text-indigo-600 hover:text-indigo-800 flex items-center"
             >
               <svg
@@ -105,6 +106,14 @@ const LineConfidenceViz = ({
               </svg>
               About Confidence Intervals
             </Link>
+          </div>
+
+          <div className="mb-4 w-full max-w-4xl text-sm bg-blue-50 p-3 rounded-md border border-blue-100">
+            <p className="text-blue-800">
+              All confidence intervals displayed in the visualization represent
+              a 95% confidence level, meaning we can be 95% confident that the
+              true value falls within the displayed range.
+            </p>
           </div>
 
           {aggregationInterval && (
