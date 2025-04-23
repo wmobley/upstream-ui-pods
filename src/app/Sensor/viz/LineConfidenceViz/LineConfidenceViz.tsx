@@ -107,6 +107,14 @@ const LineConfidenceViz = ({
             </Link>
           </div>
 
+          <div className="mb-4 w-full max-w-4xl text-sm bg-blue-50 p-3 rounded-md border border-blue-100">
+            <p className="text-blue-800">
+              All confidence intervals displayed in the visualization represent
+              a 95% confidence level, meaning we can be 95% confident that the
+              true value falls within the displayed range.
+            </p>
+          </div>
+
           {aggregationInterval && (
             <Chart
               campaignId={campaignId}

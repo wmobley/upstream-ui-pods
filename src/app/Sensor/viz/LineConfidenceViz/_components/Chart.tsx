@@ -72,6 +72,8 @@ export const Chart = ({
           onBrush={(domain) => {
             setSelectedTimeRange(domain);
           }}
+          maxValue={Math.max(...data.map((item) => item.maxValue))}
+          minValue={Math.min(...data.map((item) => item.minValue))}
         />
       )}
     </QueryWrapper>
