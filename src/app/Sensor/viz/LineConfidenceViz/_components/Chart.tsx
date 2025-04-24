@@ -3,6 +3,7 @@ import { useListConfidenceValues } from '../../../../../hooks/measurements/useLi
 import LineConfidenceChart from '../../../../LineConfidenceChart';
 import { formatNumber } from '../../../../common/NumberFormatter/NumberFortatterUtils';
 import QueryWrapper from '../../../../common/QueryWrapper';
+import { useLineConfidence } from '../context/LineConfidenceContext';
 
 type AggregationInterval =
   | 'second'
@@ -12,21 +13,22 @@ type AggregationInterval =
   | 'week'
   | 'month';
 
+interface ChartProps {
+  campaignId: string;
+  stationId: string;
+  sensorId: string;
+  aggregationInterval: AggregationInterval;
+}
+
 export const Chart = ({
   campaignId,
   stationId,
   sensorId,
-  selectedTimeRange,
-  setSelectedTimeRange,
   aggregationInterval,
-}: {
-  campaignId: string;
-  stationId: string;
-  sensorId: string;
-  selectedTimeRange: [number, number] | null;
-  setSelectedTimeRange: (domain: [number, number]) => void;
-  aggregationInterval: AggregationInterval;
-}) => {
+}: ChartProps) => {
+  // Get the time range from context
+  const { selectedTimeRange, setSelectedTimeRange } = useLineConfidence();
+
   const aggregationValue = aggregationInterval === 'second' ? 10 : 1;
 
   const { data, isLoading, error } = useListConfidenceValues(

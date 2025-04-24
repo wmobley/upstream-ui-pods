@@ -45,8 +45,6 @@ const LineConfidenceContent = ({
     data,
     isLoading,
     error,
-    selectedTimeRange,
-    setSelectedTimeRange,
     aggregationInterval,
     handleAggregationIntervalChange,
   } = useLineConfidence();
@@ -107,8 +105,6 @@ const LineConfidenceContent = ({
               campaignId={campaignId}
               stationId={stationId}
               sensorId={sensorId}
-              selectedTimeRange={selectedTimeRange}
-              setSelectedTimeRange={setSelectedTimeRange}
               aggregationInterval={aggregationInterval}
             />
           )}
