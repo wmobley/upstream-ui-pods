@@ -32,6 +32,53 @@ export const AGGREGATION_INTERVALS: AggregationInterval[] = [
   'month',
 ];
 
+interface SensorInfo {
+  id: string;
+  campaignId: string;
+  stationId: string;
+}
+
+interface SensorData {
+  info: SensorInfo;
+  aggregatedData: AggregatedMeasurement[] | null;
+  aggregatedLoading: boolean;
+  aggregatedError: Error | null;
+  allPoints: ListMeasurementsResponsePagination | null;
+}
+
+// Custom hook to fetch sensor data
+const useSensorData = (
+  sensorInfo: SensorInfo,
+  effectiveInterval: string,
+  aggregationValue: number,
+): SensorData => {
+  const {
+    data: sensorAggregatedData,
+    isLoading: sensorAggregatedLoading,
+    error: sensorAggregatedError,
+  } = useListConfidenceValues(
+    sensorInfo.campaignId,
+    sensorInfo.stationId,
+    sensorInfo.id,
+    effectiveInterval,
+    aggregationValue,
+  );
+
+  const { data: sensorAllPoints } = useList(
+    sensorInfo.campaignId,
+    sensorInfo.stationId,
+    sensorInfo.id,
+  );
+
+  return {
+    info: sensorInfo,
+    aggregatedData: sensorAggregatedData,
+    aggregatedLoading: sensorAggregatedLoading,
+    aggregatedError: sensorAggregatedError,
+    allPoints: sensorAllPoints,
+  };
+};
+
 interface LineConfidenceContextProps {
   data: GetSensorResponse | null;
   isLoading: boolean;
@@ -51,6 +98,9 @@ interface LineConfidenceContextProps {
   aggregatedLoading: boolean;
   aggregatedError: Error | null;
   allPoints: ListMeasurementsResponsePagination | null;
+  additionalSensors: SensorData[];
+  addSensor: (campaignId: string, stationId: string, sensorId: string) => void;
+  removeSensor: (sensorId: string) => void;
 }
 
 const LineConfidenceContext = createContext<
@@ -64,6 +114,31 @@ interface LineConfidenceProviderProps {
   sensorId: string;
 }
 
+// Helper component to manage additional sensor data
+const AdditionalSensor = ({
+  sensorInfo,
+  effectiveInterval,
+  aggregationValue,
+  onDataReady,
+}: {
+  sensorInfo: SensorInfo;
+  effectiveInterval: string;
+  aggregationValue: number;
+  onDataReady: (data: SensorData) => void;
+}) => {
+  const sensorData = useSensorData(
+    sensorInfo,
+    effectiveInterval,
+    aggregationValue,
+  );
+
+  useEffect(() => {
+    onDataReady(sensorData);
+  }, [sensorData, onDataReady]);
+
+  return null;
+};
+
 export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   children,
   campaignId,
@@ -76,6 +151,12 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   >(null);
   const [aggregationInterval, setAggregationInterval] =
     useState<AggregationInterval | null>(null);
+  const [additionalSensorInfos, setAdditionalSensorInfos] = useState<
+    SensorInfo[]
+  >([]);
+  const [additionalSensorsData, setAdditionalSensorsData] = useState<
+    SensorData[]
+  >([]);
 
   useEffect(() => {
     if (data) {
@@ -116,6 +197,75 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
 
   const { data: allPoints } = useList(campaignId, stationId, sensorId);
 
+  // Handle additional sensor data updates
+  const handleSensorDataUpdate = (updatedSensorData: SensorData) => {
+    setAdditionalSensorsData((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) => item.info.id === updatedSensorData.info.id,
+      );
+
+      if (existingIndex >= 0) {
+        // Update existing sensor data
+        const newData = [...prev];
+        newData[existingIndex] = updatedSensorData;
+        return newData;
+      } else {
+        // Add new sensor data
+        return [...prev, updatedSensorData];
+      }
+    });
+  };
+
+  // Clean up removed sensors from the data array
+  useEffect(() => {
+    if (additionalSensorsData.length > 0) {
+      setAdditionalSensorsData((prev) =>
+        prev.filter((sensorData) =>
+          additionalSensorInfos.some((info) => info.id === sensorData.info.id),
+        ),
+      );
+    }
+  }, [additionalSensorInfos]);
+
+  // Function to add a new sensor
+  const addSensor = (
+    newCampaignId: string,
+    newStationId: string,
+    newSensorId: string,
+  ) => {
+    // Check if the sensor is already added
+    if (
+      (newSensorId === sensorId &&
+        newCampaignId === campaignId &&
+        newStationId === stationId) ||
+      additionalSensorInfos.some(
+        (sensor) =>
+          sensor.id === newSensorId &&
+          sensor.campaignId === newCampaignId &&
+          sensor.stationId === newStationId,
+      )
+    ) {
+      return; // Sensor already exists
+    }
+
+    // Add the new sensor info to the list
+    setAdditionalSensorInfos((prev) => [
+      ...prev,
+      {
+        id: newSensorId,
+        campaignId: newCampaignId,
+        stationId: newStationId,
+      },
+    ]);
+  };
+
+  // Function to remove a sensor
+  const removeSensor = (sensorIdToRemove: string) => {
+    setAdditionalSensorInfos((prev) =>
+      prev.filter((sensor) => sensor.id !== sensorIdToRemove),
+    );
+  };
+
   const value = {
     data,
     isLoading,
@@ -129,10 +279,23 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     aggregatedLoading,
     aggregatedError,
     allPoints,
+    additionalSensors: additionalSensorsData,
+    addSensor,
+    removeSensor,
   };
 
   return (
     <LineConfidenceContext.Provider value={value}>
+      {/* Render a component for each additional sensor to manage its data */}
+      {additionalSensorInfos.map((sensorInfo) => (
+        <AdditionalSensor
+          key={sensorInfo.id}
+          sensorInfo={sensorInfo}
+          effectiveInterval={effectiveInterval}
+          aggregationValue={aggregationValue}
+          onDataReady={handleSensorDataUpdate}
+        />
+      ))}
       {children}
     </LineConfidenceContext.Provider>
   );
