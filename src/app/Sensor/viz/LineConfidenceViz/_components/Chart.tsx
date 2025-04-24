@@ -16,7 +16,6 @@ export const Chart = () => {
     allPoints,
     additionalSensors,
     renderDataPoints,
-    setRenderDataPoints,
     addingSensor,
   } = useLineConfidence();
 
