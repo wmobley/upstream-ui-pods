@@ -11,6 +11,17 @@ import { useChartScales } from './hooks/useChartScales';
 import { useChartBrush } from './hooks/useChartBrush';
 import { defaultChartStyles, defaultFormatters } from './utils/chartUtils';
 
+// Define the structure of additional sensors
+export interface AdditionalSensor {
+  info: {
+    id: string;
+    campaignId: string;
+    stationId: string;
+  };
+  aggregatedData: AggregatedMeasurement[] | null;
+  allPoints: MeasurementItem[] | null;
+}
+
 // Props
 export interface LineConfidenceChartProps {
   data: AggregatedMeasurement[];
@@ -35,6 +46,12 @@ export interface LineConfidenceChartProps {
   gapThresholdMinutes?: number;
   maxValue: number;
   minValue: number;
+  additionalSensors?: AdditionalSensor[];
+  colorPalette?: Array<{
+    line: string;
+    area: string;
+    point: string;
+  }>;
 }
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
@@ -56,6 +73,15 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   gapThresholdMinutes = 120,
   maxValue,
   minValue,
+  additionalSensors = [],
+  colorPalette = [
+    { line: '#9a6fb0', area: '#9a6fb0', point: '#9a6fb0' }, // Primary sensor
+    { line: '#4287f5', area: '#4287f5', point: '#4287f5' },
+    { line: '#42c5f5', area: '#42c5f5', point: '#42c5f5' },
+    { line: '#42f5a7', area: '#42f5a7', point: '#42f5a7' },
+    { line: '#f5cd42', area: '#f5cd42', point: '#f5cd42' },
+    { line: '#f54242', area: '#f54242', point: '#f54242' },
+  ],
 }) => {
   // Container ref for resizing
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -135,6 +161,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           yAxisTitle={yAxisTitle}
           setTooltipAggregation={setTooltipAggregation}
           setTooltipPoint={setTooltipPoint}
+          additionalSensors={additionalSensors}
+          colorPalette={colorPalette}
         />
 
         {/* Overview chart */}
