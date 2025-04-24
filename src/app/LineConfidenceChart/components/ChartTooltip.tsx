@@ -23,6 +23,7 @@ interface ChartTooltipProps {
   setTooltipPoint: React.Dispatch<
     React.SetStateAction<PointTooltipData | null>
   >;
+  renderDataPoints: boolean;
 }
 
 const ChartTooltip: React.FC<ChartTooltipProps> = ({
@@ -30,6 +31,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
   tooltipPoint,
   setTooltipAggregation,
   setTooltipPoint,
+  renderDataPoints,
 }) => {
   return (
     <>
@@ -80,7 +82,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
         </div>
       )}
 
-      {tooltipPoint && (
+      {tooltipPoint && renderDataPoints && (
         <div
           className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
           style={{

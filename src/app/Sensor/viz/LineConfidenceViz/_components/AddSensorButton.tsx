@@ -30,10 +30,10 @@ export const AddSensorButton: React.FC<AddSensorButtonProps> = ({
     <div className={className}>
       {!isFormOpen ? (
         <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700"
           onClick={() => setIsFormOpen(true)}
         >
-          Add Comparison Sensor
+          Compare
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="p-4 border rounded shadow-sm">

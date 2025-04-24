@@ -15,6 +15,8 @@ export const Chart = () => {
     aggregatedError,
     allPoints,
     additionalSensors,
+    renderDataPoints,
+    setRenderDataPoints,
   } = useLineConfidence();
 
   // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
@@ -42,8 +44,16 @@ export const Chart = () => {
       }
     });
 
-    const max = Math.max(...allData.map((item) => item.maxValue));
-    const min = Math.min(...allData.map((item) => item.minValue));
+    const max = Math.max(
+      ...allData.map((item) =>
+        Math.max(item.parametricUpperBound, item.maxValue),
+      ),
+    );
+    const min = Math.min(
+      ...allData.map((item) =>
+        Math.min(item.parametricLowerBound, item.minValue),
+      ),
+    );
 
     return { min, max };
   };
@@ -100,6 +110,7 @@ export const Chart = () => {
             minValue={minValue}
             additionalSensors={chartAdditionalSensors}
             colorPalette={colorPalette}
+            renderDataPoints={renderDataPoints}
           />
         </div>
       )}

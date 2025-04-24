@@ -59,6 +59,7 @@ interface MainChartProps {
     area: string;
     point: string;
   }>;
+  renderDataPoints: boolean;
 }
 
 const MainChart: React.FC<MainChartProps> = ({
@@ -77,6 +78,7 @@ const MainChart: React.FC<MainChartProps> = ({
   setTooltipPoint,
   additionalSensors,
   colorPalette,
+  renderDataPoints,
 }) => {
   return (
     <g
@@ -148,7 +150,7 @@ const MainChart: React.FC<MainChartProps> = ({
             key={`point-${d.measurementTime.getTime()}`}
             cx={scales.xScale(d.measurementTime.getTime())}
             cy={scales.yScale(d.value)}
-            r={pointRadius * 2}
+            r={pointRadius}
             fill={colorPalette?.[0]?.point || colors.point}
             opacity={1}
           />
@@ -161,7 +163,7 @@ const MainChart: React.FC<MainChartProps> = ({
               key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
               cx={scales.xScale(d.measurementTime.getTime())}
               cy={scales.yScale(d.value)}
-              r={pointRadius * 2}
+              r={pointRadius}
               fill={colorPalette?.[i + 1]?.point || colors.point}
               opacity={1}
             />
@@ -169,7 +171,7 @@ const MainChart: React.FC<MainChartProps> = ({
         )}
 
         {/* Individual Points */}
-        {allPoints && setTooltipPoint && (
+        {allPoints && renderDataPoints && setTooltipPoint && (
           <g>
             {allPoints.map((d) => (
               <circle
@@ -197,7 +199,7 @@ const MainChart: React.FC<MainChartProps> = ({
             ))}
           </g>
         )}
-        {/* Interactive overlay for tooltip */}
+        {/* Interactive overlayfor tooltip */}
         <g>
           {data.map((d) => (
             <circle
@@ -222,6 +224,34 @@ const MainChart: React.FC<MainChartProps> = ({
               style={{ cursor: 'pointer' }}
             />
           ))}
+        </g>
+        {/* Interactive overlay for tooltip */}
+        <g>
+          {additionalSensors?.map((sensor, i) =>
+            sensor.aggregatedData?.map((d) => (
+              <circle
+                key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
+                cx={scales.xScale(d.measurementTime.getTime())}
+                cy={scales.yScale(d.value)}
+                r={pointRadius + 5}
+                fill="transparent"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const svgRect = e.currentTarget
+                    .closest('svg')
+                    ?.getBoundingClientRect();
+                  if (!svgRect) return;
+
+                  setTooltipAggregation({
+                    x: rect.left - svgRect.left,
+                    y: rect.top - svgRect.top,
+                    data: d,
+                  });
+                }}
+                style={{ cursor: 'pointer' }}
+              />
+            )),
+          )}
         </g>
       </g>
 

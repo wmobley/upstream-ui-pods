@@ -26,15 +26,17 @@ export const AdditionalSensorsList: React.FC<AdditionalSensorsListProps> = ({
             <div>
               <span className="font-medium">Sensor {sensor.info.id}</span>
               <div className="text-sm text-gray-500">
-                Campaign: {sensor.info.campaignId}, Station:{' '}
-                {sensor.info.stationId}
+                {sensor.aggregatedData?.[0].measurementTime.toLocaleString()} to
+                {sensor.aggregatedData?.[
+                  sensor.aggregatedData.length - 1
+                ].measurementTime.toLocaleString()}
               </div>
               <div className="text-xs mt-1">
                 {sensor.aggregatedLoading
                   ? 'Loading data...'
                   : sensor.aggregatedError
                     ? `Error: ${sensor.aggregatedError.message}`
-                    : `${sensor.aggregatedData?.length || 0} data points loaded`}
+                    : `${sensor.aggregatedData?.length || 0} aggregated points loaded`}
               </div>
             </div>
             <button

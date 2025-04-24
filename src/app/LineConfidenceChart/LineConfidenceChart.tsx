@@ -52,6 +52,7 @@ export interface LineConfidenceChartProps {
     area: string;
     point: string;
   }>;
+  renderDataPoints: boolean;
 }
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
@@ -82,6 +83,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     { line: '#f5cd42', area: '#f5cd42', point: '#f5cd42' },
     { line: '#f54242', area: '#f54242', point: '#f54242' },
   ],
+  renderDataPoints,
 }) => {
   // Container ref for resizing
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -164,6 +166,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           setTooltipPoint={setTooltipPoint}
           additionalSensors={additionalSensors}
           colorPalette={colorPalette}
+          renderDataPoints={renderDataPoints}
         />
 
         {/* Overview chart */}
@@ -196,6 +199,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
         tooltipPoint={tooltipPoint}
         setTooltipAggregation={setTooltipAggregation}
         setTooltipPoint={setTooltipPoint}
+        renderDataPoints={renderDataPoints}
       />
     </div>
   );

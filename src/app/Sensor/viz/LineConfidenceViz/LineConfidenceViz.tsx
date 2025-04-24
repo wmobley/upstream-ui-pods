@@ -41,6 +41,8 @@ const LineConfidenceContent = () => {
     error,
     aggregationInterval,
     handleAggregationIntervalChange,
+    renderDataPoints,
+    setRenderDataPoints,
   } = useLineConfidence();
 
   return (
@@ -68,9 +70,21 @@ const LineConfidenceContent = () => {
             </div>
             <div className="flex space-x-3 items-center">
               <AddSensorButton />
+              <button
+                onClick={() => setRenderDataPoints(!renderDataPoints)}
+                className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700"
+                aria-label={
+                  renderDataPoints ? 'Hide Data Points' : 'Show Data Points'
+                }
+                title={
+                  renderDataPoints ? 'Hide Data Points' : 'Show Data Points'
+                }
+              >
+                {renderDataPoints ? 'Hide Data Points' : 'Show Data Points'}
+              </button>
               <Link
                 to={`/docs/confidence-explanation`}
-                className="text-indigo-600 hover:text-indigo-800 flex items-center"
+                className="text-primary-600 hover:text-primary-800 flex items-center"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

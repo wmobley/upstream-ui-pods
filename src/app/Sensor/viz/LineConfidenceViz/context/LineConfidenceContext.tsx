@@ -101,6 +101,8 @@ interface LineConfidenceContextProps {
   additionalSensors: SensorData[];
   addSensor: (campaignId: string, stationId: string, sensorId: string) => void;
   removeSensor: (sensorId: string) => void;
+  renderDataPoints: boolean;
+  setRenderDataPoints: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const LineConfidenceContext = createContext<
@@ -167,6 +169,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const [additionalSensorsData, setAdditionalSensorsData] = useState<
     SensorData[]
   >([]);
+  const [renderDataPoints, setRenderDataPoints] = useState<boolean>(false);
 
   useEffect(() => {
     if (data) {
@@ -306,6 +309,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     additionalSensors: additionalSensorsData,
     addSensor,
     removeSensor,
+    renderDataPoints,
+    setRenderDataPoints,
   };
 
   return (
