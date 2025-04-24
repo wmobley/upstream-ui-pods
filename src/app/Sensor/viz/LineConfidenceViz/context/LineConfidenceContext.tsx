@@ -6,8 +6,14 @@ import React, {
   ReactNode,
 } from 'react';
 import { useDetail } from '../../../../../hooks/sensor/useDetail';
+import { useList } from '../../../../../hooks/measurements/useList';
+import { useListConfidenceValues } from '../../../../../hooks/measurements/useListConfidenceValues';
 import { selectAggregationInterval } from '../../../../../utils/aggregationProcessing';
-import { GetSensorResponse } from '@upstream/upstream-api';
+import {
+  GetSensorResponse,
+  AggregatedMeasurement,
+  ListMeasurementsResponsePagination,
+} from '@upstream/upstream-api';
 
 export type AggregationInterval =
   | 'second'
@@ -41,6 +47,10 @@ interface LineConfidenceContextProps {
   handleAggregationIntervalChange: (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => void;
+  aggregatedData: AggregatedMeasurement[] | null;
+  aggregatedLoading: boolean;
+  aggregatedError: Error | null;
+  allPoints: ListMeasurementsResponsePagination | null;
 }
 
 const LineConfidenceContext = createContext<
@@ -88,6 +98,24 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     setAggregationInterval(event.target.value as AggregationInterval);
   };
 
+  const aggregationValue = aggregationInterval === 'second' ? 10 : 1;
+
+  const effectiveInterval = aggregationInterval || 'minute';
+
+  const {
+    data: aggregatedData,
+    isLoading: aggregatedLoading,
+    error: aggregatedError,
+  } = useListConfidenceValues(
+    campaignId,
+    stationId,
+    sensorId,
+    effectiveInterval,
+    aggregationValue,
+  );
+
+  const { data: allPoints } = useList(campaignId, stationId, sensorId);
+
   const value = {
     data,
     isLoading,
@@ -97,6 +125,10 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     aggregationInterval,
     setAggregationInterval,
     handleAggregationIntervalChange,
+    aggregatedData,
+    aggregatedLoading,
+    aggregatedError,
+    allPoints,
   };
 
   return (

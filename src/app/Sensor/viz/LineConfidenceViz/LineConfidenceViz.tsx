@@ -26,21 +26,13 @@ const LineConfidenceViz = ({
       stationId={stationId}
       sensorId={sensorId}
     >
-      <LineConfidenceContent
-        campaignId={campaignId}
-        stationId={stationId}
-        sensorId={sensorId}
-      />
+      <LineConfidenceContent />
     </LineConfidenceProvider>
   );
 };
 
 // Inner component that uses the context
-const LineConfidenceContent = ({
-  campaignId,
-  stationId,
-  sensorId,
-}: MeasurementsSummaryProps) => {
+const LineConfidenceContent = () => {
   const {
     data,
     isLoading,
@@ -100,14 +92,7 @@ const LineConfidenceContent = ({
             </p>
           </div>
 
-          {aggregationInterval && (
-            <Chart
-              campaignId={campaignId}
-              stationId={stationId}
-              sensorId={sensorId}
-              aggregationInterval={aggregationInterval}
-            />
-          )}
+          <Chart />
         </div>
       )}
     </QueryWrapper>
