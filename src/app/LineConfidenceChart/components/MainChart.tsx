@@ -112,7 +112,7 @@ const DataPoint: React.FC<DataPointProps> = React.memo(
       cx={cx}
       cy={cy}
       r={radius}
-      fill={isInteractive ? 'transparent' : color}
+      fill={color}
       opacity={1}
       onClick={onClick}
       style={isInteractive ? { cursor: 'pointer' } : undefined}
@@ -245,40 +245,7 @@ const MainChart: React.FC<MainChartProps> = ({
             radius={pointRadius}
             color={getSensorColor('point', 0)}
             pointKey={`point-${d.measurementTime.getTime()}`}
-          />
-        ))}
-
-        {/* Additional Sensors Points */}
-        {additionalSensors?.map((sensor, sensorIndex) =>
-          sensor.aggregatedData?.map((d) => (
-            <DataPoint
-              key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
-              cx={scales.xScale(d.measurementTime.getTime())}
-              cy={scales.yScale(d.value)}
-              radius={pointRadius}
-              color={getSensorColor('point', sensorIndex + 1)}
-              pointKey={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
-            />
-          )),
-        )}
-      </>
-    ),
-    [data, additionalSensors, scales, pointRadius, getSensorColor],
-  );
-
-  const renderInteractivePoints = React.useMemo(
-    () => (
-      <>
-        {/* Interactive overlay for tooltip - primary sensor */}
-        {data.map((d) => (
-          <DataPoint
-            key={`interactive-${d.measurementTime.getTime()}`}
-            cx={scales.xScale(d.measurementTime.getTime())}
-            cy={scales.yScale(d.value)}
-            radius={pointRadius + 5}
-            color="transparent"
-            pointKey={`interactive-${d.measurementTime.getTime()}`}
-            isInteractive
+            isInteractive={true}
             onClick={(e) => {
               const tooltipPos = handleTooltipPosition(e, d);
               if (tooltipPos) {
@@ -292,17 +259,17 @@ const MainChart: React.FC<MainChartProps> = ({
           />
         ))}
 
-        {/* Interactive overlay for tooltip - additional sensors */}
-        {additionalSensors?.map((sensor) =>
+        {/* Additional Sensors Points */}
+        {additionalSensors?.map((sensor, sensorIndex) =>
           sensor.aggregatedData?.map((d) => (
             <DataPoint
-              key={`interactive-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
               cx={scales.xScale(d.measurementTime.getTime())}
               cy={scales.yScale(d.value)}
-              radius={pointRadius + 5}
-              color="transparent"
-              pointKey={`interactive-${sensor.info.id}-${d.measurementTime.getTime()}`}
-              isInteractive
+              radius={pointRadius}
+              color={getSensorColor('point', sensorIndex + 1)}
+              pointKey={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              isInteractive={true}
               onClick={(e) => {
                 const tooltipPos = handleTooltipPosition(e, d);
                 if (tooltipPos) {
@@ -318,21 +285,32 @@ const MainChart: React.FC<MainChartProps> = ({
         )}
       </>
     ),
-    [
-      data,
-      additionalSensors,
-      scales,
-      pointRadius,
-      setTooltipAggregation,
-      handleTooltipPosition,
-    ],
+    [data, additionalSensors, scales, pointRadius, getSensorColor],
   );
 
   const renderIndividualPoints = React.useMemo(() => {
-    if (!allPoints || !renderDataPoints || !setTooltipPoint) return null;
+    // First check renderDataPoints flag - if false, don't render points
+    if (!renderDataPoints) {
+      console.log('Individual points not rendered: renderDataPoints is false');
+      return null;
+    } else {
+      console.log('Individual points rendered: renderDataPoints is true');
+    }
+    // Then check if we have the data needed to render points
+    if (!allPoints || allPoints.length === 0) {
+      console.log('Individual points not rendered: no data points available');
+      return null;
+    }
 
+    // Finally check if we have the tooltip handler
+    if (!setTooltipPoint) {
+      console.log('Individual points not rendered: missing tooltip handler');
+      return null;
+    }
+
+    // If all conditions are met, render the points
     return (
-      <g>
+      <>
         {allPoints.map((d) => (
           <DataPoint
             key={`individual-${d.collectiontime.getTime()}-${d.value}`}
@@ -354,7 +332,30 @@ const MainChart: React.FC<MainChartProps> = ({
             }}
           />
         ))}
-      </g>
+        {additionalSensors?.map((sensor, sensorIndex) =>
+          sensor.allPoints?.map((d, index) => (
+            <DataPoint
+              key={`individual-${d.collectiontime.getTime()}-${d.value}-${index}`}
+              cx={scales.xScale(d.collectiontime.getTime())}
+              cy={scales.yScale(d.value)}
+              radius={pointRadius}
+              color={getSensorColor('point', sensorIndex + 1)}
+              pointKey={`individual-${d.collectiontime.getTime()}-${d.value}-${index}`}
+              isInteractive
+              onClick={(e) => {
+                const tooltipPos = handleTooltipPosition(e, d);
+                if (tooltipPos) {
+                  setTooltipPoint({
+                    ...d,
+                    x: tooltipPos.x,
+                    y: tooltipPos.y,
+                  });
+                }
+              }}
+            />
+          )),
+        )}
+      </>
     );
   }, [
     allPoints,
@@ -493,7 +494,7 @@ const MainChart: React.FC<MainChartProps> = ({
         {renderLinePaths}
         {renderDataPointCircles}
         {renderIndividualPoints}
-        {renderInteractivePoints}
+        {/* {renderInteractivePoints} */}
       </g>
 
       {/* Axes layer - rendered last to be on top */}
