@@ -62,6 +62,65 @@ interface MainChartProps {
   renderDataPoints: boolean;
 }
 
+// Helper Components
+interface PathProps {
+  path: string | null;
+  color: string | undefined;
+  keyPrefix: string;
+  index: number;
+  isArea?: boolean;
+}
+
+const ChartPath: React.FC<PathProps> = React.memo(
+  ({ path, color, keyPrefix, index, isArea }) => {
+    if (!path) return null;
+
+    return isArea ? (
+      <path
+        key={`${keyPrefix}-${index}`}
+        d={path}
+        fill={color}
+        fillOpacity={0.2}
+        stroke="none"
+      />
+    ) : (
+      <path
+        key={`${keyPrefix}-${index}`}
+        d={path}
+        fill="none"
+        stroke={color}
+        strokeWidth={2}
+      />
+    );
+  },
+);
+
+interface DataPointProps {
+  cx: number;
+  cy: number;
+  radius: number;
+  color: string | undefined;
+  pointKey: string;
+  isInteractive?: boolean;
+  onClick?: (e: React.MouseEvent<SVGCircleElement>) => void;
+}
+
+const DataPoint: React.FC<DataPointProps> = React.memo(
+  ({ cx, cy, radius, color, pointKey, isInteractive, onClick }) => (
+    <circle
+      key={pointKey}
+      cx={cx}
+      cy={cy}
+      r={radius}
+      fill={isInteractive ? 'transparent' : color}
+      opacity={1}
+      onClick={onClick}
+      style={isInteractive ? { cursor: 'pointer' } : undefined}
+    />
+  ),
+);
+
+// Main component
 const MainChart: React.FC<MainChartProps> = ({
   data,
   allPoints,
@@ -71,15 +130,349 @@ const MainChart: React.FC<MainChartProps> = ({
   axisTicks,
   margin,
   colors,
-  pointRadius,
+  pointRadius = 3, // Default value
   xAxisTitle,
   yAxisTitle,
   setTooltipAggregation,
   setTooltipPoint,
   additionalSensors,
   colorPalette,
-  renderDataPoints,
+  renderDataPoints = true, // Default value
 }) => {
+  // Helper function to handle tooltip positioning
+  const handleTooltipPosition = React.useCallback(
+    (
+      e: React.MouseEvent<SVGCircleElement>,
+      data: AggregatedMeasurement | MeasurementItem,
+    ) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const svgRect = e.currentTarget.closest('svg')?.getBoundingClientRect();
+      if (!svgRect) return null;
+
+      return {
+        x: rect.left - svgRect.left,
+        y: rect.top - svgRect.top,
+        data,
+      };
+    },
+    [],
+  );
+
+  // Helper function to get color for a sensor at a specified index
+  const getSensorColor = React.useCallback(
+    (colorType: 'line' | 'area' | 'point', sensorIndex: number = 0) => {
+      return colorPalette?.[sensorIndex]?.[colorType] || colors[colorType];
+    },
+    [colorPalette, colors],
+  );
+
+  // Memoized components
+  const renderAreaPaths = React.useMemo(
+    () => (
+      <>
+        {/* Primary Sensor Area Paths */}
+        {paths?.mainAreaPaths.map((path, i) => (
+          <ChartPath
+            key={`area-${i}`}
+            path={path}
+            color={getSensorColor('area', 0)}
+            keyPrefix="area"
+            index={i}
+            isArea
+          />
+        ))}
+
+        {/* Additional Sensors Area Paths */}
+        {paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
+          sensorPaths.mainAreaPaths.map((path, i) => (
+            <ChartPath
+              key={`area-sensor-${sensorIndex}-${i}`}
+              path={path}
+              color={getSensorColor('area', sensorIndex + 1)}
+              keyPrefix={`area-sensor-${sensorIndex}`}
+              index={i}
+              isArea
+            />
+          )),
+        )}
+      </>
+    ),
+    [paths?.mainAreaPaths, paths?.additionalSensorPaths, getSensorColor],
+  );
+
+  const renderLinePaths = React.useMemo(
+    () => (
+      <>
+        {/* Primary Sensor Line Paths */}
+        {paths?.mainLinePaths.map((path, i) => (
+          <ChartPath
+            key={`line-${i}`}
+            path={path}
+            color={getSensorColor('line', 0)}
+            keyPrefix="line"
+            index={i}
+            isArea={false}
+          />
+        ))}
+
+        {/* Additional Sensors Line Paths */}
+        {paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
+          sensorPaths.mainLinePaths.map((path, i) => (
+            <ChartPath
+              key={`line-sensor-${sensorIndex}-${i}`}
+              path={path}
+              color={getSensorColor('line', sensorIndex + 1)}
+              keyPrefix={`line-sensor-${sensorIndex}`}
+              index={i}
+              isArea={false}
+            />
+          )),
+        )}
+      </>
+    ),
+    [paths?.mainLinePaths, paths?.additionalSensorPaths, getSensorColor],
+  );
+
+  const renderDataPointCircles = React.useMemo(
+    () => (
+      <>
+        {/* Primary Sensor Points */}
+        {data.map((d) => (
+          <DataPoint
+            key={`point-${d.measurementTime.getTime()}`}
+            cx={scales.xScale(d.measurementTime.getTime())}
+            cy={scales.yScale(d.value)}
+            radius={pointRadius}
+            color={getSensorColor('point', 0)}
+            pointKey={`point-${d.measurementTime.getTime()}`}
+          />
+        ))}
+
+        {/* Additional Sensors Points */}
+        {additionalSensors?.map((sensor, sensorIndex) =>
+          sensor.aggregatedData?.map((d) => (
+            <DataPoint
+              key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              cx={scales.xScale(d.measurementTime.getTime())}
+              cy={scales.yScale(d.value)}
+              radius={pointRadius}
+              color={getSensorColor('point', sensorIndex + 1)}
+              pointKey={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
+            />
+          )),
+        )}
+      </>
+    ),
+    [data, additionalSensors, scales, pointRadius, getSensorColor],
+  );
+
+  const renderInteractivePoints = React.useMemo(
+    () => (
+      <>
+        {/* Interactive overlay for tooltip - primary sensor */}
+        {data.map((d) => (
+          <DataPoint
+            key={`interactive-${d.measurementTime.getTime()}`}
+            cx={scales.xScale(d.measurementTime.getTime())}
+            cy={scales.yScale(d.value)}
+            radius={pointRadius + 5}
+            color="transparent"
+            pointKey={`interactive-${d.measurementTime.getTime()}`}
+            isInteractive
+            onClick={(e) => {
+              const tooltipPos = handleTooltipPosition(e, d);
+              if (tooltipPos) {
+                setTooltipAggregation({
+                  x: tooltipPos.x,
+                  y: tooltipPos.y,
+                  data: d,
+                });
+              }
+            }}
+          />
+        ))}
+
+        {/* Interactive overlay for tooltip - additional sensors */}
+        {additionalSensors?.map((sensor) =>
+          sensor.aggregatedData?.map((d) => (
+            <DataPoint
+              key={`interactive-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              cx={scales.xScale(d.measurementTime.getTime())}
+              cy={scales.yScale(d.value)}
+              radius={pointRadius + 5}
+              color="transparent"
+              pointKey={`interactive-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              isInteractive
+              onClick={(e) => {
+                const tooltipPos = handleTooltipPosition(e, d);
+                if (tooltipPos) {
+                  setTooltipAggregation({
+                    x: tooltipPos.x,
+                    y: tooltipPos.y,
+                    data: d,
+                  });
+                }
+              }}
+            />
+          )),
+        )}
+      </>
+    ),
+    [
+      data,
+      additionalSensors,
+      scales,
+      pointRadius,
+      setTooltipAggregation,
+      handleTooltipPosition,
+    ],
+  );
+
+  const renderIndividualPoints = React.useMemo(() => {
+    if (!allPoints || !renderDataPoints || !setTooltipPoint) return null;
+
+    return (
+      <g>
+        {allPoints.map((d) => (
+          <DataPoint
+            key={`individual-${d.collectiontime.getTime()}-${d.value}`}
+            cx={scales.xScale(d.collectiontime.getTime())}
+            cy={scales.yScale(d.value)}
+            radius={pointRadius}
+            color={colors.point}
+            pointKey={`individual-${d.collectiontime.getTime()}-${d.value}`}
+            isInteractive
+            onClick={(e) => {
+              const tooltipPos = handleTooltipPosition(e, d);
+              if (tooltipPos) {
+                setTooltipPoint({
+                  ...d,
+                  x: tooltipPos.x,
+                  y: tooltipPos.y,
+                });
+              }
+            }}
+          />
+        ))}
+      </g>
+    );
+  }, [
+    allPoints,
+    renderDataPoints,
+    setTooltipPoint,
+    scales,
+    pointRadius,
+    colors.point,
+    handleTooltipPosition,
+  ]);
+
+  const renderXAxis = React.useMemo(
+    () => (
+      <g
+        transform={`translate(0,${chartDimensions.mainInnerHeight})`}
+        className="x-axis"
+      >
+        <rect
+          x={-margin.left}
+          y={0}
+          width={chartDimensions.innerWidth}
+          height={margin.bottom}
+          fill="white"
+        />
+        <line
+          x1={0}
+          x2={chartDimensions.innerWidth}
+          y1={0}
+          y2={0}
+          stroke="var(--gray-400)"
+        />
+        {axisTicks.xTicks.map((tick) => (
+          <g key={tick.value} transform={`translate(${tick.x},0)`}>
+            <line y1={0} y2={6} stroke="var(--gray-300)" />
+            <text
+              y={20}
+              textAnchor="middle"
+              fill="var(--gray-600)"
+              className="text-xs"
+            >
+              {tick.label}
+            </text>
+          </g>
+        ))}
+        <text
+          x={chartDimensions.innerWidth}
+          y={chartDimensions.mainInnerHeight}
+          textAnchor="end"
+          fill="var(--gray-600)"
+          className="text-xs"
+        >
+          {xAxisTitle}
+        </text>
+      </g>
+    ),
+    [
+      chartDimensions.mainInnerHeight,
+      chartDimensions.innerWidth,
+      margin.left,
+      margin.bottom,
+      axisTicks.xTicks,
+      xAxisTitle,
+    ],
+  );
+
+  const renderYAxis = React.useMemo(
+    () => (
+      <g className="y-axis">
+        <rect
+          x={-margin.left}
+          y={-margin.top}
+          width={margin.left}
+          height={chartDimensions.mainInnerHeight + margin.top + margin.bottom}
+          fill="white"
+        />
+        <line
+          x1={0}
+          x2={0}
+          y1={0}
+          y2={chartDimensions.mainInnerHeight}
+          stroke="var(--gray-400)"
+        />
+        {axisTicks.yTicks.map((tick) => (
+          <g key={tick.value} transform={`translate(0,${tick.y})`}>
+            <line x1={-6} x2={0} stroke="var(--gray-300)" />
+            <text
+              x={-12}
+              y={4}
+              textAnchor="end"
+              fill="var(--gray-600)"
+              className="text-xs"
+            >
+              {tick.label}
+            </text>
+          </g>
+        ))}
+        <text
+          transform="rotate(-90)"
+          x={-chartDimensions.mainInnerHeight}
+          y={-30}
+          textAnchor="start"
+          fill="var(--gray-600)"
+          className="text-xs"
+        >
+          {yAxisTitle}
+        </text>
+      </g>
+    ),
+    [
+      margin.left,
+      margin.top,
+      margin.bottom,
+      chartDimensions.mainInnerHeight,
+      axisTicks.yTicks,
+      yAxisTitle,
+    ],
+  );
+
   return (
     <g
       transform={`translate(${margin.left},${margin.top})`}
@@ -96,255 +489,20 @@ const MainChart: React.FC<MainChartProps> = ({
 
       {/* Data visualization layer */}
       <g className="data-layer">
-        {/* Primary Sensor Area Paths */}
-        {paths?.mainAreaPaths.map((path, i) => (
-          <path
-            key={`area-${i}`}
-            d={path || ''}
-            fill={colorPalette?.[0]?.area || colors.area}
-            fillOpacity={0.2}
-            stroke="none"
-          />
-        ))}
-
-        {/* Additional Sensors Area Paths */}
-        {paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
-          sensorPaths.mainAreaPaths.map((path, i) => (
-            <path
-              key={`area-sensor-${sensorIndex}-${i}`}
-              d={path || ''}
-              fill={colorPalette?.[sensorIndex + 1]?.area || colors.area}
-              fillOpacity={0.2}
-              stroke="none"
-            />
-          )),
-        )}
-
-        {/* Primary Sensor Line Paths */}
-        {paths?.mainLinePaths.map((path, i) => (
-          <path
-            key={`line-${i}`}
-            d={path || ''}
-            fill="none"
-            stroke={colorPalette?.[0]?.line || colors.line}
-            strokeWidth={2}
-          />
-        ))}
-
-        {/* Additional Sensors Line Paths */}
-        {paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
-          sensorPaths.mainLinePaths.map((path, i) => (
-            <path
-              key={`line-sensor-${sensorIndex}-${i}`}
-              d={path || ''}
-              fill="none"
-              stroke={colorPalette?.[sensorIndex + 1]?.line || colors.line}
-              strokeWidth={2}
-            />
-          )),
-        )}
-
-        {/* Primary Sensor Points */}
-        {data.map((d) => (
-          <circle
-            key={`point-${d.measurementTime.getTime()}`}
-            cx={scales.xScale(d.measurementTime.getTime())}
-            cy={scales.yScale(d.value)}
-            r={pointRadius}
-            fill={colorPalette?.[0]?.point || colors.point}
-            opacity={1}
-          />
-        ))}
-
-        {/* Additional Sensors Points */}
-        {additionalSensors?.map((sensor, i) =>
-          sensor.aggregatedData?.map((d) => (
-            <circle
-              key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
-              cx={scales.xScale(d.measurementTime.getTime())}
-              cy={scales.yScale(d.value)}
-              r={pointRadius}
-              fill={colorPalette?.[i + 1]?.point || colors.point}
-              opacity={1}
-            />
-          )),
-        )}
-
-        {/* Individual Points */}
-        {allPoints && renderDataPoints && setTooltipPoint && (
-          <g>
-            {allPoints.map((d) => (
-              <circle
-                key={`point-${d.collectiontime.getTime()}-${d.value}`}
-                cx={scales.xScale(d.collectiontime.getTime())}
-                cy={scales.yScale(d.value)}
-                r={pointRadius}
-                fill={colors.point}
-                opacity={1}
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const svgRect = e.currentTarget
-                    .closest('svg')
-                    ?.getBoundingClientRect();
-                  if (!svgRect) return;
-
-                  setTooltipPoint({
-                    ...d,
-                    x: rect.left - svgRect.left,
-                    y: rect.top - svgRect.top,
-                  });
-                }}
-                style={{ cursor: 'pointer' }}
-              />
-            ))}
-          </g>
-        )}
-        {/* Interactive overlayfor tooltip */}
-        <g>
-          {data.map((d) => (
-            <circle
-              key={d.measurementTime.getTime()}
-              cx={scales.xScale(d.measurementTime.getTime())}
-              cy={scales.yScale(d.value)}
-              r={pointRadius + 5}
-              fill="transparent"
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const svgRect = e.currentTarget
-                  .closest('svg')
-                  ?.getBoundingClientRect();
-                if (!svgRect) return;
-
-                setTooltipAggregation({
-                  x: rect.left - svgRect.left,
-                  y: rect.top - svgRect.top,
-                  data: d,
-                });
-              }}
-              style={{ cursor: 'pointer' }}
-            />
-          ))}
-        </g>
-        {/* Interactive overlay for tooltip */}
-        <g>
-          {additionalSensors?.map((sensor, i) =>
-            sensor.aggregatedData?.map((d) => (
-              <circle
-                key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
-                cx={scales.xScale(d.measurementTime.getTime())}
-                cy={scales.yScale(d.value)}
-                r={pointRadius + 5}
-                fill="transparent"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const svgRect = e.currentTarget
-                    .closest('svg')
-                    ?.getBoundingClientRect();
-                  if (!svgRect) return;
-
-                  setTooltipAggregation({
-                    x: rect.left - svgRect.left,
-                    y: rect.top - svgRect.top,
-                    data: d,
-                  });
-                }}
-                style={{ cursor: 'pointer' }}
-              />
-            )),
-          )}
-        </g>
+        {renderAreaPaths}
+        {renderLinePaths}
+        {renderDataPointCircles}
+        {renderIndividualPoints}
+        {renderInteractivePoints}
       </g>
 
       {/* Axes layer - rendered last to be on top */}
       <g className="axes-layer">
-        {/* X Axis */}
-        <g
-          transform={`translate(0,${chartDimensions.mainInnerHeight})`}
-          className="x-axis"
-        >
-          <rect
-            x={-margin.left}
-            y={0}
-            width={chartDimensions.innerWidth}
-            height={margin.bottom}
-            fill="white"
-          />
-          <line
-            x1={0}
-            x2={chartDimensions.innerWidth}
-            y1={0}
-            y2={0}
-            stroke="var(--gray-400)"
-          />
-          {axisTicks.xTicks.map((tick) => (
-            <g key={tick.value} transform={`translate(${tick.x},0)`}>
-              <line y1={0} y2={6} stroke="var(--gray-300)" />
-              <text
-                y={20}
-                textAnchor="middle"
-                fill="var(--gray-600)"
-                className="text-xs"
-              >
-                {tick.label}
-              </text>
-            </g>
-          ))}
-          <text
-            x={chartDimensions.innerWidth}
-            y={chartDimensions.mainInnerHeight}
-            textAnchor="end"
-            fill="var(--gray-600)"
-            className="text-xs"
-          >
-            {xAxisTitle}
-          </text>
-        </g>
-        {/* Y Axis */}
-        <g className="y-axis">
-          <rect
-            x={-margin.left}
-            y={-margin.top}
-            width={margin.left}
-            height={
-              chartDimensions.mainInnerHeight + margin.top + margin.bottom
-            }
-            fill="white"
-          />
-          <line
-            x1={0}
-            x2={0}
-            y1={0}
-            y2={chartDimensions.mainInnerHeight}
-            stroke="var(--gray-400)"
-          />
-          {axisTicks.yTicks.map((tick) => (
-            <g key={tick.value} transform={`translate(0,${tick.y})`}>
-              <line x1={-6} x2={0} stroke="var(--gray-300)" />
-              <text
-                x={-12}
-                y={4}
-                textAnchor="end"
-                fill="var(--gray-600)"
-                className="text-xs"
-              >
-                {tick.label}
-              </text>
-            </g>
-          ))}
-          <text
-            transform="rotate(-90)"
-            x={-chartDimensions.mainInnerHeight}
-            y={-30}
-            textAnchor="start"
-            fill="var(--gray-600)"
-            className="text-xs"
-          >
-            {yAxisTitle}
-          </text>
-        </g>
+        {renderXAxis}
+        {renderYAxis}
       </g>
     </g>
   );
 };
 
-export default MainChart;
+export default React.memo(MainChart);
