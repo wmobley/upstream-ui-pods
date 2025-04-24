@@ -1,18 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useDetail } from '../../../../hooks/sensor/useDetail';
-import { Chart } from './_components/Chart';
-import { selectAggregationInterval } from '../../../../utils/aggregationProcessing';
 import QueryWrapper from '../../../common/QueryWrapper';
 import MeasurementSummary from '../../../SensorDashboard/_components/MeasurementSummary';
 import { Link } from 'react-router-dom';
-
-type AggregationInterval =
-  | 'second'
-  | 'minute'
-  | 'hour'
-  | 'day'
-  | 'week'
-  | 'month';
+import { Chart } from './_components/Chart';
+import {
+  LineConfidenceProvider,
+  useLineConfidence,
+  AGGREGATION_INTERVALS,
+} from './context/LineConfidenceContext';
 
 interface MeasurementsSummaryProps {
   campaignId: string;
@@ -20,49 +14,42 @@ interface MeasurementsSummaryProps {
   sensorId: string;
 }
 
-const AGGREGATION_INTERVALS: AggregationInterval[] = [
-  'second',
-  'minute',
-  'hour',
-  'day',
-  'week',
-  'month',
-];
-
+// Main Line Confidence component which wraps everything in the provider
 const LineConfidenceViz = ({
   campaignId,
   stationId,
   sensorId,
 }: MeasurementsSummaryProps) => {
-  const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
+  return (
+    <LineConfidenceProvider
+      campaignId={campaignId}
+      stationId={stationId}
+      sensorId={sensorId}
+    >
+      <LineConfidenceContent
+        campaignId={campaignId}
+        stationId={stationId}
+        sensorId={sensorId}
+      />
+    </LineConfidenceProvider>
+  );
+};
 
-  const [selectedTimeRange, setSelectedTimeRange] = useState<
-    [number, number] | null
-  >(null);
-
-  const [aggregationInterval, setAggregationInterval] =
-    useState<AggregationInterval | null>(null);
-
-  useEffect(() => {
-    if (data) {
-      if (data.firstMeasurementTime && data.lastMeasurementTime) {
-        setAggregationInterval(
-          selectAggregationInterval(
-            data.firstMeasurementTime,
-            data.lastMeasurementTime,
-          ),
-        );
-      } else {
-        throw new Error('No measurement time range found');
-      }
-    }
-  }, [data]);
-
-  const handleAggregationIntervalChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    setAggregationInterval(event.target.value as AggregationInterval);
-  };
+// Inner component that uses the context
+const LineConfidenceContent = ({
+  campaignId,
+  stationId,
+  sensorId,
+}: MeasurementsSummaryProps) => {
+  const {
+    data,
+    isLoading,
+    error,
+    selectedTimeRange,
+    setSelectedTimeRange,
+    aggregationInterval,
+    handleAggregationIntervalChange,
+  } = useLineConfidence();
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
