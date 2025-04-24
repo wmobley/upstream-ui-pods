@@ -26,6 +26,7 @@ export interface AdditionalSensor {
 export interface LineConfidenceChartProps {
   data: AggregatedMeasurement[];
   allPoints: MeasurementItem[];
+  loading: boolean;
   width?: number;
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -58,6 +59,7 @@ export interface LineConfidenceChartProps {
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   data,
   allPoints,
+  loading,
   width,
   height,
   margin = defaultChartStyles.margin,
@@ -151,6 +153,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
         <MainChart
+          loading={loading}
           data={data}
           allPoints={allPoints}
           scales={scales}

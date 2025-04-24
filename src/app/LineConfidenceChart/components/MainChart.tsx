@@ -16,6 +16,7 @@ interface PointTooltipData extends Partial<MeasurementItem> {
 }
 
 interface MainChartProps {
+  loading: boolean;
   data: AggregatedMeasurement[];
   allPoints?: MeasurementItem[];
   scales: {
@@ -124,6 +125,7 @@ const DataPoint: React.FC<DataPointProps> = React.memo(
 const MainChart: React.FC<MainChartProps> = ({
   data,
   allPoints,
+  loading,
   scales,
   chartDimensions,
   paths,
@@ -487,6 +489,28 @@ const MainChart: React.FC<MainChartProps> = ({
         height={chartDimensions.mainInnerHeight}
         fill="white"
       />
+
+      {/* Loading indicator */}
+      {loading && (
+        <g className="loading-layer">
+          <rect
+            x={0}
+            y={0}
+            width={chartDimensions.innerWidth}
+            height={chartDimensions.mainInnerHeight}
+            fill="white"
+          />
+          <text
+            x={chartDimensions.innerWidth / 2}
+            y={chartDimensions.mainInnerHeight / 2}
+            textAnchor="middle"
+            fill="var(--gray-600)"
+            className="text-xs"
+          >
+            Loading...
+          </text>
+        </g>
+      )}
 
       {/* Data visualization layer */}
       <g className="data-layer">

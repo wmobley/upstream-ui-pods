@@ -17,6 +17,7 @@ export const Chart = () => {
     additionalSensors,
     renderDataPoints,
     setRenderDataPoints,
+    addingSensor,
   } = useLineConfidence();
 
   // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
@@ -83,6 +84,7 @@ export const Chart = () => {
           <LineConfidenceChart
             data={aggregatedData}
             allPoints={allPoints?.items ?? []}
+            loading={addingSensor}
             margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
             colors={colorPalette[0]}
             xAxisTitle="Date"

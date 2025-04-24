@@ -103,6 +103,7 @@ interface LineConfidenceContextProps {
   removeSensor: (sensorId: string) => void;
   renderDataPoints: boolean;
   setRenderDataPoints: React.Dispatch<React.SetStateAction<boolean>>;
+  addingSensor: boolean;
 }
 
 const LineConfidenceContext = createContext<
@@ -170,6 +171,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     SensorData[]
   >([]);
   const [renderDataPoints, setRenderDataPoints] = useState<boolean>(false);
+  const [addingSensor, setAddingSensor] = useState<boolean>(false);
 
   useEffect(() => {
     if (data) {
@@ -210,6 +212,41 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
 
   const { data: allPoints } = useList(campaignId, stationId, sensorId);
 
+  // Function to add a new sensor
+  const addSensor = (
+    newCampaignId: string,
+    newStationId: string,
+    newSensorId: string,
+  ) => {
+    // Check if the sensor is already added
+    if (
+      (newSensorId === sensorId &&
+        newCampaignId === campaignId &&
+        newStationId === stationId) ||
+      additionalSensorInfos.some(
+        (sensor) =>
+          sensor.id === newSensorId &&
+          sensor.campaignId === newCampaignId &&
+          sensor.stationId === newStationId,
+      )
+    ) {
+      return; // Sensor already exists
+    }
+
+    // Set loading state to true when starting to add a new sensor
+    setAddingSensor(true);
+
+    // Add the new sensor info to the list
+    setAdditionalSensorInfos((prev) => [
+      ...prev,
+      {
+        id: newSensorId,
+        campaignId: newCampaignId,
+        stationId: newStationId,
+      },
+    ]);
+  };
+
   // Handle additional sensor data updates
   const handleSensorDataUpdate = (updatedSensorData: SensorData) => {
     setAdditionalSensorsData((prev) => {
@@ -238,6 +275,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
         return newData;
       } else {
         // Add new sensor data
+        // Turn off loading state after the data is loaded
+        setAddingSensor(false);
         return [...prev, updatedSensorData];
       }
     });
@@ -253,38 +292,6 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
       );
     }
   }, [additionalSensorInfos]);
-
-  // Function to add a new sensor
-  const addSensor = (
-    newCampaignId: string,
-    newStationId: string,
-    newSensorId: string,
-  ) => {
-    // Check if the sensor is already added
-    if (
-      (newSensorId === sensorId &&
-        newCampaignId === campaignId &&
-        newStationId === stationId) ||
-      additionalSensorInfos.some(
-        (sensor) =>
-          sensor.id === newSensorId &&
-          sensor.campaignId === newCampaignId &&
-          sensor.stationId === newStationId,
-      )
-    ) {
-      return; // Sensor already exists
-    }
-
-    // Add the new sensor info to the list
-    setAdditionalSensorInfos((prev) => [
-      ...prev,
-      {
-        id: newSensorId,
-        campaignId: newCampaignId,
-        stationId: newStationId,
-      },
-    ]);
-  };
 
   // Function to remove a sensor
   const removeSensor = (sensorIdToRemove: string) => {
@@ -311,6 +318,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     removeSensor,
     renderDataPoints,
     setRenderDataPoints,
+    addingSensor,
   };
 
   return (
