@@ -133,8 +133,18 @@ const AdditionalSensor = ({
   );
 
   useEffect(() => {
-    onDataReady(sensorData);
-  }, [sensorData, onDataReady]);
+    // Only call onDataReady when we have actual data updates
+    if (sensorData.aggregatedData !== null || sensorData.allPoints !== null) {
+      onDataReady(sensorData);
+    }
+  }, [
+    sensorData.aggregatedData,
+    sensorData.allPoints,
+    sensorData.aggregatedLoading,
+    sensorData.aggregatedError,
+    sensorInfo.id,
+    onDataReady,
+  ]);
 
   return null;
 };
@@ -204,7 +214,21 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
         (item) => item.info.id === updatedSensorData.info.id,
       );
 
+      // Don't update if the data hasn't actually changed
       if (existingIndex >= 0) {
+        const existingData = prev[existingIndex];
+
+        // Check if the data is actually different before updating
+        if (
+          existingData.aggregatedData === updatedSensorData.aggregatedData &&
+          existingData.allPoints === updatedSensorData.allPoints &&
+          existingData.aggregatedLoading ===
+            updatedSensorData.aggregatedLoading &&
+          existingData.aggregatedError === updatedSensorData.aggregatedError
+        ) {
+          return prev; // No change needed
+        }
+
         // Update existing sensor data
         const newData = [...prev];
         newData[existingIndex] = updatedSensorData;

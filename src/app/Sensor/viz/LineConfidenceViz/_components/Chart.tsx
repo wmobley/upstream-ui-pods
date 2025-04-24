@@ -65,11 +65,11 @@ export const Chart = () => {
     <QueryWrapper isLoading={aggregatedLoading} error={aggregatedError}>
       {aggregatedData && (
         <div>
-          {additionalSensors.length > 0 && (
+          {/* {additionalSensors.length > 0 && (
             <div className="text-sm text-gray-600 mb-2">
               Visualizing {1 + additionalSensors.length} sensors
             </div>
-          )}
+          )} */}
           <LineConfidenceChart
             data={aggregatedData}
             allPoints={allPoints?.items ?? []}

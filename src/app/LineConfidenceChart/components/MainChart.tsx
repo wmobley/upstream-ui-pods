@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
+import { AdditionalSensor } from '../LineConfidenceChart';
 
 // Types
 interface TooltipData {
@@ -48,6 +49,12 @@ interface MainChartProps {
   setTooltipPoint?: React.Dispatch<
     React.SetStateAction<PointTooltipData | null>
   >;
+  additionalSensors?: AdditionalSensor[];
+  colorPalette?: Array<{
+    line: string;
+    area: string;
+    point: string;
+  }>;
 }
 
 const MainChart: React.FC<MainChartProps> = ({
@@ -64,6 +71,8 @@ const MainChart: React.FC<MainChartProps> = ({
   yAxisTitle,
   setTooltipAggregation,
   setTooltipPoint,
+  additionalSensors,
+  colorPalette,
 }) => {
   return (
     <g
@@ -108,10 +117,22 @@ const MainChart: React.FC<MainChartProps> = ({
             cx={scales.xScale(d.measurementTime.getTime())}
             cy={scales.yScale(d.value)}
             r={pointRadius * 2}
-            fill={colors.point}
+            fill={colorPalette?.[0]?.point || colors.point}
             opacity={1}
           />
         ))}
+        {additionalSensors?.map((sensor, i) =>
+          sensor.aggregatedData?.map((d) => (
+            <circle
+              key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              cx={scales.xScale(d.measurementTime.getTime())}
+              cy={scales.yScale(d.value)}
+              r={pointRadius * 2}
+              fill={colorPalette?.[i + 1]?.point || colors.point}
+              opacity={1}
+            />
+          )),
+        )}
 
         {/* Individual Points */}
         {allPoints && setTooltipPoint && (
