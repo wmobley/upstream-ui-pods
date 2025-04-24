@@ -117,6 +117,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     gapThresholdMinutes,
     minValue,
     maxValue,
+    additionalSensors,
     xFormatter,
     yFormatter,
   });
@@ -174,6 +175,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           scales={scales}
           margin={margin}
           colors={colors}
+          colorPalette={colorPalette}
           xFormatterOverview={xFormatterOverview}
           overviewRef={overviewRef}
         />

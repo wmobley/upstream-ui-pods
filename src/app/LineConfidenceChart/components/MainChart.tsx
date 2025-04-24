@@ -29,6 +29,10 @@ interface MainChartProps {
   paths: {
     mainAreaPaths: (string | null)[];
     mainLinePaths: (string | null)[];
+    additionalSensorPaths?: Array<{
+      mainAreaPaths: (string | null)[];
+      mainLinePaths: (string | null)[];
+    }>;
   };
   axisTicks: {
     xTicks: { value: number; label: string; x: number }[];
@@ -90,27 +94,55 @@ const MainChart: React.FC<MainChartProps> = ({
 
       {/* Data visualization layer */}
       <g className="data-layer">
-        {/* Render each segment's area */}
+        {/* Primary Sensor Area Paths */}
         {paths?.mainAreaPaths.map((path, i) => (
           <path
             key={`area-${i}`}
             d={path || ''}
-            fill={colors.area}
+            fill={colorPalette?.[0]?.area || colors.area}
             fillOpacity={0.2}
             stroke="none"
           />
         ))}
-        {/* Render each segment's line */}
+
+        {/* Additional Sensors Area Paths */}
+        {paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
+          sensorPaths.mainAreaPaths.map((path, i) => (
+            <path
+              key={`area-sensor-${sensorIndex}-${i}`}
+              d={path || ''}
+              fill={colorPalette?.[sensorIndex + 1]?.area || colors.area}
+              fillOpacity={0.2}
+              stroke="none"
+            />
+          )),
+        )}
+
+        {/* Primary Sensor Line Paths */}
         {paths?.mainLinePaths.map((path, i) => (
           <path
             key={`line-${i}`}
             d={path || ''}
             fill="none"
-            stroke={colors.line}
+            stroke={colorPalette?.[0]?.line || colors.line}
             strokeWidth={2}
           />
         ))}
-        {/* Aggregated Points */}
+
+        {/* Additional Sensors Line Paths */}
+        {paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
+          sensorPaths.mainLinePaths.map((path, i) => (
+            <path
+              key={`line-sensor-${sensorIndex}-${i}`}
+              d={path || ''}
+              fill="none"
+              stroke={colorPalette?.[sensorIndex + 1]?.line || colors.line}
+              strokeWidth={2}
+            />
+          )),
+        )}
+
+        {/* Primary Sensor Points */}
         {data.map((d) => (
           <circle
             key={`point-${d.measurementTime.getTime()}`}
@@ -121,6 +153,8 @@ const MainChart: React.FC<MainChartProps> = ({
             opacity={1}
           />
         ))}
+
+        {/* Additional Sensors Points */}
         {additionalSensors?.map((sensor, i) =>
           sensor.aggregatedData?.map((d) => (
             <circle

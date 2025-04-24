@@ -7,6 +7,10 @@ interface OverviewChartProps {
   paths: {
     overviewAreaPaths: (string | null)[];
     overviewLinePaths: (string | null)[];
+    additionalSensorPaths?: Array<{
+      overviewAreaPaths: (string | null)[];
+      overviewLinePaths: (string | null)[];
+    }>;
   };
   chartDimensions: {
     mainHeight: number;
@@ -23,6 +27,11 @@ interface OverviewChartProps {
     area?: string;
     point?: string;
   };
+  colorPalette?: Array<{
+    line: string;
+    area: string;
+    point: string;
+  }>;
   xFormatterOverview: (date: Date | number) => string;
   overviewRef: React.RefObject<SVGGElement>;
 }
@@ -35,6 +44,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
   scales,
   margin,
   colors,
+  colorPalette,
   xFormatterOverview,
   overviewRef,
 }) => {
@@ -43,28 +53,58 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
       transform={`translate(${margin.left},${chartDimensions.mainHeight + chartDimensions.spacing})`}
       className="overview-chart"
     >
-      {/* Render each segment's area in overview */}
+      {/* Primary sensor area paths */}
       {showAreaOverview &&
         paths?.overviewAreaPaths.map((path, i) => (
           <path
             key={`overview-area-${i}`}
             d={path || ''}
-            fill={colors.area}
+            fill={colorPalette?.[0]?.area || colors.area}
             fillOpacity={0.2}
             stroke="none"
           />
         ))}
-      {/* Render each segment's line in overview */}
+
+      {/* Additional sensors area paths */}
+      {showAreaOverview &&
+        paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
+          sensorPaths.overviewAreaPaths.map((path, i) => (
+            <path
+              key={`overview-area-sensor-${sensorIndex}-${i}`}
+              d={path || ''}
+              fill={colorPalette?.[sensorIndex + 1]?.area || colors.area}
+              fillOpacity={0.2}
+              stroke="none"
+            />
+          )),
+        )}
+
+      {/* Primary sensor line paths */}
       {showLineOverview &&
         paths?.overviewLinePaths.map((path, i) => (
           <path
             key={`overview-line-${i}`}
             d={path || ''}
             fill="none"
-            stroke={colors.line}
+            stroke={colorPalette?.[0]?.line || colors.line}
             strokeWidth={1}
           />
         ))}
+
+      {/* Additional sensors line paths */}
+      {showLineOverview &&
+        paths?.additionalSensorPaths?.map((sensorPaths, sensorIndex) =>
+          sensorPaths.overviewLinePaths.map((path, i) => (
+            <path
+              key={`overview-line-sensor-${sensorIndex}-${i}`}
+              d={path || ''}
+              fill="none"
+              stroke={colorPalette?.[sensorIndex + 1]?.line || colors.line}
+              strokeWidth={1}
+            />
+          )),
+        )}
+
       {/* Overview chart x-axis */}
       <g
         transform={`translate(0,${chartDimensions.overviewInnerHeight})`}
