@@ -456,7 +456,7 @@ const MainChart: React.FC<MainChartProps> = ({
         ))}
         <text
           transform="rotate(-90)"
-          x={-chartDimensions.mainInnerHeight}
+          x={-chartDimensions.mainInnerHeight - 100}
           y={-30}
           textAnchor="start"
           fill="var(--gray-600)"

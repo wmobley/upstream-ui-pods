@@ -2,11 +2,11 @@ import React from 'react';
 import { useLineConfidence } from '../context/LineConfidenceContext';
 
 interface AdditionalSensorsListProps {
-  className?: string;
+  color?: string;
 }
 
 export const AdditionalSensorsList: React.FC<AdditionalSensorsListProps> = ({
-  className,
+  color,
 }) => {
   const { additionalSensors, removeSensor } = useLineConfidence();
 
@@ -15,7 +15,7 @@ export const AdditionalSensorsList: React.FC<AdditionalSensorsListProps> = ({
   }
 
   return (
-    <div className={`mt-4 ${className}`}>
+    <div className={`mt-4`}>
       <h3 className="text-lg font-medium mb-2">Comparison Sensors</h3>
       <ul className="space-y-2">
         {additionalSensors.map((sensor) => (
@@ -25,19 +25,12 @@ export const AdditionalSensorsList: React.FC<AdditionalSensorsListProps> = ({
           >
             <div>
               <span className="font-medium">Sensor {sensor.info.id}</span>
-              <div className="text-sm text-gray-500">
-                {sensor.aggregatedData?.[0].measurementTime.toLocaleString()} to
-                {sensor.aggregatedData?.[
-                  sensor.aggregatedData.length - 1
-                ].measurementTime.toLocaleString()}
-              </div>
-              <div className="text-xs mt-1">
-                {sensor.aggregatedLoading
-                  ? 'Loading data...'
-                  : sensor.aggregatedError
-                    ? `Error: ${sensor.aggregatedError.message}`
-                    : `${sensor.aggregatedData?.length || 0} aggregated points loaded`}
-              </div>
+              {color && (
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: color }}
+                />
+              )}
             </div>
             <button
               onClick={() => removeSensor(sensor.info.id)}

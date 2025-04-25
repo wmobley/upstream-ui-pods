@@ -15,10 +15,10 @@ interface MeasurementSummaryProps {
 
 export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
   return (
-    <div>
+    <div className="flex flex-col ">
       <h1 className="text-2xl font-bold mb-4">{data.variablename}</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-md flex items-center">
           <FaRuler className="text-green-500 text-2xl mr-3" />
           <div>

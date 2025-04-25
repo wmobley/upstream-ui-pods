@@ -1,14 +1,12 @@
 import QueryWrapper from '../../../common/QueryWrapper';
 import MeasurementSummary from '../../../SensorDashboard/_components/MeasurementSummary';
-import { Link } from 'react-router-dom';
 import { Chart } from './_components/Chart';
-import { AddSensorButton } from './_components/AddSensorButton';
 import { AdditionalSensorsList } from './_components/AdditionalSensorsList';
 import {
   LineConfidenceProvider,
   useLineConfidence,
-  AGGREGATION_INTERVALS,
 } from './context/LineConfidenceContext';
+import Controls from './_components/Controls';
 
 interface MeasurementsSummaryProps {
   campaignId: string;
@@ -28,91 +26,28 @@ const LineConfidenceViz = ({
       stationId={stationId}
       sensorId={sensorId}
     >
-      <LineConfidenceContent />
+      <LineConfidenceContent campaignId={campaignId} stationId={stationId} />
     </LineConfidenceProvider>
   );
 };
 
 // Inner component that uses the context
-const LineConfidenceContent = () => {
-  const {
-    data,
-    isLoading,
-    error,
-    aggregationInterval,
-    handleAggregationIntervalChange,
-    renderDataPoints,
-    setRenderDataPoints,
-  } = useLineConfidence();
+const LineConfidenceContent = ({
+  campaignId,
+  stationId,
+}: {
+  campaignId: string;
+  stationId: string;
+}) => {
+  const { data, isLoading, error } = useLineConfidence();
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       {data && (
-        <div className="flex flex-col items-center h-screen">
+        <div className="mx-auto flex flex-col max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <MeasurementSummary data={data} />
-          <div className="mb-4 flex items-center justify-between w-full max-w-4xl">
-            <div className="flex items-center">
-              <label htmlFor="aggregationInterval" className="mr-2">
-                Aggregation Interval:
-              </label>
-              <select
-                id="aggregationInterval"
-                value={aggregationInterval || ''}
-                onChange={handleAggregationIntervalChange}
-                className="p-2 border rounded"
-              >
-                {AGGREGATION_INTERVALS.map((interval) => (
-                  <option key={interval} value={interval}>
-                    {interval.charAt(0).toUpperCase() + interval.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex space-x-3 items-center">
-              <AddSensorButton />
-              <button
-                onClick={() => setRenderDataPoints(!renderDataPoints)}
-                className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700"
-                aria-label={
-                  renderDataPoints ? 'Hide Data Points' : 'Show Data Points'
-                }
-                title={
-                  renderDataPoints ? 'Hide Data Points' : 'Show Data Points'
-                }
-              >
-                {renderDataPoints ? 'Hide Data Points' : 'Show Data Points'}
-              </button>
-              <Link
-                to={`/docs/confidence-explanation`}
-                className="text-primary-600 hover:text-primary-800 flex items-center"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                About Confidence Intervals
-              </Link>
-            </div>
-          </div>
-
-          <div className="mb-4 w-full max-w-4xl text-sm bg-blue-50 p-3 rounded-md border border-blue-100">
-            <p className="text-blue-800">
-              All confidence intervals displayed in the visualization represent
-              a 95% confidence level, meaning we can be 95% confident that the
-              true value falls within the displayed range.
-            </p>
-          </div>
-
-          <AdditionalSensorsList className="w-full max-w-4xl" />
-
+          <Controls campaignId={campaignId} stationId={stationId} />
+          <AdditionalSensorsList />
           <Chart />
         </div>
       )}

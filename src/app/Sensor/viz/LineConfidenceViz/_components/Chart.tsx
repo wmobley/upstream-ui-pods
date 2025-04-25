@@ -17,6 +17,7 @@ export const Chart = () => {
     additionalSensors,
     renderDataPoints,
     addingSensor,
+    data,
   } = useLineConfidence();
 
   // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
@@ -84,10 +85,10 @@ export const Chart = () => {
             data={aggregatedData}
             allPoints={allPoints?.items ?? []}
             loading={addingSensor}
-            margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
+            margin={{ top: 10, right: 50, bottom: 50, left: 50 }}
             colors={colorPalette[0]}
             xAxisTitle="Date"
-            yAxisTitle="Value"
+            yAxisTitle={data?.units ?? 'value'}
             xFormatter={(date: Date | number) => {
               const dateObj = date instanceof Date ? date : new Date(date);
               // For main chart - show time
