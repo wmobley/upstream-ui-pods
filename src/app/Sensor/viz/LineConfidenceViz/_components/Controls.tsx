@@ -3,6 +3,7 @@ import { useLineConfidence } from '../context/LineConfidenceContext';
 import { Link } from 'react-router-dom';
 import { AddSensorButton } from './AddSensorButton';
 import { useState } from 'react';
+import { MeasurementItem } from '@upstream/upstream-api';
 
 interface ControlsProps {
   campaignId: string;
@@ -17,50 +18,94 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
     setRenderDataPoints,
     selectedTimeRange,
     aggregatedData,
+    allPoints,
+    additionalSensors,
   } = useLineConfidence();
 
   // State for active button styling
   const [activeExport, setActiveExport] = useState<string | null>(null);
+  // State to track which dataset to export
+  const [exportDataset, setExportDataset] = useState<'aggregated' | 'all'>(
+    'aggregated',
+  );
 
   // Handle data export
   const handleExport = (format: string) => {
     setActiveExport(format);
 
-    if (!aggregatedData) return;
+    const dataToExport =
+      exportDataset === 'aggregated' ? aggregatedData : allPoints;
+    if (!dataToExport) return;
 
     let content = '';
-    let filename = `sensor-data-${new Date().toISOString()}`;
+    let filename = `sensor-data-${exportDataset}-${new Date().toISOString()}`;
     let mimeType = '';
 
     if (format === 'csv') {
-      // Create CSV content
-      const headers = [
-        'measurementTime',
-        'value',
-        'minValue',
-        'maxValue',
-        'parametricLowerBound',
-        'parametricUpperBound',
-      ];
+      // Create CSV content with appropriate headers based on dataset
+      let headers: string[] = [];
+
+      if (exportDataset === 'aggregated') {
+        headers = [
+          'measurementTime',
+          'value',
+          'minValue',
+          'maxValue',
+          'parametricLowerBound',
+          'parametricUpperBound',
+        ];
+      } else {
+        // Headers for all points measurements
+        headers = [
+          'id',
+          'value',
+          'collectiontime',
+          'sensorid',
+          'variablename',
+          'variabletype',
+          'description',
+        ];
+      }
+
       content = headers.join(',') + '\n';
 
-      aggregatedData.forEach((measurement) => {
-        const row = [
-          new Date(measurement.measurementTime).toISOString(),
-          measurement.value,
-          measurement.minValue,
-          measurement.maxValue,
-          measurement.parametricLowerBound,
-          measurement.parametricUpperBound,
-        ].join(',');
-        content += row + '\n';
-      });
+      if (exportDataset === 'aggregated' && aggregatedData) {
+        aggregatedData.forEach((measurement) => {
+          const rowData = [
+            new Date(measurement.measurementTime).toISOString(),
+            measurement.value,
+            measurement.minValue,
+            measurement.maxValue,
+            measurement.parametricLowerBound,
+            measurement.parametricUpperBound,
+          ];
+          content += rowData.join(',') + '\n';
+        });
+      } else if (exportDataset === 'all' && allPoints) {
+        // Handle the items array in ListMeasurementsResponsePagination
+        allPoints.items.forEach((item: MeasurementItem) => {
+          const rowData = [
+            item.id,
+            item.value,
+            new Date(item.collectiontime).toISOString(),
+            item.sensorid || '',
+            item.variablename || '',
+            item.variabletype || '',
+            item.description || '',
+          ];
+          content += rowData.join(',') + '\n';
+        });
+      }
 
       filename += '.csv';
       mimeType = 'text/csv';
     } else if (format === 'json') {
       // Create JSON content
-      content = JSON.stringify(aggregatedData, null, 2);
+      if (exportDataset === 'aggregated' && aggregatedData) {
+        content = JSON.stringify(aggregatedData, null, 2);
+      } else if (exportDataset === 'all' && allPoints) {
+        content = JSON.stringify(allPoints.items, null, 2);
+      }
       filename += '.json';
       mimeType = 'application/json';
     }
@@ -162,6 +207,29 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
           {/* Export Controls Group */}
           <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
             <span className="text-sm font-medium">Export:</span>
+
+            {/* Dataset selection */}
+            <div className="flex items-center mr-3">
+              <label className="inline-flex items-center mr-3">
+                <input
+                  type="radio"
+                  className="form-radio h-4 w-4 text-primary-600"
+                  checked={exportDataset === 'aggregated'}
+                  onChange={() => setExportDataset('aggregated')}
+                />
+                <span className="ml-1 text-sm">Aggregated</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  className="form-radio h-4 w-4 text-primary-600"
+                  checked={exportDataset === 'all'}
+                  onChange={() => setExportDataset('all')}
+                />
+                <span className="ml-1 text-sm">All Points</span>
+              </label>
+            </div>
+
             <button
               onClick={() => handleExport('csv')}
               className={`px-3 py-1 text-sm rounded transition-colors ${
@@ -169,7 +237,9 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
                   ? 'bg-primary-600 text-white'
                   : 'bg-white text-primary-600 border border-primary-600 hover:bg-gray-50'
               }`}
-              disabled={!aggregatedData}
+              disabled={
+                exportDataset === 'aggregated' ? !aggregatedData : !allPoints
+              }
               title="Export as CSV"
             >
               CSV
@@ -181,7 +251,9 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
                   ? 'bg-primary-600 text-white'
                   : 'bg-white text-primary-600 border border-primary-600 hover:bg-gray-50'
               }`}
-              disabled={!aggregatedData}
+              disabled={
+                exportDataset === 'aggregated' ? !aggregatedData : !allPoints
+              }
               title="Export as JSON"
             >
               JSON
