@@ -87,7 +87,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     { line: '#f54242', area: '#f54242', point: '#f54242' },
   ],
   renderDataPoints,
-  selectedSensorId,
+  selectedSensorId: sensorId,
 }) => {
   // Container ref for resizing
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -172,7 +172,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           additionalSensors={additionalSensors}
           colorPalette={colorPalette}
           renderDataPoints={renderDataPoints}
-          selectedSensorId={selectedSensorId}
+          selectedSensorId={sensorId}
         />
 
         {/* Overview chart */}
