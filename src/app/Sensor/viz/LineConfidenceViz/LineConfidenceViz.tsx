@@ -7,6 +7,7 @@ import {
   useLineConfidence,
 } from './context/LineConfidenceContext';
 import Controls from './_components/Controls';
+import SensorFilteringModal from './_components/SensorFilteringModal';
 
 interface MeasurementsSummaryProps {
   campaignId: string;
@@ -33,7 +34,7 @@ const LineConfidenceViz = ({
 
 // Inner component that uses the context
 const LineConfidenceContent = () => {
-  const { data, isLoading, error } = useLineConfidence();
+  const { data, isLoading, error, addSensorModalOpen } = useLineConfidence();
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
@@ -43,6 +44,7 @@ const LineConfidenceContent = () => {
           <Controls />
           <AdditionalSensorsList />
           <Chart />
+          {addSensorModalOpen && <SensorFilteringModal />}
         </div>
       )}
     </QueryWrapper>

@@ -107,6 +107,8 @@ interface LineConfidenceContextProps {
   campaignId: string;
   stationId: string;
   sensorId: string;
+  addSensorModalOpen: boolean;
+  setAddSensorModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const LineConfidenceContext = createContext<
@@ -175,7 +177,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   >([]);
   const [renderDataPoints, setRenderDataPoints] = useState<boolean>(false);
   const [addingSensor, setAddingSensor] = useState<boolean>(false);
-
+  const [addSensorModalOpen, setAddSensorModalOpen] = useState<boolean>(false);
   useEffect(() => {
     if (data) {
       if (data.firstMeasurementTime && data.lastMeasurementTime) {
@@ -325,6 +327,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     campaignId,
     stationId,
     sensorId,
+    addSensorModalOpen,
+    setAddSensorModalOpen,
   };
 
   return (

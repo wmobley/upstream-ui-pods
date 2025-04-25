@@ -200,7 +200,7 @@ const Controls = () => {
         <div className="flex flex-row justify-between gap-4 w-full">
           {/* Visualization Controls Group */}
           <div className="flex items-center gap-3 p-2 bg-gray-50 rounded border">
-            <AddSensorButton campaignId={campaignId} stationId={stationId} />
+            <AddSensorButton />
             <button
               onClick={() => setRenderDataPoints(!renderDataPoints)}
               className={`px-4 py-2 text-sm rounded transition-colors ${
