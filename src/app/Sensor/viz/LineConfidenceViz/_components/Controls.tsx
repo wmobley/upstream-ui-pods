@@ -33,8 +33,14 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
   const handleExport = (format: string) => {
     setActiveExport(format);
 
-    const dataToExport =
-      exportDataset === 'aggregated' ? aggregatedData : allPoints;
+    let dataToExport;
+
+    if (exportDataset === 'aggregated') {
+      dataToExport = aggregatedData;
+    } else if (exportDataset === 'all') {
+      dataToExport = allPoints;
+    }
+
     if (!dataToExport) return;
 
     let content = '';
@@ -54,9 +60,10 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
           'parametricLowerBound',
           'parametricUpperBound',
         ];
-      } else {
+      } else if (exportDataset === 'all') {
         // Headers for all points measurements
         headers = [
+          'sensorId',
           'id',
           'value',
           'collectiontime',
@@ -85,6 +92,7 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
         // Handle the items array in ListMeasurementsResponsePagination
         allPoints.items.forEach((item: MeasurementItem) => {
           const rowData = [
+            item.sensorid || '',
             item.id,
             item.value,
             new Date(item.collectiontime).toISOString(),
@@ -95,6 +103,27 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
           ];
           content += rowData.join(',') + '\n';
         });
+
+        // Add data from additional sensors
+        if (additionalSensors && additionalSensors.length > 0) {
+          additionalSensors.forEach((sensor) => {
+            if (sensor.allPoints && sensor.allPoints.items) {
+              sensor.allPoints.items.forEach((item: MeasurementItem) => {
+                const rowData = [
+                  sensor.info.id, // Additional sensor ID
+                  item.id,
+                  item.value,
+                  new Date(item.collectiontime).toISOString(),
+                  item.sensorid || '',
+                  item.variablename || '',
+                  item.variabletype || '',
+                  item.description || '',
+                ];
+                content += rowData.join(',') + '\n';
+              });
+            }
+          });
+        }
       }
 
       filename += '.csv';
@@ -104,7 +133,27 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
       if (exportDataset === 'aggregated' && aggregatedData) {
         content = JSON.stringify(aggregatedData, null, 2);
       } else if (exportDataset === 'all' && allPoints) {
-        content = JSON.stringify(allPoints.items, null, 2);
+        // Create a structured representation of all points including additional sensors
+        const allData = [
+          {
+            sensorId: campaignId + '-' + stationId,
+            points: allPoints.items,
+          },
+        ];
+
+        // Add additional sensors data
+        if (additionalSensors && additionalSensors.length > 0) {
+          additionalSensors.forEach((sensor) => {
+            if (sensor.allPoints && sensor.allPoints.items) {
+              allData.push({
+                sensorId: sensor.info.id,
+                points: sensor.allPoints.items,
+              });
+            }
+          });
+        }
+
+        content = JSON.stringify(allData, null, 2);
       }
       filename += '.json';
       mimeType = 'application/json';
