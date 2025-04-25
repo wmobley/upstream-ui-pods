@@ -1,4 +1,3 @@
-import { AGGREGATION_INTERVALS } from '../context/LineConfidenceContext';
 import { useLineConfidence } from '../context/LineConfidenceContext';
 import { Link } from 'react-router-dom';
 import { AddSensorButton } from './AddSensorButton';
@@ -13,7 +12,6 @@ interface ControlsProps {
 const Controls = ({ campaignId, stationId }: ControlsProps) => {
   const {
     aggregationInterval,
-    handleAggregationIntervalChange,
     renderDataPoints,
     setRenderDataPoints,
     selectedTimeRange,
@@ -184,20 +182,8 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
               htmlFor="aggregationInterval"
               className="mr-2 text-sm font-medium"
             >
-              Aggregation Interval:
+              Aggregation Interval: {aggregationInterval}
             </label>
-            <select
-              id="aggregationInterval"
-              value={aggregationInterval || ''}
-              onChange={handleAggregationIntervalChange}
-              className="p-2 border rounded text-sm"
-            >
-              {AGGREGATION_INTERVALS.map((interval) => (
-                <option key={interval} value={interval}>
-                  {interval.charAt(0).toUpperCase() + interval.slice(1)}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div className="h-8 border-r border-gray-300"></div>
