@@ -8,6 +8,7 @@ interface TooltipData {
   x: number;
   y: number;
   data: AggregatedMeasurement;
+  sensorId: string;
 }
 
 interface PointTooltipData extends Partial<MeasurementItem> {
@@ -61,6 +62,7 @@ interface MainChartProps {
     point: string;
   }>;
   renderDataPoints: boolean;
+  selectedSensorId: string;
 }
 
 // Helper Components
@@ -140,6 +142,7 @@ const MainChart: React.FC<MainChartProps> = ({
   additionalSensors,
   colorPalette,
   renderDataPoints = true, // Default value
+  selectedSensorId,
 }) => {
   // Helper function to handle tooltip positioning
   const handleTooltipPosition = React.useCallback(
@@ -255,6 +258,7 @@ const MainChart: React.FC<MainChartProps> = ({
                   x: tooltipPos.x,
                   y: tooltipPos.y,
                   data: d,
+                  sensorId: selectedSensorId,
                 });
               }
             }}
@@ -279,6 +283,7 @@ const MainChart: React.FC<MainChartProps> = ({
                     x: tooltipPos.x,
                     y: tooltipPos.y,
                     data: d,
+                    sensorId: sensor.info.id,
                   });
                 }
               }}

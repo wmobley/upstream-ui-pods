@@ -5,7 +5,7 @@ import QueryWrapper from '../../../../common/QueryWrapper';
 import { useLineConfidence } from '../context/LineConfidenceContext';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 
-export const Chart = () => {
+export const Chart = ({ selectedSensorId }: { selectedSensorId: string }) => {
   // Get the time range from context
   const {
     selectedTimeRange,
@@ -113,6 +113,7 @@ export const Chart = () => {
             additionalSensors={chartAdditionalSensors}
             colorPalette={colorPalette}
             renderDataPoints={renderDataPoints}
+            selectedSensorId={selectedSensorId}
           />
         </div>
       )}
