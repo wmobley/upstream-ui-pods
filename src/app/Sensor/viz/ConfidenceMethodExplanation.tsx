@@ -34,30 +34,9 @@ const ConfidenceMethodExplanation: React.FC = () => {
           confidence intervals:
         </p>
 
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h3 className="text-xl font-medium mb-2 text-primary-600">
-            1. Percentile-based Intervals
-          </h3>
-          <p className="mb-2">
-            These are displayed as{' '}
-            <span className="font-semibold">lower_bound</span> and{' '}
-            <span className="font-semibold">upper_bound</span> in the data.
-          </p>
-          <ul className="list-disc pl-6 mb-2">
-            <li>Based on the actual distribution of data points</li>
-            <li>Lower bound corresponds to the 2.5th percentile</li>
-            <li>Upper bound corresponds to the 97.5th percentile</li>
-            <li>Reflects the spread of actual measurements</li>
-          </ul>
-          <p>
-            These intervals make no assumptions about the data distribution and
-            are purely based on the observed values.
-          </p>
-        </div>
-
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-xl font-medium mb-2 text-primary-600">
-            2. Parametric Intervals
+            1. Parametric Intervals
           </h3>
           <p className="mb-2">
             These are displayed as{' '}
