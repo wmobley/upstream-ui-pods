@@ -1,80 +1,119 @@
-import { useList } from '../../../../../hooks/measurements/useList';
-import { useListConfidenceValues } from '../../../../../hooks/measurements/useListConfidenceValues';
 import LineConfidenceChart from '../../../../LineConfidenceChart';
+import type { AdditionalSensor } from '../../../../LineConfidenceChart/LineConfidenceChart';
 import { formatNumber } from '../../../../common/NumberFormatter/NumberFortatterUtils';
 import QueryWrapper from '../../../../common/QueryWrapper';
+import { useLineConfidence } from '../context/LineConfidenceContext';
+import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 
-type AggregationInterval =
-  | 'second'
-  | 'minute'
-  | 'hour'
-  | 'day'
-  | 'week'
-  | 'month';
+export const Chart = () => {
+  // Get the time range from context
+  const {
+    selectedTimeRange,
+    setSelectedTimeRange,
+    aggregatedData,
+    aggregatedLoading,
+    aggregatedError,
+    allPoints,
+    additionalSensors,
+    renderDataPoints,
+    addingSensor,
+  } = useLineConfidence();
 
-export const Chart = ({
-  campaignId,
-  stationId,
-  sensorId,
-  selectedTimeRange,
-  setSelectedTimeRange,
-  aggregationInterval,
-}: {
-  campaignId: string;
-  stationId: string;
-  sensorId: string;
-  selectedTimeRange: [number, number] | null;
-  setSelectedTimeRange: (domain: [number, number]) => void;
-  aggregationInterval: AggregationInterval;
-}) => {
-  const aggregationValue = aggregationInterval === 'second' ? 10 : 1;
+  // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
+  const adaptSensorsForChart = (): AdditionalSensor[] => {
+    return additionalSensors.map((sensor) => {
+      const adaptedSensor: AdditionalSensor = {
+        info: sensor.info,
+        aggregatedData: sensor.aggregatedData,
+        allPoints: (sensor.allPoints?.items as MeasurementItem[]) || null,
+      };
+      return adaptedSensor;
+    });
+  };
 
-  const { data, isLoading, error } = useListConfidenceValues(
-    campaignId,
-    stationId,
-    sensorId,
-    aggregationInterval,
-    aggregationValue,
-  );
+  // Calculate overall min and max values considering all sensors
+  const calculateMinMax = () => {
+    if (!aggregatedData) return { min: 0, max: 0 };
 
-  const { data: allPoints } = useList(campaignId, stationId, sensorId);
+    let allData: AggregatedMeasurement[] = [...aggregatedData];
+
+    // Add data from additional sensors
+    additionalSensors.forEach((sensor) => {
+      if (sensor.aggregatedData) {
+        allData = [...allData, ...sensor.aggregatedData];
+      }
+    });
+
+    const max = Math.max(
+      ...allData.map((item) =>
+        Math.max(item.parametricUpperBound, item.maxValue),
+      ),
+    );
+    const min = Math.min(
+      ...allData.map((item) =>
+        Math.min(item.parametricLowerBound, item.minValue),
+      ),
+    );
+
+    return { min, max };
+  };
+
+  const { min: minValue, max: maxValue } = calculateMinMax();
+  const chartAdditionalSensors = adaptSensorsForChart();
+
+  // Define a color palette for the sensors
+  const colorPalette = [
+    { line: '#9a6fb0', area: '#9a6fb0', point: '#9a6fb0' }, // Primary sensor
+    { line: '#4287f5', area: '#4287f5', point: '#4287f5' },
+    { line: '#42c5f5', area: '#42c5f5', point: '#42c5f5' },
+    { line: '#42f5a7', area: '#42f5a7', point: '#42f5a7' },
+    { line: '#f5cd42', area: '#f5cd42', point: '#f5cd42' },
+    { line: '#f54242', area: '#f54242', point: '#f54242' },
+  ];
 
   return (
-    <QueryWrapper isLoading={isLoading} error={error}>
-      {data && (
-        <LineConfidenceChart
-          data={data}
-          allPoints={allPoints?.items ?? []}
-          margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
-          colors={{
-            line: '#9a6fb0',
-            area: '#9a6fb0',
-            point: '#9a6fb0',
-          }}
-          xAxisTitle="Date"
-          yAxisTitle="Value"
-          xFormatter={(date: Date | number) => {
-            const dateObj = date instanceof Date ? date : new Date(date);
-            // For main chart - show time
-            if (selectedTimeRange) {
-              return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-            }
-            // For overview - show date
-            return dateObj.toLocaleDateString();
-          }}
-          xFormatterOverview={(date: Date | number) => {
-            const dateObj = date instanceof Date ? date : new Date(date);
-            return dateObj.toLocaleDateString();
-          }}
-          yFormatter={(value: number) => {
-            return formatNumber(value);
-          }}
-          onBrush={(domain) => {
-            setSelectedTimeRange(domain);
-          }}
-          maxValue={Math.max(...data.map((item) => item.maxValue))}
-          minValue={Math.min(...data.map((item) => item.minValue))}
-        />
+    <QueryWrapper isLoading={aggregatedLoading} error={aggregatedError}>
+      {aggregatedData && (
+        <div>
+          {/* {additionalSensors.length > 0 && (
+            <div className="text-sm text-gray-600 mb-2">
+              Visualizing {1 + additionalSensors.length} sensors
+            </div>
+          )} */}
+          <LineConfidenceChart
+            data={aggregatedData}
+            allPoints={allPoints?.items ?? []}
+            loading={addingSensor}
+            margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
+            colors={colorPalette[0]}
+            xAxisTitle="Date"
+            yAxisTitle="Value"
+            xFormatter={(date: Date | number) => {
+              const dateObj = date instanceof Date ? date : new Date(date);
+              // For main chart - show time
+              if (selectedTimeRange) {
+                return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
+              }
+              // For overview - show date
+              return dateObj.toLocaleDateString();
+            }}
+            xFormatterOverview={(date: Date | number) => {
+              const dateObj = date instanceof Date ? date : new Date(date);
+              return dateObj.toLocaleDateString();
+            }}
+            yFormatter={(value: number) => {
+              return formatNumber(value);
+            }}
+            onBrush={(domain) => {
+              setSelectedTimeRange(domain);
+            }}
+            maxValue={maxValue}
+            minValue={minValue}
+            additionalSensors={chartAdditionalSensors}
+            colorPalette={colorPalette}
+            renderDataPoints={renderDataPoints}
+          />
+        </div>
       )}
     </QueryWrapper>
   );

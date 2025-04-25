@@ -1,30 +1,32 @@
 import * as React from 'react';
-import { extent } from 'd3-array';
-import { scaleLinear } from 'd3-scale';
-import { line, curveCatmullRom, area } from 'd3-shape';
-import { brushX } from 'd3-brush';
-import { select } from 'd3-selection';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
-import NumberFormatter from '../common/NumberFormatter/NumberFormatter';
-import { formatNumber } from '../common/NumberFormatter/NumberFortatterUtils';
 import MainChart from './components/MainChart';
 import OverviewChart from './components/OverviewChart';
+import ChartTooltip, {
+  TooltipData,
+  PointTooltipData,
+} from './components/ChartTooltip';
+import { useChartDimensions } from './hooks/useChartDimensions';
+import { useChartScales } from './hooks/useChartScales';
+import { useChartBrush } from './hooks/useChartBrush';
+import { defaultChartStyles, defaultFormatters } from './utils/chartUtils';
 
-// Types
-interface TooltipData {
-  x: number;
-  y: number;
-  data: AggregatedMeasurement;
+// Define the structure of additional sensors
+export interface AdditionalSensor {
+  info: {
+    id: string;
+    campaignId: string;
+    stationId: string;
+  };
+  aggregatedData: AggregatedMeasurement[] | null;
+  allPoints: MeasurementItem[] | null;
 }
 
-interface PointTooltipData extends Partial<MeasurementItem> {
-  x: number;
-  y: number;
-}
-
+// Props
 export interface LineConfidenceChartProps {
   data: AggregatedMeasurement[];
   allPoints: MeasurementItem[];
+  loading: boolean;
   width?: number;
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -45,320 +47,102 @@ export interface LineConfidenceChartProps {
   gapThresholdMinutes?: number;
   maxValue: number;
   minValue: number;
+  additionalSensors?: AdditionalSensor[];
+  colorPalette?: Array<{
+    line: string;
+    area: string;
+    point: string;
+  }>;
+  renderDataPoints: boolean;
 }
-
-// Default props
-const defaultProps: Partial<LineConfidenceChartProps> = {
-  margin: { top: 20, right: 30, bottom: 30, left: 40 },
-  showAreaOverview: true,
-  showLineOverview: true,
-  pointRadius: 3,
-  colors: {
-    line: '#9a6fb0',
-    area: '#9a6fb0',
-    point: '#9a6fb0',
-  },
-  xAxisTitle: 'Time',
-  yAxisTitle: 'Value',
-  xFormatter: (date: Date | number) => {
-    if (date instanceof Date) {
-      return date.toLocaleTimeString();
-    }
-    return new Date(date).toLocaleTimeString();
-  },
-  yFormatter: (value: number) => {
-    return formatNumber(value);
-  },
-};
-
-const getDataSegments = (
-  data: AggregatedMeasurement[],
-  gapThresholdMinutes: number = 120, // 2 hours default
-): AggregatedMeasurement[][] => {
-  if (data.length === 0) return [];
-  const segments: AggregatedMeasurement[][] = [];
-  let currentSegment: AggregatedMeasurement[] = [data[0]];
-
-  for (let i = 1; i < data.length; i++) {
-    const timeDiff =
-      (data[i].measurementTime.getTime() -
-        data[i - 1].measurementTime.getTime()) /
-      (1000 * 60); // Convert to minutes
-
-    if (timeDiff > gapThresholdMinutes) {
-      segments.push(currentSegment);
-      currentSegment = [];
-    }
-    currentSegment.push(data[i]);
-  }
-
-  if (currentSegment.length > 0) {
-    segments.push(currentSegment);
-  }
-
-  return segments;
-};
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   data,
   allPoints,
+  loading,
   width,
   height,
-  margin = defaultProps.margin!,
-  showAreaOverview = defaultProps.showAreaOverview!,
-  showLineOverview = defaultProps.showLineOverview!,
-  pointRadius = defaultProps.pointRadius!,
-  colors = defaultProps.colors!,
-  xAxisTitle = defaultProps.xAxisTitle!,
-  yAxisTitle = defaultProps.yAxisTitle!,
-  xFormatter = defaultProps.xFormatter!,
-  xFormatterOverview = defaultProps.xFormatterOverview!,
-  yFormatter = defaultProps.yFormatter!,
+  margin = defaultChartStyles.margin,
+  showAreaOverview = defaultChartStyles.showAreaOverview,
+  showLineOverview = defaultChartStyles.showLineOverview,
+  pointRadius = defaultChartStyles.pointRadius,
+  colors = defaultChartStyles.colors,
+  xAxisTitle = defaultChartStyles.xAxisTitle,
+  yAxisTitle = defaultChartStyles.yAxisTitle,
+  xFormatter = defaultFormatters.xFormatter,
+  xFormatterOverview = defaultFormatters.xFormatter,
+  yFormatter = defaultFormatters.yFormatter,
   onBrush,
   gapThresholdMinutes = 120,
   maxValue,
   minValue,
+  additionalSensors = [],
+  colorPalette = [
+    { line: '#9a6fb0', area: '#9a6fb0', point: '#9a6fb0' }, // Primary sensor
+    { line: '#4287f5', area: '#4287f5', point: '#4287f5' },
+    { line: '#42c5f5', area: '#42c5f5', point: '#42c5f5' },
+    { line: '#42f5a7', area: '#42f5a7', point: '#42f5a7' },
+    { line: '#f5cd42', area: '#f5cd42', point: '#f5cd42' },
+    { line: '#f54242', area: '#f54242', point: '#f54242' },
+  ],
+  renderDataPoints,
 }) => {
-  // Add refs for brush and container
-  const overviewRef = React.useRef<SVGGElement>(null);
+  // Container ref for resizing
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  // Add state for dimensions
-  const [dimensions, setDimensions] = React.useState({
-    width: width || 1000,
-    height: height || 800,
-  });
+  // Ref for the brush component
+  const overviewRef = React.useRef<SVGGElement>(null);
 
-  // Track if initial selection has been set
-  const initialSelectionRef = React.useRef(false);
-
-  // Add state for view domain
+  // View domain state
   const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
     null,
   );
 
-  // Add tooltip state
+  // Tooltip states
   const [tooltip, setTooltipAggregation] = React.useState<TooltipData | null>(
     null,
   );
-
   const [tooltipPoint, setTooltipPoint] =
     React.useState<PointTooltipData | null>(null);
 
-  // Use resize observer to update dimensions when container size changes
-  React.useEffect(() => {
-    if (!containerRef.current || width || height) return;
+  // Calculate chart dimensions
+  const { dimensions, chartDimensions } = useChartDimensions({
+    containerRef,
+    width,
+    height,
+    margin,
+  });
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        const { width, height } = entries[0].contentRect;
-        setDimensions({ width, height });
-      }
-    });
+  // Generate scales and paths
+  const { scales, paths, axisTicks } = useChartScales({
+    data,
+    chartDimensions,
+    viewDomain,
+    gapThresholdMinutes,
+    minValue,
+    maxValue,
+    additionalSensors,
+    xFormatter,
+    yFormatter,
+  });
 
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [width, height]);
-
-  // Calculate dimensions for main and overview charts
-  const chartDimensions = React.useMemo(() => {
-    const mainHeight = dimensions.height * 0.75; // Main chart takes 70% of total height
-    const overviewHeight = dimensions.height * 0.2; // Overview takes 20% of total height
-    const spacing = dimensions.height * 0.05; // 5% spacing between charts
-
-    const innerWidth = dimensions.width - margin.left - margin.right;
-    const mainInnerHeight = mainHeight - margin.top - margin.bottom;
-    const overviewInnerHeight = overviewHeight - margin.top - margin.bottom;
-
-    return {
-      innerWidth,
-      mainHeight,
-      mainInnerHeight,
-      overviewHeight,
-      overviewInnerHeight,
-      spacing,
-    };
-  }, [dimensions, margin]);
-
-  // Memoize scales for both charts
-  const scales = React.useMemo(() => {
-    const xExtent = extent(data, (d) => d.measurementTime.getTime());
-    const yExtent = [minValue, maxValue];
-
-    if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
-      return null;
-    }
-
-    // Add padding to the x-axis range to ensure points at the edges are fully visible
-    const xPadding = chartDimensions.innerWidth * 0.01; // 5% padding on each side
-
-    // Main chart scales - use viewDomain if available
-    const xScale = scaleLinear()
-      .domain(viewDomain || [xExtent[0], xExtent[1]])
-      .range([xPadding, chartDimensions.innerWidth - xPadding]);
-
-    const yScale = scaleLinear()
-      .domain(yExtent)
-      .range([chartDimensions.mainInnerHeight, 0]);
-
-    // Overview chart scales
-    const overviewXScale = scaleLinear()
-      .domain([xExtent[0], xExtent[1]])
-      .range([xPadding, chartDimensions.innerWidth - xPadding]);
-
-    const overviewYScale = scaleLinear()
-      .domain(yExtent)
-      .range([chartDimensions.overviewInnerHeight, 0]);
-
-    return { xScale, yScale, overviewXScale, overviewYScale };
-  }, [data, chartDimensions, viewDomain]);
-
-  // Memoize path generators for both charts
-  const paths = React.useMemo(() => {
-    if (!scales) return null;
-
-    // Get data segments
-    const segments = getDataSegments(data, gapThresholdMinutes);
-
-    // Main chart paths
-    const mainLineGenerator = line<AggregatedMeasurement>()
-      .x((d) => scales.xScale(d.measurementTime.getTime()))
-      .y((d) => scales.yScale(d.value))
-      .curve(curveCatmullRom.alpha(0.5));
-
-    const mainAreaGenerator = area<AggregatedMeasurement>()
-      .x((d) => scales.xScale(d.measurementTime.getTime()))
-      .y0((d) => scales.yScale(d.parametricLowerBound))
-      .y1((d) => scales.yScale(d.parametricUpperBound))
-      .curve(curveCatmullRom.alpha(0.5));
-
-    // Overview chart paths
-    const overviewLineGenerator = line<AggregatedMeasurement>()
-      .x((d) => scales.overviewXScale(d.measurementTime.getTime()))
-      .y((d) => scales.overviewYScale(d.value))
-      .curve(curveCatmullRom.alpha(0.5));
-
-    const overviewAreaGenerator = area<AggregatedMeasurement>()
-      .x((d) => scales.overviewXScale(d.measurementTime.getTime()))
-      .y0((d) => scales.overviewYScale(d.parametricLowerBound))
-      .y1((d) => scales.overviewYScale(d.parametricUpperBound))
-      .curve(curveCatmullRom.alpha(0.5));
-
-    // Generate paths for each segment
-    const mainLinePaths = segments.map((segment) => mainLineGenerator(segment));
-    const mainAreaPaths = segments.map((segment) => mainAreaGenerator(segment));
-    const overviewLinePaths = segments.map((segment) =>
-      overviewLineGenerator(segment),
-    );
-    const overviewAreaPaths = segments.map((segment) =>
-      overviewAreaGenerator(segment),
-    );
-
-    return {
-      mainLinePaths,
-      mainAreaPaths,
-      overviewLinePaths,
-      overviewAreaPaths,
-    };
-  }, [data, scales, gapThresholdMinutes]);
-
-  // Memoize axis ticks for main chart
-  const axisTicks = React.useMemo(() => {
-    if (!scales) return null;
-
-    const xTicks = scales.xScale.ticks(5).map((tick) => ({
-      value: tick,
-      label: xFormatter(tick),
-      x: scales.xScale(tick),
-    }));
-
-    const yTicks = scales.yScale.ticks(5).map((tick) => ({
-      value: tick,
-      label: yFormatter(tick),
-      y: scales.yScale(tick),
-    }));
-
-    return { xTicks, yTicks };
-  }, [scales, xFormatter, yFormatter]);
-
-  // Initialize brush
-  React.useEffect(() => {
-    console.log('initializing brush');
-    if (!scales || !overviewRef.current) return;
-
-    // Create brush behavior
-    const brush = brushX<unknown>()
-      .extent([
-        [0, 0],
-        [chartDimensions.innerWidth, chartDimensions.overviewInnerHeight],
-      ])
-      .on('start', () => {
-        // Mark that user has started brushing
-        initialSelectionRef.current = true;
-      })
-      .on('brush', (event) => {
-        if (!event.selection) return;
-        const selection = event.selection as [number, number];
-
-        // Convert pixel coordinates to domain values
-        const domain: [number, number] = [
-          scales.overviewXScale.invert(selection[0]),
-          scales.overviewXScale.invert(selection[1]),
-        ];
-
-        // Update view domain
-        setViewDomain(domain);
-        onBrush?.(domain);
-      });
-
-    // Apply brush to overview chart
-    const brushGroup = select(overviewRef.current);
-    brushGroup.call(brush);
-
-    // Set initial selection if not already set
-    if (!initialSelectionRef.current) {
-      // Calculate 10% width selection centered in the middle
-      const selectionWidth = chartDimensions.innerWidth * 0.5;
-      const selectionStart = (chartDimensions.innerWidth - selectionWidth) / 2;
-      const selectionEnd = selectionStart + selectionWidth;
-
-      brushGroup.call(brush.move, [selectionStart, selectionEnd]);
-
-      // Trigger initial brush event with 10% domain
-      if (scales.overviewXScale) {
-        const domain: [number, number] = [
-          scales.overviewXScale.invert(selectionStart),
-          scales.overviewXScale.invert(selectionEnd),
-        ];
-        onBrush?.(domain);
-      }
-    }
-
-    // Cleanup
-    return () => {
-      brushGroup.on('.brush', null);
-    };
-  }, [
-    scales,
-    chartDimensions.innerWidth,
-    chartDimensions.overviewInnerHeight,
-    onBrush,
+  // Set up brush
+  useChartBrush({
+    overviewRef,
+    innerWidth: chartDimensions.innerWidth,
+    overviewInnerHeight: chartDimensions.overviewInnerHeight,
+    overviewXScale: scales?.overviewXScale,
     setViewDomain,
-  ]);
+    onBrush,
+  });
 
+  // Quick validation checks
   if (data.length === 0) {
-    return <div>Data is empty</div>;
+    return <div>No data available</div>;
   }
 
-  if (!scales) {
-    return <div>Invalid data - no scales</div>;
-  }
-
-  if (!paths || !axisTicks) {
-    return <div>Invalid data - no paths or axis ticks</div>;
+  if (!scales || !paths || !axisTicks) {
+    return <div>Cannot calculate chart scales</div>;
   }
 
   return (
@@ -369,6 +153,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
       <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
         <MainChart
+          loading={loading}
           data={data}
           allPoints={allPoints}
           scales={scales}
@@ -382,6 +167,9 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           yAxisTitle={yAxisTitle}
           setTooltipAggregation={setTooltipAggregation}
           setTooltipPoint={setTooltipPoint}
+          additionalSensors={additionalSensors}
+          colorPalette={colorPalette}
+          renderDataPoints={renderDataPoints}
         />
 
         {/* Overview chart */}
@@ -393,6 +181,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           scales={scales}
           margin={margin}
           colors={colors}
+          colorPalette={colorPalette}
           xFormatterOverview={xFormatterOverview}
           overviewRef={overviewRef}
         />
@@ -406,89 +195,15 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           fill="white"
         />
       </svg>
-      {tooltip && (
-        <div
-          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
-          style={{
-            left: tooltip.x + 10,
-            top: tooltip.y - 10,
-            pointerEvents: 'auto',
-          }}
-        >
-          <div className="flex justify-between items-start mb-2">
-            <div className="font-medium">Aggregated Point Details</div>
-            <button
-              onClick={() => setTooltipAggregation(null)}
-              className="ml-2 text-gray-500 hover:text-gray-700"
-              aria-label="Close tooltip"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-          <div>Time: {tooltip.data.measurementTime.toLocaleString()}</div>
-          <div>
-            Value: <NumberFormatter value={tooltip.data.value} />
-          </div>
-          <div>
-            Median: <NumberFormatter value={tooltip.data.medianValue} />
-          </div>
-          <div>
-            Confidence Interval: [
-            <NumberFormatter value={tooltip.data.parametricLowerBound} />,
-            <NumberFormatter value={tooltip.data.parametricUpperBound} /> ]
-          </div>
-          <div>Point Count: {tooltip.data.pointCount}</div>
-        </div>
-      )}
-      {tooltipPoint && (
-        <div
-          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
-          style={{
-            left: tooltipPoint.x + 10,
-            top: tooltipPoint.y - 10,
-            pointerEvents: 'auto',
-          }}
-        >
-          <div className="flex justify-between items-start mb-2">
-            <div className="font-medium">Individual Point Details</div>
-            <button
-              onClick={() => setTooltipPoint(null)}
-              className="ml-2 text-gray-500 hover:text-gray-700"
-              aria-label="Close tooltip"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-          <div>Time: {tooltipPoint.collectiontime?.toLocaleString()}</div>
-          <div>
-            Value: <NumberFormatter value={tooltipPoint.value ?? 0} />
-          </div>
-        </div>
-      )}
+
+      {/* Tooltips */}
+      <ChartTooltip
+        tooltip={tooltip}
+        tooltipPoint={tooltipPoint}
+        setTooltipAggregation={setTooltipAggregation}
+        setTooltipPoint={setTooltipPoint}
+        renderDataPoints={renderDataPoints}
+      />
     </div>
   );
 };
