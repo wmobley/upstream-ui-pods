@@ -26,7 +26,11 @@ const LineConfidenceViz = ({
       stationId={stationId}
       sensorId={sensorId}
     >
-      <LineConfidenceContent campaignId={campaignId} stationId={stationId} />
+      <LineConfidenceContent
+        campaignId={campaignId}
+        stationId={stationId}
+        sensorId={sensorId}
+      />
     </LineConfidenceProvider>
   );
 };
@@ -35,9 +39,11 @@ const LineConfidenceViz = ({
 const LineConfidenceContent = ({
   campaignId,
   stationId,
+  sensorId,
 }: {
   campaignId: string;
   stationId: string;
+  sensorId: string;
 }) => {
   const { data, isLoading, error } = useLineConfidence();
 
@@ -48,7 +54,7 @@ const LineConfidenceContent = ({
           <MeasurementSummary data={data} />
           <Controls campaignId={campaignId} stationId={stationId} />
           <AdditionalSensorsList />
-          <Chart />
+          <Chart selectedSensorId={sensorId} />
         </div>
       )}
     </QueryWrapper>

@@ -7,6 +7,7 @@ export interface TooltipData {
   x: number;
   y: number;
   data: AggregatedMeasurement;
+  sensorId: string;
 }
 
 export interface PointTooltipData extends Partial<MeasurementItem> {
@@ -79,6 +80,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
             <NumberFormatter value={tooltip.data.parametricUpperBound} /> ]
           </div>
           <div>Point Count: {tooltip.data.pointCount}</div>
+          <div>Sensor ID: {tooltip.sensorId}</div>
         </div>
       )}
 
@@ -117,6 +119,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
           <div>
             Value: <NumberFormatter value={tooltipPoint.value ?? 0} />
           </div>
+          <div>Sensor ID: {tooltipPoint.sensorid}</div>
         </div>
       )}
     </>
