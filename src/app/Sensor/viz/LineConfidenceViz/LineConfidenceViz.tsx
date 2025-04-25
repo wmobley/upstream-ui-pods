@@ -26,25 +26,13 @@ const LineConfidenceViz = ({
       stationId={stationId}
       sensorId={sensorId}
     >
-      <LineConfidenceContent
-        campaignId={campaignId}
-        stationId={stationId}
-        sensorId={sensorId}
-      />
+      <LineConfidenceContent />
     </LineConfidenceProvider>
   );
 };
 
 // Inner component that uses the context
-const LineConfidenceContent = ({
-  campaignId,
-  stationId,
-  sensorId,
-}: {
-  campaignId: string;
-  stationId: string;
-  sensorId: string;
-}) => {
+const LineConfidenceContent = () => {
   const { data, isLoading, error } = useLineConfidence();
 
   return (
@@ -52,9 +40,9 @@ const LineConfidenceContent = ({
       {data && (
         <div className="mx-auto flex flex-col max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <MeasurementSummary data={data} />
-          <Controls campaignId={campaignId} stationId={stationId} />
+          <Controls />
           <AdditionalSensorsList />
-          <Chart selectedSensorId={sensorId} />
+          <Chart />
         </div>
       )}
     </QueryWrapper>

@@ -104,6 +104,9 @@ interface LineConfidenceContextProps {
   renderDataPoints: boolean;
   setRenderDataPoints: React.Dispatch<React.SetStateAction<boolean>>;
   addingSensor: boolean;
+  campaignId: string;
+  stationId: string;
+  sensorId: string;
 }
 
 const LineConfidenceContext = createContext<
@@ -319,6 +322,9 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     renderDataPoints,
     setRenderDataPoints,
     addingSensor,
+    campaignId,
+    stationId,
+    sensorId,
   };
 
   return (

@@ -4,12 +4,7 @@ import { AddSensorButton } from './AddSensorButton';
 import { useState } from 'react';
 import { MeasurementItem } from '@upstream/upstream-api';
 
-interface ControlsProps {
-  campaignId: string;
-  stationId: string;
-}
-
-const Controls = ({ campaignId, stationId }: ControlsProps) => {
+const Controls = () => {
   const {
     aggregationInterval,
     renderDataPoints,
@@ -18,6 +13,8 @@ const Controls = ({ campaignId, stationId }: ControlsProps) => {
     aggregatedData,
     allPoints,
     additionalSensors,
+    campaignId,
+    stationId,
   } = useLineConfidence();
 
   // State for active button styling
