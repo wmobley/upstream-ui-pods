@@ -51,7 +51,7 @@ export const defaultFormatters = {
  * Default chart styling options
  */
 export const defaultChartStyles = {
-  margin: { top: 20, right: 30, bottom: 30, left: 40 },
+  margin: { top: 20, right: 0, bottom: 30, left: 0 },
   showAreaOverview: true,
   showLineOverview: true,
   pointRadius: 3,

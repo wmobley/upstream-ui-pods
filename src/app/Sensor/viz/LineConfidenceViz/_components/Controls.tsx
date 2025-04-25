@@ -1,0 +1,196 @@
+import { AGGREGATION_INTERVALS } from '../context/LineConfidenceContext';
+import { useLineConfidence } from '../context/LineConfidenceContext';
+import { Link } from 'react-router-dom';
+import { AddSensorButton } from './AddSensorButton';
+import { useState } from 'react';
+
+interface ControlsProps {
+  campaignId: string;
+  stationId: string;
+}
+
+const Controls = ({ campaignId, stationId }: ControlsProps) => {
+  const {
+    aggregationInterval,
+    handleAggregationIntervalChange,
+    renderDataPoints,
+    setRenderDataPoints,
+    selectedTimeRange,
+    aggregatedData,
+  } = useLineConfidence();
+
+  // State for active button styling
+  const [activeExport, setActiveExport] = useState<string | null>(null);
+
+  // Handle data export
+  const handleExport = (format: string) => {
+    setActiveExport(format);
+
+    if (!aggregatedData) return;
+
+    let content = '';
+    let filename = `sensor-data-${new Date().toISOString()}`;
+    let mimeType = '';
+
+    if (format === 'csv') {
+      // Create CSV content
+      const headers = [
+        'measurementTime',
+        'value',
+        'minValue',
+        'maxValue',
+        'parametricLowerBound',
+        'parametricUpperBound',
+      ];
+      content = headers.join(',') + '\n';
+
+      aggregatedData.forEach((measurement) => {
+        const row = [
+          new Date(measurement.measurementTime).toISOString(),
+          measurement.value,
+          measurement.minValue,
+          measurement.maxValue,
+          measurement.parametricLowerBound,
+          measurement.parametricUpperBound,
+        ].join(',');
+        content += row + '\n';
+      });
+
+      filename += '.csv';
+      mimeType = 'text/csv';
+    } else if (format === 'json') {
+      // Create JSON content
+      content = JSON.stringify(aggregatedData, null, 2);
+      filename += '.json';
+      mimeType = 'application/json';
+    }
+
+    // Create and trigger download
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+
+    // Clean up
+    URL.revokeObjectURL(url);
+
+    // Reset active state after a delay
+    setTimeout(() => setActiveExport(null), 1000);
+  };
+
+  return (
+    <div className="border-b pb-4">
+      <div className="flex flex-col flex-wrap items-center justify-between gap-4">
+        {/* Time Controls Group */}
+        <div className="flex items-center gap-4 p-2 bg-gray-50 rounded border w-full">
+          <div className="flex items-center">
+            <label
+              htmlFor="aggregationInterval"
+              className="mr-2 text-sm font-medium"
+            >
+              Aggregation Interval:
+            </label>
+            <select
+              id="aggregationInterval"
+              value={aggregationInterval || ''}
+              onChange={handleAggregationIntervalChange}
+              className="p-2 border rounded text-sm"
+            >
+              {AGGREGATION_INTERVALS.map((interval) => (
+                <option key={interval} value={interval}>
+                  {interval.charAt(0).toUpperCase() + interval.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="h-8 border-r border-gray-300"></div>
+
+          <div className="text-sm">
+            {selectedTimeRange ? (
+              <span>
+                Viewing: {new Date(selectedTimeRange[0]).toLocaleString()} -{' '}
+                {new Date(selectedTimeRange[1]).toLocaleString()}
+              </span>
+            ) : (
+              <span>Viewing all data</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-row justify-between gap-4 w-full">
+          {/* Visualization Controls Group */}
+          <div className="flex items-center gap-3 p-2 bg-gray-50 rounded border">
+            <AddSensorButton campaignId={campaignId} stationId={stationId} />
+            <button
+              onClick={() => setRenderDataPoints(!renderDataPoints)}
+              className={`px-4 py-2 text-sm rounded transition-colors ${
+                renderDataPoints
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-primary-600 border border-primary-600'
+              }`}
+              aria-label={
+                renderDataPoints ? 'Hide Data Points' : 'Show Data Points'
+              }
+              title={renderDataPoints ? 'Hide Data Points' : 'Show Data Points'}
+            >
+              {renderDataPoints ? 'Hide Data Points' : 'Show Data Points'}
+            </button>
+
+            <Link
+              to={`/docs/confidence-explanation`}
+              className="text-primary-600 hover:text-primary-800 flex items-center text-sm"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              About Confidence Intervals
+            </Link>
+          </div>
+
+          {/* Export Controls Group */}
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+            <span className="text-sm font-medium">Export:</span>
+            <button
+              onClick={() => handleExport('csv')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                activeExport === 'csv'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-primary-600 border border-primary-600 hover:bg-gray-50'
+              }`}
+              disabled={!aggregatedData}
+              title="Export as CSV"
+            >
+              CSV
+            </button>
+            <button
+              onClick={() => handleExport('json')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                activeExport === 'json'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-primary-600 border border-primary-600 hover:bg-gray-50'
+              }`}
+              disabled={!aggregatedData}
+              title="Export as JSON"
+            >
+              JSON
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Controls;
