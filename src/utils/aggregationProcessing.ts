@@ -45,10 +45,8 @@ export function selectAggregationInterval(
     return 'day';
   } else if (timeRange > millisecondsPerDay) {
     return 'hour';
-  } else if (timeRange > millisecondsPerHour / 3) {
-    return 'minute';
   } else {
-    return 'second';
+    return 'minute';
   }
 }
 
