@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ListMeasurementsResponsePagination,
   MeasurementsApi,
@@ -22,48 +22,35 @@ export const useListFilterDate = (
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
-  const [data, setData] = useState<ListMeasurementsResponsePagination | null>(
-    null,
-  );
-  const [isLoading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchSensors = async () => {
-      try {
-        setLoading(true);
-        const response =
-          await measurementsApi.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(
-            {
-              campaignId: parseInt(campaignId),
-              stationId: parseInt(stationId),
-              sensorId: parseInt(sensorId),
-              downsampleThreshold: downsampleThreshold,
-              minMeasurementValue: 0,
-              limit: limit,
-              startDate: startDate,
-              endDate: endDate,
-            },
-          );
-        setData(response);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error('Unknown error occurred'),
+  const { data, isLoading, error } = useQuery({
+    queryKey: [
+      'measurements',
+      campaignId,
+      stationId,
+      sensorId,
+      limit,
+      downsampleThreshold,
+      startDate,
+      endDate,
+    ],
+    queryFn: async () => {
+      const response =
+        await measurementsApi.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(
+          {
+            campaignId: parseInt(campaignId),
+            stationId: parseInt(stationId),
+            sensorId: parseInt(sensorId),
+            downsampleThreshold: downsampleThreshold,
+            minMeasurementValue: 0,
+            limit: limit,
+            startDate: startDate,
+            endDate: endDate,
+          },
         );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSensors();
-  }, [
-    campaignId,
-    stationId,
-    sensorId,
-    limit,
-    downsampleThreshold,
-    startDate,
-    endDate,
-  ]);
+      return response;
+    },
+  });
 
-  return { data, isLoading, error };
+  return { data: data ?? null, isLoading, error: error as Error | null };
 };

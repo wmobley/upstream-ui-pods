@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   AggregatedMeasurement,
   GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest,
@@ -21,38 +21,31 @@ export const useListConfidenceValues = (
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
-  const [data, setData] = useState<AggregatedMeasurement[] | null>(null);
-  const [isLoading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchSensors = async () => {
-      try {
-        setLoading(true);
-        const requestParams: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest =
-          {
-            campaignId: parseInt(campaignId),
-            stationId: parseInt(stationId),
-            sensorId: parseInt(sensorId),
-            interval: interval,
-            intervalValue: intervalValue,
-            minValue: 0,
-          };
-        const response =
-          await measurementsApi.getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet(
-            requestParams,
-          );
-        setData(response);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error('Unknown error occurred'),
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSensors();
-  }, [campaignId, stationId, sensorId, interval, intervalValue]);
+  const { data, isLoading, error } = useQuery<AggregatedMeasurement[]>({
+    queryKey: [
+      'confidenceValues',
+      campaignId,
+      stationId,
+      sensorId,
+      interval,
+      intervalValue,
+    ],
+    queryFn: async () => {
+      const requestParams: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest =
+        {
+          campaignId: parseInt(campaignId),
+          stationId: parseInt(stationId),
+          sensorId: parseInt(sensorId),
+          interval: interval,
+          intervalValue: intervalValue,
+          minValue: 0,
+        };
+      return await measurementsApi.getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet(
+        requestParams,
+      );
+    },
+  });
 
-  return { data, isLoading, error };
+  return { data: data ?? null, isLoading, error: error as Error | null };
 };

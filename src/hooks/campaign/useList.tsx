@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   CampaignsApi,
   ListCampaignsApiV1CampaignsGetRequest,
@@ -19,26 +19,19 @@ interface UseListProps {
 export const useList = ({ filters }: UseListProps): UseListReturn => {
   const config = useConfiguration();
   const campaignsApi = new CampaignsApi(config);
-  const [data, setData] = useState<ListCampaignsResponseItem[]>([]);
-  const [isLoading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        const response =
-          await campaignsApi.listCampaignsApiV1CampaignsGet(filters);
-        setData(response.items);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error('Unknown error occurred'),
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCampaigns();
-  }, [filters]);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['campaigns', filters],
+    queryFn: async () => {
+      const response =
+        await campaignsApi.listCampaignsApiV1CampaignsGet(filters);
+      return response.items;
+    },
+  });
 
-  return { data, isLoading, error };
+  return {
+    data: data ?? [],
+    isLoading,
+    error: error as Error | null,
+  };
 };
