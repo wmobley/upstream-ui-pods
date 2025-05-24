@@ -2,10 +2,12 @@ import { useState } from 'react';
 import {
   ListSensorsResponsePagination,
   SensorItem,
+  SensorStatistics,
 } from '@upstream/upstream-api';
 import { PageButtons } from './PageButtons';
 import { ItemsPerPage } from './ItemsPerPage';
 import { Link } from 'react-router-dom';
+import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 interface DataTableProps<
   T extends Record<string, string | number | boolean | null>,
 > {
@@ -28,6 +30,21 @@ const DataCell = ({
   column: string;
   getRowLink?: (item: SensorItem) => string;
 }) => {
+  if (column.includes('statistics')) {
+    console.log(item.statistics);
+    const key = column.split('.')[1] as keyof SensorStatistics;
+    return (
+      <td className="px-6 py-4 whitespace-nowrap">
+        {item.statistics &&
+        item.statistics[key] !== null &&
+        item.statistics[key] !== undefined
+          ? typeof item.statistics[key] === 'number'
+            ? formatNumber(item.statistics[key])
+            : 'N/A'
+          : 'N/A'}
+      </td>
+    );
+  }
   return (
     <td className="px-6 py-4 whitespace-nowrap">
       {getRowLink ? (
