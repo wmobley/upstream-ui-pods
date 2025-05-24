@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useList } from './useList';
+import { useQuery } from '@tanstack/react-query';
 import {
   DataPoint,
   ProcessedDataPoint,
@@ -9,6 +9,8 @@ import {
   calculateThreshold,
   getAppropriateResolution,
 } from '../../utils/dataProcessing';
+import { MeasurementsApi } from '@upstream/upstream-api';
+import useConfiguration from '../api/useConfiguration';
 
 export interface ProcessedMeasurementsResult {
   downsampledData: ProcessedDataPoint[];
@@ -26,18 +28,50 @@ export function useProcessedMeasurements(
   startTime?: Date,
   endTime?: Date,
 ): ProcessedMeasurementsResult {
-  const { data, isLoading, error } = useList(campaignId, stationId, sensorId);
+  const config = useConfiguration();
+  const measurementsApi = new MeasurementsApi(config);
+
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: [
+      'measurements',
+      campaignId,
+      stationId,
+      sensorId,
+      startTime,
+      endTime,
+    ],
+    queryFn: async () => {
+      const response =
+        await measurementsApi.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(
+          {
+            campaignId: parseInt(campaignId),
+            stationId: parseInt(stationId),
+            sensorId: parseInt(sensorId),
+            minMeasurementValue: 0,
+            limit: 500000,
+            startDate: startTime,
+            endDate: endTime,
+          },
+        );
+      return response;
+    },
+  });
 
   const processedData = useMemo(() => {
-    if (!data?.items || data.items.length === 0) {
+    if (!rawData?.items || rawData.items.length === 0) {
       return {
         downsampledData: [],
         aggregatedData: [],
+        data: [],
       };
     }
 
     // Convert API data to DataPoint format
-    const timeSeriesData: DataPoint[] = data.items
+    const timeSeriesData: DataPoint[] = rawData.items
       .filter((item) => item.value != null) // Filter out null values
       .map((item) => ({
         timestamp: new Date(item.collectiontime),
@@ -45,41 +79,29 @@ export function useProcessedMeasurements(
         geometry: item.geometry as GeoJSON.Point,
       }));
 
-    // Filter by time range if provided
-    const filteredData = timeSeriesData.filter((point) => {
-      if (startTime && point.timestamp < startTime) return false;
-      if (endTime && point.timestamp > endTime) return false;
-      return true;
-    });
-
     // Calculate appropriate threshold based on container width
     const threshold = calculateThreshold(containerWidth);
 
     // Determine appropriate time interval for aggregation
     const interval = getAppropriateResolution(
-      startTime || filteredData[0].timestamp,
-      endTime || filteredData[filteredData.length - 1].timestamp,
+      startTime || timeSeriesData[0].timestamp,
+      endTime || timeSeriesData[timeSeriesData.length - 1].timestamp,
     );
 
     // Process data using both methods
-    const downsampledData = lttb(filteredData, threshold);
-    const aggregatedData = aggregateByTime(filteredData, interval);
+    const downsampledData = lttb(timeSeriesData, threshold);
+    const aggregatedData = aggregateByTime(timeSeriesData, interval);
 
     return {
       downsampledData,
       aggregatedData,
+      data: timeSeriesData,
     };
-  }, [data, containerWidth, startTime, endTime]);
+  }, [rawData, containerWidth, startTime, endTime]);
 
   return {
     ...processedData,
-    data:
-      data?.items.map((item) => ({
-        timestamp: new Date(item.collectiontime),
-        value: item.value as number,
-        geometry: item.geometry as GeoJSON.Point,
-      })) || [],
     isLoading,
-    error,
+    error: error as Error | null,
   };
 }

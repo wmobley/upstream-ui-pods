@@ -32,6 +32,7 @@ export * from './PyTASProject';
 export * from './PyTASUser';
 export * from './ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValue';
 export * from './SensorItem';
+export * from './SensorStatistics';
 export * from './SensorSummaryForStations';
 export * from './StationCreate';
 export * from './StationCreateResponse';

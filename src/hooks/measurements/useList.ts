@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ListMeasurementsResponsePagination,
   MeasurementsApi,
@@ -20,15 +20,18 @@ export const useList = (
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
-  const [data, setData] = useState<ListMeasurementsResponsePagination | null>(
-    null,
-  );
-  const [isLoading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchSensors = async () => {
-      try {
+  const { data, isLoading, error } =
+    useQuery<ListMeasurementsResponsePagination>({
+      queryKey: [
+        'measurements',
+        campaignId,
+        stationId,
+        sensorId,
+        limit,
+        downsampleThreshold,
+      ],
+      queryFn: async () => {
         const response =
           await measurementsApi.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(
             {
@@ -40,17 +43,9 @@ export const useList = (
               limit,
             },
           );
-        setData(response);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error('Unknown error occurred'),
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSensors();
-  }, []);
+        return response;
+      },
+    });
 
-  return { data, isLoading, error };
+  return { data: data ?? null, isLoading, error: error as Error | null };
 };

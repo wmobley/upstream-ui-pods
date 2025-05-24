@@ -113,15 +113,19 @@ export const SensorTable: React.FC<SensorTableProps> = ({
       <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
         Explore sensors
       </h2>
+      <FilterToolbar title="Filters" filters={filterConfigs} />
       <QueryWrapper isLoading={sensorsLoading} error={sensorsError}>
-        <FilterToolbar title="Filters" filters={filterConfigs} />
         {sensors && (
           <DataTable
             data={sensors}
             columns={[
               { key: 'variablename', label: 'Variable Name' },
-              { key: 'units', label: 'Units' },
               { key: 'alias', label: 'Alias' },
+              { key: 'statistics.count', label: 'Count' },
+              { key: 'statistics.avgValue', label: 'Average' },
+              { key: 'statistics.minValue', label: 'Min' },
+              { key: 'statistics.maxValue', label: 'Max' },
+              { key: 'units', label: 'Units' },
               { key: 'postprocess', label: 'Postprocess' },
               { key: 'postprocessscript', label: 'Postprocess Script' },
             ]}

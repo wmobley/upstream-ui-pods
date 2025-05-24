@@ -80,7 +80,7 @@ const useSensorData = (
 };
 
 interface LineConfidenceContextProps {
-  data: GetSensorResponse | null;
+  data: GetSensorResponse | undefined;
   isLoading: boolean;
   error: Error | null;
   selectedTimeRange: [number, number] | null;
@@ -180,11 +180,14 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const [addSensorModalOpen, setAddSensorModalOpen] = useState<boolean>(false);
   useEffect(() => {
     if (data) {
-      if (data.firstMeasurementTime && data.lastMeasurementTime) {
+      if (
+        data.statistics?.firstMeasurementCollectiontime &&
+        data.statistics?.lastMeasurementTime
+      ) {
         setAggregationInterval(
           selectAggregationInterval(
-            data.firstMeasurementTime,
-            data.lastMeasurementTime,
+            data.statistics.firstMeasurementCollectiontime,
+            data.statistics.lastMeasurementTime,
           ),
         );
       } else {

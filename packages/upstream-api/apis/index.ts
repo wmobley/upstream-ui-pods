@@ -7,5 +7,4 @@ export * from './ProjectsApi';
 export * from './SensorVariablesApi';
 export * from './SensorsApi';
 export * from './StationsApi';
-export * from './UploadfileApi';
 export * from './UploadfileCsvApi';

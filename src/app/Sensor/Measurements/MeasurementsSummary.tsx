@@ -22,24 +22,42 @@ const MeasurementsSummary = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg mb-6">
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Total</p>
-          <p className="font-medium text-lg">{data?.count}</p>
+          <p className="font-medium text-lg">
+            {data?.statistics &&
+            data.statistics.count !== null &&
+            data.statistics.count !== undefined
+              ? data.statistics.count
+              : 'N/A'}
+          </p>
         </div>
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Average</p>
           <p className="font-medium text-lg">
-            {data?.avgValue ? formatNumber(data?.avgValue) : 'N/A'}
+            {data?.statistics &&
+            data.statistics.avgValue !== null &&
+            data.statistics.avgValue !== undefined
+              ? formatNumber(data.statistics.avgValue)
+              : 'N/A'}
           </p>
         </div>
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Minimum</p>
           <p className="font-medium text-lg">
-            {data?.minValue ? formatNumber(data?.minValue) : 'N/A'}
+            {data?.statistics &&
+            data.statistics.minValue !== null &&
+            data.statistics.minValue !== undefined
+              ? formatNumber(data.statistics.minValue)
+              : 'N/A'}
           </p>
         </div>
         <div className="flex flex-col items-center p-3 bg-white rounded-md shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Maximum</p>
           <p className="font-medium text-lg">
-            {data?.maxValue ? formatNumber(data?.maxValue) : 'N/A'}
+            {data?.statistics &&
+            data.statistics.maxValue !== null &&
+            data.statistics.maxValue !== undefined
+              ? formatNumber(data.statistics.maxValue)
+              : 'N/A'}
           </p>
         </div>
       </div>

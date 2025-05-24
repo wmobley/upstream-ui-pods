@@ -40,10 +40,18 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
           <div>
             <p className="text-sm text-gray-500">First Measurement</p>
             <p className="font-medium">
-              {data.firstMeasurementTime?.toLocaleDateString()}
+              {data.statistics &&
+              data.statistics.firstMeasurementCollectiontime !== null &&
+              data.statistics.firstMeasurementCollectiontime !== undefined
+                ? data.statistics.firstMeasurementCollectiontime.toLocaleDateString()
+                : 'N/A'}
             </p>
             <p className="text-sm text-gray-500">
-              {data.firstMeasurementTime?.toLocaleTimeString()}
+              {data.statistics &&
+              data.statistics.firstMeasurementCollectiontime !== null &&
+              data.statistics.firstMeasurementCollectiontime !== undefined
+                ? data.statistics.firstMeasurementCollectiontime.toLocaleTimeString()
+                : 'N/A'}
             </p>
           </div>
         </div>
@@ -53,10 +61,11 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
           <div>
             <p className="text-sm text-gray-500">Last Measurement</p>
             <p className="font-medium">
-              {data.lastMeasurementTime?.toLocaleDateString()}
-            </p>
-            <p className="text-sm text-gray-500">
-              {data.lastMeasurementTime?.toLocaleTimeString()}
+              {data.statistics &&
+              data.statistics.lastMeasurementTime !== null &&
+              data.statistics.lastMeasurementTime !== undefined
+                ? data.statistics.lastMeasurementTime.toLocaleString()
+                : 'N/A'}
             </p>
           </div>
         </div>
@@ -65,8 +74,10 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
           <div>
             <p className="text-sm text-gray-500">Min Value</p>
             <p className="font-medium">
-              {data.minValue !== null && data.minValue !== undefined
-                ? formatNumber(data.minValue)
+              {data.statistics &&
+              data.statistics.minValue !== null &&
+              data.statistics.minValue !== undefined
+                ? formatNumber(data.statistics.minValue)
                 : 'N/A'}
             </p>
           </div>
@@ -77,8 +88,10 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
           <div>
             <p className="text-sm text-gray-500">Max Value</p>
             <p className="font-medium">
-              {data.maxValue !== null && data.maxValue !== undefined
-                ? formatNumber(data.maxValue)
+              {data.statistics &&
+              data.statistics.maxValue !== null &&
+              data.statistics.maxValue !== undefined
+                ? formatNumber(data.statistics.maxValue)
                 : 'N/A'}
             </p>
           </div>
@@ -89,8 +102,10 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
           <div>
             <p className="text-sm text-gray-500">Average Value</p>
             <p className="font-medium">
-              {data.avgValue !== null && data.avgValue !== undefined
-                ? formatNumber(data.avgValue)
+              {data.statistics &&
+              data.statistics.avgValue !== null &&
+              data.statistics.avgValue !== undefined
+                ? formatNumber(data.statistics.avgValue)
                 : 'N/A'}
             </p>
           </div>
@@ -100,7 +115,13 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
           <FaChartBar className="text-indigo-500 text-2xl mr-3" />
           <div>
             <p className="text-sm text-gray-500">Count</p>
-            <p className="font-medium">{data.count}</p>
+            <p className="font-medium">
+              {data.statistics &&
+              data.statistics.count !== null &&
+              data.statistics.count !== undefined
+                ? data.statistics.count
+                : 'N/A'}
+            </p>
           </div>
         </div>
       </div>

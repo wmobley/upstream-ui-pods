@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SensorStatistics } from './SensorStatistics';
+import {
+    SensorStatisticsFromJSON,
+    SensorStatisticsFromJSONTyped,
+    SensorStatisticsToJSON,
+    SensorStatisticsToJSONTyped,
+} from './SensorStatistics';
+
 /**
  * 
  * @export
@@ -61,6 +69,12 @@ export interface SensorItem {
      * @memberof SensorItem
      */
     variablename?: string | null;
+    /**
+     * 
+     * @type {SensorStatistics}
+     * @memberof SensorItem
+     */
+    statistics?: SensorStatistics | null;
 }
 
 /**
@@ -88,6 +102,7 @@ export function SensorItemFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'postprocessscript': json['postprocessscript'] == null ? undefined : json['postprocessscript'],
         'units': json['units'] == null ? undefined : json['units'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
+        'statistics': json['statistics'] == null ? undefined : SensorStatisticsFromJSON(json['statistics']),
     };
 }
 
@@ -109,6 +124,7 @@ export function SensorItemToJSONTyped(value?: SensorItem | null, ignoreDiscrimin
         'postprocessscript': value['postprocessscript'],
         'units': value['units'],
         'variablename': value['variablename'],
+        'statistics': SensorStatisticsToJSON(value['statistics']),
     };
 }
 

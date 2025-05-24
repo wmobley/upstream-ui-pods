@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SensorStatistics } from './SensorStatistics';
+import {
+    SensorStatisticsFromJSON,
+    SensorStatisticsFromJSONTyped,
+    SensorStatisticsToJSON,
+    SensorStatisticsToJSONTyped,
+} from './SensorStatistics';
+
 /**
  * 
  * @export
@@ -63,40 +71,10 @@ export interface GetSensorResponse {
     variablename?: string | null;
     /**
      * 
-     * @type {number}
+     * @type {SensorStatistics}
      * @memberof GetSensorResponse
      */
-    maxValue?: number | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof GetSensorResponse
-     */
-    minValue?: number | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof GetSensorResponse
-     */
-    avgValue?: number | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof GetSensorResponse
-     */
-    count?: number | null;
-    /**
-     * 
-     * @type {Date}
-     * @memberof GetSensorResponse
-     */
-    firstMeasurementTime?: Date | null;
-    /**
-     * 
-     * @type {Date}
-     * @memberof GetSensorResponse
-     */
-    lastMeasurementTime?: Date | null;
+    statistics?: SensorStatistics | null;
 }
 
 /**
@@ -124,12 +102,7 @@ export function GetSensorResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         'postprocessscript': json['postprocessscript'] == null ? undefined : json['postprocessscript'],
         'units': json['units'] == null ? undefined : json['units'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
-        'maxValue': json['max_value'] == null ? undefined : json['max_value'],
-        'minValue': json['min_value'] == null ? undefined : json['min_value'],
-        'avgValue': json['avg_value'] == null ? undefined : json['avg_value'],
-        'count': json['count'] == null ? undefined : json['count'],
-        'firstMeasurementTime': json['first_measurement_time'] == null ? undefined : (new Date(json['first_measurement_time'])),
-        'lastMeasurementTime': json['last_measurement_time'] == null ? undefined : (new Date(json['last_measurement_time'])),
+        'statistics': json['statistics'] == null ? undefined : SensorStatisticsFromJSON(json['statistics']),
     };
 }
 
@@ -151,12 +124,7 @@ export function GetSensorResponseToJSONTyped(value?: GetSensorResponse | null, i
         'postprocessscript': value['postprocessscript'],
         'units': value['units'],
         'variablename': value['variablename'],
-        'max_value': value['maxValue'],
-        'min_value': value['minValue'],
-        'avg_value': value['avgValue'],
-        'count': value['count'],
-        'first_measurement_time': value['firstMeasurementTime'] == null ? undefined : ((value['firstMeasurementTime'] as any).toISOString()),
-        'last_measurement_time': value['lastMeasurementTime'] == null ? undefined : ((value['lastMeasurementTime'] as any).toISOString()),
+        'statistics': SensorStatisticsToJSON(value['statistics']),
     };
 }
 
