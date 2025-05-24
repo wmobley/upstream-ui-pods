@@ -44,12 +44,14 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
               Explore sensor data
             </h2>
-            <MeasurementsSummary
-              campaignId={campaignId}
-              stationId={stationId}
-              sensorId={sensorId}
-              data={data}
-            />
+            {data && (
+              <MeasurementsSummary
+                campaignId={campaignId}
+                stationId={stationId}
+                sensorId={sensorId}
+                data={data}
+              />
+            )}
           </QueryWrapper>
         </section>
       </div>

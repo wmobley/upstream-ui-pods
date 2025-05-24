@@ -33,13 +33,7 @@ const CampaignList: React.FC = () => {
     [startDate, endDate, bounds, sensorVariables],
   );
 
-  const {
-    data: campaigns,
-    isLoading,
-    error,
-  } = useList({
-    filters,
-  });
+  const { data: campaigns, isLoading, error } = useList({ filters });
 
   // Define filter configurations with proper typing
   const filterConfigs = [
