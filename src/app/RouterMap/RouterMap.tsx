@@ -13,9 +13,13 @@ import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 
 interface RouterMapProps {
   measurements: MeasurementItem[];
+  showPoints?: boolean;
 }
 
-export default function RouterMap({ measurements }: RouterMapProps) {
+export default function RouterMap({
+  measurements,
+  showPoints = true,
+}: RouterMapProps) {
   const coordinates = measurements.map((m) => [
     // @ts-expect-error - Geometry coordinates type is not properly defined in the API
     m.geometry?.coordinates[1],
@@ -36,37 +40,38 @@ export default function RouterMap({ measurements }: RouterMapProps) {
         positions={coordinates as LatLngExpression[]}
         pathOptions={{ color: 'blue', weight: 3 }}
       />
-      {getReducedPoints(measurements).map((measurement, index) => {
-        const position: LatLngExpression = [
-          // @ts-expect-error - Geometry coordinates type is not properly defined in the API
-          measurement.geometry?.coordinates[1],
-          // @ts-expect-error - Geometry coordinates type is not properly defined in the API
-          measurement.geometry?.coordinates[0],
-        ];
+      {showPoints &&
+        getReducedPoints(measurements).map((measurement, index) => {
+          const position: LatLngExpression = [
+            // @ts-expect-error - Geometry coordinates type is not properly defined in the API
+            measurement.geometry?.coordinates[1],
+            // @ts-expect-error - Geometry coordinates type is not properly defined in the API
+            measurement.geometry?.coordinates[0],
+          ];
 
-        return (
-          <CircleMarker
-            key={index}
-            center={position}
-            radius={5}
-            pathOptions={{
-              color: '#1a73e8',
-              fillColor: '#1a73e8',
-              fillOpacity: 0.7,
-              weight: 1,
-            }}
-          >
-            <Tooltip>
-              <SensorTooltip
-                value={measurement.value}
-                timestamp={measurement.collectiontime}
-                precision={10}
-                className="min-w-[200px]"
-              />
-            </Tooltip>
-          </CircleMarker>
-        );
-      })}
+          return (
+            <CircleMarker
+              key={index}
+              center={position}
+              radius={5}
+              pathOptions={{
+                color: '#1a73e8',
+                fillColor: '#1a73e8',
+                fillOpacity: 0.7,
+                weight: 1,
+              }}
+            >
+              <Tooltip>
+                <SensorTooltip
+                  value={measurement.value}
+                  timestamp={measurement.collectiontime}
+                  precision={10}
+                  className="min-w-[200px]"
+                />
+              </Tooltip>
+            </CircleMarker>
+          );
+        })}
     </MapContainer>
   );
 }

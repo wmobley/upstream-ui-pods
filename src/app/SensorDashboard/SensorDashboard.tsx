@@ -16,17 +16,9 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
   sensorId,
 }) => {
   const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
-  const {
-    data: measurements,
-    isLoading: measurementsLoading,
-    error: measurementsError,
-  } = useList(campaignId, stationId, sensorId, 5000);
 
   return (
-    <QueryWrapper
-      isLoading={isLoading || measurementsLoading}
-      error={error || measurementsError}
-    >
+    <QueryWrapper isLoading={isLoading} error={error}>
       <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
         <header className="mb-8">
           <div className="mt-6">
@@ -36,7 +28,11 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
         </header>
 
         <section className="h-[400px] grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
-          <StatsSection data={measurements} />
+          <StatsSection
+            campaignId={campaignId}
+            stationId={stationId}
+            sensorId={sensorId}
+          />
         </section>
 
         <section className="flex flex-col gap-10 bg-white rounded-lg p-4 shadow-md">
