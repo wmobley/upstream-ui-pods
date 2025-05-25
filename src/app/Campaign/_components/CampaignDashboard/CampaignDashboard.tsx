@@ -41,11 +41,6 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
               )}
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Campaign Statistics</h2>
-            <StatsWidget campaignId={campaignId} />
-          </div>
         </section>
 
         <section className="bg-white rounded-lg shadow-md p-6 mb-8">
