@@ -2,7 +2,6 @@ import { useDetail } from '../../hooks/sensor/useDetail';
 import QueryWrapper from '../common/QueryWrapper';
 import React from 'react';
 import MeasurementsSummary from '../Sensor/Measurements/MeasurementsSummary';
-import { useList } from '../../hooks/measurements/useList';
 import StatsSection from './_components/StatsSection';
 interface SensorDashboardProps {
   campaignId: string;
