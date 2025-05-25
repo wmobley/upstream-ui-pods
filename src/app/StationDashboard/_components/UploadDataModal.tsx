@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '../../common/Modal/Modal';
+import { useUploadData } from '../../../hooks/station/useUploadData';
 
 interface UploadDataModalProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
 }) => {
   const [sensorFile, setSensorFile] = useState<File | null>(null);
   const [measurementFile, setMeasurementFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const uploadMutation = useUploadData();
 
   const handleSensorFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -35,11 +36,13 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   const handleUpload = async () => {
     if (!sensorFile && !measurementFile) return;
 
-    setIsUploading(true);
     try {
-      // TODO: Implement actual file upload logic here
-      // This is where you'll add the API calls to upload the files
-      console.log('Uploading files:', { sensorFile, measurementFile });
+      await uploadMutation.mutateAsync({
+        campaignId: parseInt(campaignId, 10),
+        stationId: parseInt(stationId, 10),
+        sensorFile: sensorFile || undefined,
+        measurementFile: measurementFile || undefined,
+      });
 
       // Reset form after successful upload
       setSensorFile(null);
@@ -47,8 +50,6 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error uploading files:', error);
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -98,10 +99,12 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
           </button>
           <button
             onClick={handleUpload}
-            disabled={isUploading || (!sensorFile && !measurementFile)}
+            disabled={
+              uploadMutation.isPending || (!sensorFile && !measurementFile)
+            }
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isUploading ? 'Uploading...' : 'Upload'}
+            {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
           </button>
         </div>
       </div>
