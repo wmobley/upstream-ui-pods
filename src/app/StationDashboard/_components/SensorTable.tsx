@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useList } from '../../../hooks/sensor/useList';
-import { ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest } from '@upstream/upstream-api';
+import {
+  ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest,
+  SortField,
+} from '@upstream/upstream-api';
 import DataTable from '../../common/DataTable';
 import FilterToolbar, {
   CustomFilterConfig,
@@ -13,6 +16,19 @@ interface SensorTableProps {
   campaignId: string;
   stationId: string;
 }
+
+// Map table column keys to API sort fields
+const columnToSortField: Record<string, SortField> = {
+  variablename: SortField.Variablename,
+  alias: SortField.Alias,
+  'statistics.count': SortField.Count,
+  'statistics.avgValue': SortField.AvgValue,
+  'statistics.minValue': SortField.MinValue,
+  'statistics.maxValue': SortField.MaxValue,
+  units: SortField.Units,
+  postprocess: SortField.Postprocess,
+  postprocessscript: SortField.Postprocessscript,
+};
 
 export const SensorTable: React.FC<SensorTableProps> = ({
   campaignId,
@@ -33,6 +49,12 @@ export const SensorTable: React.FC<SensorTableProps> = ({
   );
   const [page, setPage] = useState<number>(1);
 
+  /** Sorting state */
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(
+    null,
+  );
+
   const filters: ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest =
     useMemo(
       () => ({
@@ -45,6 +67,8 @@ export const SensorTable: React.FC<SensorTableProps> = ({
           : undefined,
         alias: variableAliases ? variableAliases : undefined,
         page: page,
+        sortBy: sortColumn ? columnToSortField[sortColumn] : undefined,
+        sortOrder: sortDirection || undefined,
       }),
       [
         campaignId,
@@ -54,6 +78,8 @@ export const SensorTable: React.FC<SensorTableProps> = ({
         variableDescription,
         variableAliases,
         page,
+        sortColumn,
+        sortDirection,
       ],
     );
 
@@ -77,6 +103,15 @@ export const SensorTable: React.FC<SensorTableProps> = ({
     setVariableUnit(undefined);
     setVariableDescription(undefined);
     setVariableAliases(undefined);
+  };
+
+  const handleSort = (column: string, direction: 'asc' | 'desc') => {
+    // Only set sort if the column is in our mapping
+    if (column in columnToSortField) {
+      setSortColumn(column);
+      setSortDirection(direction);
+      setPage(1); // Reset to first page when sorting changes
+    }
   };
 
   const filterConfigs = [
@@ -136,6 +171,7 @@ export const SensorTable: React.FC<SensorTableProps> = ({
             getRowLink={(item) =>
               `/campaigns/${campaignId}/stations/${stationId}/sensors/${item.id}`
             }
+            onSort={handleSort}
           />
         )}
       </QueryWrapper>

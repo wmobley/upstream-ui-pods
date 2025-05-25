@@ -18,6 +18,7 @@ import type {
   GetSensorResponse,
   HTTPValidationError,
   ListSensorsResponsePagination,
+  SortField,
 } from '../models/index';
 import {
     GetSensorResponseFromJSON,
@@ -26,6 +27,8 @@ import {
     HTTPValidationErrorToJSON,
     ListSensorsResponsePaginationFromJSON,
     ListSensorsResponsePaginationToJSON,
+    SortFieldFromJSON,
+    SortFieldToJSON,
 } from '../models/index';
 
 export interface GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRequest {
@@ -44,6 +47,8 @@ export interface ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetR
     alias?: string | null;
     descriptionContains?: string | null;
     postprocess?: boolean | null;
+    sortBy?: SortField | null;
+    sortOrder?: string;
 }
 
 /**
@@ -149,6 +154,14 @@ export class SensorsApi extends runtime.BaseAPI {
 
         if (requestParameters['postprocess'] != null) {
             queryParameters['postprocess'] = requestParameters['postprocess'];
+        }
+
+        if (requestParameters['sortBy'] != null) {
+            queryParameters['sort_by'] = requestParameters['sortBy'];
+        }
+
+        if (requestParameters['sortOrder'] != null) {
+            queryParameters['sort_order'] = requestParameters['sortOrder'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

@@ -16,13 +16,10 @@
 import * as runtime from '../runtime';
 import type {
   HTTPValidationError,
-  ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValue,
 } from '../models/index';
 import {
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
-    ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValueFromJSON,
-    ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValueToJSON,
 } from '../models/index';
 
 export interface PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest {
@@ -38,9 +35,10 @@ export interface PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdSta
 export class UploadfileCsvApi extends runtime.BaseAPI {
 
     /**
+     * Process sensor and measurement files and store data in the database.
      * Post Sensor And Measurement
      */
-    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRaw(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValue; }>> {
+    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRaw(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['campaignId'] == null) {
             throw new runtime.RequiredError(
                 'campaignId',
@@ -112,13 +110,14 @@ export class UploadfileCsvApi extends runtime.BaseAPI {
             body: formParams,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => runtime.mapValues(jsonValue, ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValueFromJSON));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
+     * Process sensor and measurement files and store data in the database.
      * Post Sensor And Measurement
      */
-    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: ResponsePostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostValue; }> {
+    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRaw(requestParameters, initOverrides);
         return await response.value();
     }

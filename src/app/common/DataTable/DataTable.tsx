@@ -8,6 +8,8 @@ import { PageButtons } from './PageButtons';
 import { ItemsPerPage } from './ItemsPerPage';
 import { Link } from 'react-router-dom';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
+import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+
 interface DataTableProps<
   T extends Record<string, string | number | boolean | null>,
 > {
@@ -19,7 +21,10 @@ interface DataTableProps<
   itemsPerPage: number;
   setItemsPerPage: (page: number) => void;
   getRowLink?: (item: SensorItem) => string;
+  onSort?: (column: string, direction: 'asc' | 'desc') => void;
 }
+
+type SortDirection = 'asc' | 'desc' | null;
 
 const DataCell = ({
   item,
@@ -67,10 +72,39 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
   itemsPerPage,
   setItemsPerPage,
   getRowLink,
+  onSort,
 }: DataTableProps<T>) => {
   const totalPages = data.pages;
   const paginatedData = data.items;
   const [hideItemsPerPage] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (column: string) => {
+    let newDirection: SortDirection = 'asc';
+
+    if (sortColumn === column) {
+      if (sortDirection === 'asc') {
+        newDirection = 'desc';
+      } else if (sortDirection === 'desc') {
+        newDirection = null;
+      }
+    }
+
+    setSortColumn(newDirection ? column : null);
+    setSortDirection(newDirection);
+
+    if (onSort && newDirection) {
+      onSort(column, newDirection);
+    }
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) return <FaSort className="ml-1" />;
+    if (sortDirection === 'asc') return <FaSortUp className="ml-1" />;
+    if (sortDirection === 'desc') return <FaSortDown className="ml-1" />;
+    return <FaSort className="ml-1" />;
+  };
 
   return (
     <div className="w-full">
@@ -96,9 +130,13 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort(column.key)}
                 >
-                  {column.label}
+                  <div className="flex items-center">
+                    {column.label}
+                    {getSortIcon(column.key)}
+                  </div>
                 </th>
               ))}
             </tr>
