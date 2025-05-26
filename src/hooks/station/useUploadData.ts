@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UploadfileCsvApi } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 
@@ -42,6 +42,7 @@ const createEmptyBlob = () => new Blob([''], { type: 'text/csv' });
 export const useUploadData = () => {
   const config = useConfiguration();
   const uploadfileCsvApi = new UploadfileCsvApi(config);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
@@ -51,6 +52,7 @@ export const useUploadData = () => {
       measurementFile,
       onProgress,
     }: UploadDataParams) => {
+      console.log('this is going invalidated', campaignId, stationId);
       if (!sensorFile && !measurementFile) {
         throw new Error('At least one file must be provided');
       }
@@ -120,6 +122,21 @@ export const useUploadData = () => {
       }
 
       return { success: true };
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate station detail query
+      queryClient.invalidateQueries({
+        queryKey: [
+          'station',
+          variables.campaignId.toString(),
+          variables.stationId.toString(),
+        ],
+      });
+
+      // Invalidate all sensor queries for this station
+      queryClient.invalidateQueries({
+        queryKey: ['sensors'],
+      });
     },
   });
 };
