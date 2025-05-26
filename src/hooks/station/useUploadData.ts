@@ -7,9 +7,16 @@ interface UploadDataParams {
   stationId: number;
   sensorFile?: File;
   measurementFile?: File;
+  onProgress?: (progress: UploadProgress) => void;
 }
 
-const LINES_PER_CHUNK = 1000; // Number of lines per chunk
+interface UploadProgress {
+  currentChunk: number;
+  status: 'uploading' | 'complete' | 'error';
+  error?: string;
+}
+
+export const LINES_PER_CHUNK = 100; // Number of lines per chunk
 
 const splitCSVIntoChunks = async (file: File): Promise<Blob[]> => {
   const text = await file.text();
@@ -42,6 +49,7 @@ export const useUploadData = () => {
       stationId,
       sensorFile,
       measurementFile,
+      onProgress,
     }: UploadDataParams) => {
       if (!sensorFile && !measurementFile) {
         throw new Error('At least one file must be provided');
@@ -51,26 +59,64 @@ export const useUploadData = () => {
       if (measurementFile) {
         const chunks = await splitCSVIntoChunks(measurementFile);
 
-        for (const chunk of chunks) {
+        for (let i = 0; i < chunks.length; i++) {
+          onProgress?.({
+            currentChunk: i,
+            status: 'uploading',
+          });
+
+          try {
+            await uploadfileCsvApi.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(
+              {
+                campaignId,
+                stationId,
+                uploadFileSensors: (sensorFile as Blob) || createEmptyBlob(),
+                uploadFileMeasurements: chunks[i],
+              },
+            );
+          } catch (error) {
+            onProgress?.({
+              currentChunk: i,
+              status: 'error',
+              error: error instanceof Error ? error.message : 'Upload failed',
+            });
+            throw error;
+          }
+        }
+
+        onProgress?.({
+          currentChunk: chunks.length,
+          status: 'complete',
+        });
+      } else if (sensorFile) {
+        // If we only have a sensor file, upload it with an empty measurement file
+        onProgress?.({
+          currentChunk: 0,
+          status: 'uploading',
+        });
+
+        try {
           await uploadfileCsvApi.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(
             {
               campaignId,
               stationId,
-              uploadFileSensors: (sensorFile as Blob) || createEmptyBlob(),
-              uploadFileMeasurements: chunk,
+              uploadFileSensors: sensorFile as Blob,
+              uploadFileMeasurements: createEmptyBlob(),
             },
           );
+
+          onProgress?.({
+            currentChunk: 1,
+            status: 'complete',
+          });
+        } catch (error) {
+          onProgress?.({
+            currentChunk: 0,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Upload failed',
+          });
+          throw error;
         }
-      } else if (sensorFile) {
-        // If we only have a sensor file, upload it with an empty measurement file
-        await uploadfileCsvApi.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(
-          {
-            campaignId,
-            stationId,
-            uploadFileSensors: sensorFile as Blob,
-            uploadFileMeasurements: createEmptyBlob(),
-          },
-        );
       }
 
       return { success: true };

@@ -1,7 +1,6 @@
 import { useDetail } from '../../../../hooks/campaign/useDetail';
 import QueryWrapper from '../../../common/QueryWrapper';
 import StationCard from '../../../Station/_components/StationCard';
-import StatsWidget from './_components/StatsWidget';
 import GeometryMap from '../../../common/GeometryMap/GeometryMap';
 
 interface CampaignDashboardProps {
