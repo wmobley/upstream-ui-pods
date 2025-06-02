@@ -67,6 +67,7 @@ interface MainChartProps {
   overviewRef: React.RefObject<SVGGElement>;
   setViewDomain: React.Dispatch<React.SetStateAction<[number, number] | null>>;
   onBrush?: (domain: [number, number]) => void;
+  showLineOverview?: boolean;
 }
 
 // Helper Components
@@ -181,6 +182,7 @@ const MainChart: React.FC<MainChartProps> = ({
   overviewRef,
   setViewDomain,
   onBrush,
+  showLineOverview,
 }) => {
   // Get resetZoom function from useChartBrush
   const { resetZoom } = useChartBrush({
@@ -288,7 +290,7 @@ const MainChart: React.FC<MainChartProps> = ({
 
   const renderDataPointCircles = React.useMemo(
     () => (
-      <>
+      <g className="data-points-layer" style={{ pointerEvents: 'all' }}>
         {/* Primary Sensor Points */}
         {data.map((d) => (
           <DataPoint
@@ -300,6 +302,7 @@ const MainChart: React.FC<MainChartProps> = ({
             pointKey={`point-${d.measurementTime.getTime()}`}
             isInteractive={true}
             onClick={(e) => {
+              e.stopPropagation(); // Prevent event from bubbling to zoom container
               const tooltipPos = handleTooltipPosition(e, d);
               if (tooltipPos) {
                 setTooltipAggregation({
@@ -325,6 +328,7 @@ const MainChart: React.FC<MainChartProps> = ({
               pointKey={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
               isInteractive={true}
               onClick={(e) => {
+                e.stopPropagation(); // Prevent event from bubbling to zoom container
                 const tooltipPos = handleTooltipPosition(e, d);
                 if (tooltipPos) {
                   setTooltipAggregation({
@@ -338,34 +342,31 @@ const MainChart: React.FC<MainChartProps> = ({
             />
           )),
         )}
-      </>
+      </g>
     ),
-    [data, additionalSensors, scales, pointRadius, getSensorColor],
+    [
+      data,
+      additionalSensors,
+      scales,
+      pointRadius,
+      getSensorColor,
+      selectedSensorId,
+      setTooltipAggregation,
+    ],
   );
 
   const renderIndividualPoints = React.useMemo(() => {
-    // First check renderDataPoints flag - if false, don't render points
-    if (!renderDataPoints) {
-      console.log('Individual points not rendered: renderDataPoints is false');
-      return null;
-    } else {
-      console.log('Individual points rendered: renderDataPoints is true');
-    }
-    // Then check if we have the data needed to render points
-    if (!allPoints || allPoints.length === 0) {
-      console.log('Individual points not rendered: no data points available');
+    if (
+      !renderDataPoints ||
+      !allPoints ||
+      allPoints.length === 0 ||
+      !setTooltipPoint
+    ) {
       return null;
     }
 
-    // Finally check if we have the tooltip handler
-    if (!setTooltipPoint) {
-      console.log('Individual points not rendered: missing tooltip handler');
-      return null;
-    }
-
-    // If all conditions are met, render the points
     return (
-      <>
+      <g className="individual-points-layer" style={{ pointerEvents: 'all' }}>
         {allPoints.map((d) => (
           <DataPoint
             key={`individual-${d.collectiontime.getTime()}-${d.value}`}
@@ -376,6 +377,7 @@ const MainChart: React.FC<MainChartProps> = ({
             pointKey={`individual-${d.collectiontime.getTime()}-${d.value}`}
             isInteractive
             onClick={(e) => {
+              e.stopPropagation(); // Prevent event from bubbling to zoom container
               const tooltipPos = handleTooltipPosition(e, d);
               if (tooltipPos) {
                 setTooltipPoint({
@@ -398,6 +400,7 @@ const MainChart: React.FC<MainChartProps> = ({
               pointKey={`individual-${d.collectiontime.getTime()}-${d.value}-${index}`}
               isInteractive
               onClick={(e) => {
+                e.stopPropagation(); // Prevent event from bubbling to zoom container
                 const tooltipPos = handleTooltipPosition(e, d);
                 if (tooltipPos) {
                   setTooltipPoint({
@@ -410,7 +413,7 @@ const MainChart: React.FC<MainChartProps> = ({
             />
           )),
         )}
-      </>
+      </g>
     );
   }, [
     allPoints,
@@ -420,6 +423,8 @@ const MainChart: React.FC<MainChartProps> = ({
     pointRadius,
     colors.point,
     handleTooltipPosition,
+    additionalSensors,
+    getSensorColor,
   ]);
 
   const renderXAxis = React.useMemo(
@@ -565,8 +570,35 @@ const MainChart: React.FC<MainChartProps> = ({
         </g>
       )}
 
-      {/* Data visualization layer */}
-      <g className="data-layer">
+      {/* Zoom container - rendered first to handle wheel events */}
+      {showLineOverview && (
+        <g
+          ref={overviewRef}
+          className="zoom-container"
+          style={{
+            pointerEvents: 'all',
+            cursor: 'grab',
+          }}
+        >
+          <rect
+            x={0}
+            y={0}
+            width={chartDimensions.innerWidth}
+            height={chartDimensions.mainInnerHeight}
+            fill="transparent"
+            style={{ pointerEvents: 'all' }}
+          />
+        </g>
+      )}
+
+      {/* Data visualization layer - rendered on top of zoom container */}
+      <g
+        className="data-layer"
+        style={{
+          pointerEvents: 'all',
+          isolation: 'isolate', // Creates a new stacking context
+        }}
+      >
         {renderAreaPaths}
         {renderLinePaths}
         {renderDataPointCircles}
@@ -574,7 +606,12 @@ const MainChart: React.FC<MainChartProps> = ({
       </g>
 
       {/* Axes layer - rendered last to be on top */}
-      <g className="axes-layer">
+      <g
+        className="axes-layer"
+        style={{
+          pointerEvents: 'none', // Axes should not interfere with interactions
+        }}
+      >
         {renderXAxis}
         {renderYAxis}
       </g>
@@ -585,24 +622,6 @@ const MainChart: React.FC<MainChartProps> = ({
         y={-30}
         onClick={resetZoom}
       />
-
-      <g
-        ref={overviewRef}
-        className="zoom-container"
-        style={{
-          pointerEvents: 'all',
-          cursor: 'grab',
-        }}
-      >
-        {/* Add a background rect to ensure the entire area is clickable */}
-        <rect
-          x={0}
-          y={0}
-          width={chartDimensions.innerWidth}
-          height={chartDimensions.mainInnerHeight}
-          fill="transparent"
-        />
-      </g>
     </g>
   );
 };

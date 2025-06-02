@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import MainChart from './components/MainChart';
-import OverviewChart from './components/OverviewChart';
 import ChartTooltip, {
   TooltipData,
   PointTooltipData,
@@ -64,7 +63,6 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   width,
   height,
   margin = defaultChartStyles.margin,
-  showAreaOverview = defaultChartStyles.showAreaOverview,
   showLineOverview = defaultChartStyles.showLineOverview,
   pointRadius = defaultChartStyles.pointRadius,
   colors = defaultChartStyles.colors,
@@ -124,7 +122,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     minValue,
     maxValue,
     additionalSensors,
-    xFormatter,
+    xFormatter: showLineOverview ? xFormatterOverview : xFormatter,
     yFormatter,
   });
 
@@ -184,6 +182,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           overviewRef={overviewRef}
           setViewDomain={setViewDomain}
           onBrush={onBrush}
+          showLineOverview={showLineOverview}
         />
 
         {/* Right margin background */}
