@@ -36,6 +36,7 @@ export function selectAggregationInterval(
   const millisecondsPerMonth = 30 * millisecondsPerDay;
   const millisecondsPerYear = 365 * millisecondsPerDay;
 
+  return 'hour';
   // Apply the selection algorithm based on the guidelines
   if (timeRange > millisecondsPerYear) {
     return 'month';

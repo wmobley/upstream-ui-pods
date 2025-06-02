@@ -46,14 +46,26 @@ export const Chart = () => {
       }
     });
 
+    const optionOnlyParameterBounds = false;
+
+    if (optionOnlyParameterBounds) {
+      allData = allData.filter(
+        (item) => item.parametricUpperBound && item.parametricLowerBound,
+      );
+    }
+
     const max = Math.max(
       ...allData.map((item) =>
-        Math.max(item.parametricUpperBound, item.maxValue),
+        optionOnlyParameterBounds
+          ? item.parametricUpperBound
+          : Math.max(item.parametricUpperBound, item.maxValue),
       ),
     );
     const min = Math.min(
       ...allData.map((item) =>
-        Math.min(item.parametricLowerBound, item.minValue),
+        optionOnlyParameterBounds
+          ? item.parametricLowerBound
+          : Math.min(item.parametricLowerBound, item.minValue),
       ),
     );
 
