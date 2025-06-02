@@ -38,9 +38,9 @@ export const Chart = () => {
   // Calculate overall min and max values considering all sensors
   const calculateMinMax = () => {
     if (!aggregatedData) return { min: 0, max: 0 };
-    if (maxValueChart) {
-      return { min: 0, max: maxValueChart };
-    }
+    // if (maxValueChart) {
+    //   return { min: 0, max: maxValueChart };
+    // }
 
     let allData: AggregatedMeasurement[] = [...aggregatedData];
 
@@ -51,7 +51,7 @@ export const Chart = () => {
       }
     });
 
-    const optionOnlyParameterBounds = true;
+    const optionOnlyParameterBounds = false;
 
     if (optionOnlyParameterBounds) {
       allData = allData.filter(
@@ -74,7 +74,7 @@ export const Chart = () => {
       ),
     );
 
-    return { min: 0, max };
+    return { min: 0, max: max * 1.1 };
   };
 
   const { min: minValue, max: maxValue } = calculateMinMax();

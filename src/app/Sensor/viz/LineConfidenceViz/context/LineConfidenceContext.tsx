@@ -190,18 +190,20 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const [addSensorModalOpen, setAddSensorModalOpen] = useState<boolean>(false);
   useEffect(() => {
     if (data) {
-      if (
-        data.statistics?.firstMeasurementCollectiontime &&
-        data.statistics?.lastMeasurementTime
-      ) {
-        setAggregationInterval(
-          selectAggregationInterval(
-            data.statistics.firstMeasurementCollectiontime,
-            data.statistics.lastMeasurementTime,
-          ),
-        );
-      } else {
-        throw new Error('No measurement time range found');
+      if (aggregationInterval) {
+        if (
+          data.statistics?.firstMeasurementCollectiontime &&
+          data.statistics?.lastMeasurementTime
+        ) {
+          setAggregationInterval(
+            selectAggregationInterval(
+              data.statistics.firstMeasurementCollectiontime,
+              data.statistics.lastMeasurementTime,
+            ),
+          );
+        } else {
+          throw new Error('No measurement time range found');
+        }
       }
     }
     if (data) {

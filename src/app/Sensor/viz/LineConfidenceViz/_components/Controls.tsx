@@ -15,6 +15,7 @@ const Controls = () => {
     additionalSensors,
     campaignId,
     stationId,
+    handleAggregationIntervalChange,
   } = useLineConfidence();
 
   // State for active button styling
@@ -179,8 +180,22 @@ const Controls = () => {
               htmlFor="aggregationInterval"
               className="mr-2 text-sm font-medium"
             >
-              Aggregation Interval: {aggregationInterval}
+              Aggregation Interval:
             </label>
+            <select
+              id="aggregationInterval"
+              value={aggregationInterval || ''}
+              onChange={handleAggregationIntervalChange}
+              className="form-select text-sm border rounded px-2 py-1"
+            >
+              <option value="">Select interval</option>
+              <option value="second">Second</option>
+              <option value="minute">Minute</option>
+              <option value="hour">Hour</option>
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+            </select>
           </div>
 
           <div className="h-8 border-r border-gray-300"></div>
