@@ -181,20 +181,9 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           colorPalette={colorPalette}
           renderDataPoints={renderDataPoints}
           selectedSensorId={sensorId}
-        />
-
-        {/* Overview chart */}
-        <OverviewChart
-          showAreaOverview={showAreaOverview}
-          showLineOverview={showLineOverview}
-          paths={paths}
-          chartDimensions={chartDimensions}
-          scales={scales}
-          margin={margin}
-          colors={colors}
-          colorPalette={colorPalette}
-          xFormatterOverview={xFormatterOverview}
           overviewRef={overviewRef}
+          setViewDomain={setViewDomain}
+          onBrush={onBrush}
         />
 
         {/* Right margin background */}

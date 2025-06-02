@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { brushX } from 'd3-brush';
+import { zoom } from 'd3-zoom';
 import { select } from 'd3-selection';
 import { ScaleLinear } from 'd3-scale';
 
@@ -13,7 +13,7 @@ interface UseChartBrushProps {
 }
 
 /**
- * Custom hook to set up and manage the d3 brush behavior
+ * Custom hook to set up and manage the d3 zoom behavior
  */
 export function useChartBrush({
   overviewRef,
@@ -23,65 +23,68 @@ export function useChartBrush({
   setViewDomain,
   onBrush,
 }: UseChartBrushProps) {
-  // Track if initial selection has been set
-  const initialSelectionRef = useRef(false);
+  // Track if initial zoom has been set
+  const initialZoomRef = useRef(false);
+  // Store the zoom behavior for reset functionality
+  const zoomBehaviorRef =
+    useRef<ReturnType<typeof zoom<SVGGElement, unknown>>>();
 
-  // Initialize brush
+  // Initialize zoom
   useEffect(() => {
     if (!overviewXScale || !overviewRef.current) return;
 
-    // Create brush behavior
-    const brush = brushX<unknown>()
+    // Create zoom behavior
+    const zoomBehavior = zoom<SVGGElement, unknown>()
+      .scaleExtent([1, 1000]) // Allow zooming from 1x to 32x
       .extent([
         [0, 0],
         [innerWidth, overviewInnerHeight],
       ])
-      .on('start', () => {
-        // Mark that user has started brushing
-        initialSelectionRef.current = true;
+      .translateExtent([
+        [0, -Infinity],
+        [innerWidth, Infinity],
+      ])
+      .wheelDelta((event) => {
+        // Customize wheel zoom speed
+        return -event.deltaY * 0.001;
       })
-      .on('brush', (event) => {
-        if (!event.selection) return;
-        const selection = event.selection as [number, number];
+      .on('zoom', (event) => {
+        if (!overviewXScale) return;
 
-        // Convert pixel coordinates to domain values
-        const domain: [number, number] = [
-          overviewXScale.invert(selection[0]),
-          overviewXScale.invert(selection[1]),
-        ];
+        // Get the zoomed x scale
+        const xz = event.transform.rescaleX(overviewXScale);
+
+        // Get the new domain
+        const domain: [number, number] = [xz.domain()[0], xz.domain()[1]];
 
         // Update view domain
         setViewDomain(domain);
         onBrush?.(domain);
       });
 
-    // Apply brush to overview chart
-    const brushGroup = select(overviewRef.current);
-    brushGroup.call(brush);
+    // Store zoom behavior for reset functionality
+    zoomBehaviorRef.current = zoomBehavior;
 
-    // Set initial selection if not already set
-    if (!initialSelectionRef.current) {
-      // Calculate 50% width selection centered in the middle
-      const selectionWidth = innerWidth * 0.5;
-      const selectionStart = (innerWidth - selectionWidth) / 2;
-      const selectionEnd = selectionStart + selectionWidth;
+    // Apply zoom to overview chart
+    const zoomGroup = select(overviewRef.current);
 
-      brushGroup.call(brush.move, [selectionStart, selectionEnd]);
+    // Enable wheel events
+    zoomGroup
+      .attr('class', 'zoom-container')
+      .style('pointer-events', 'all')
+      .call(zoomBehavior);
 
-      // Trigger initial brush event
-      if (overviewXScale) {
-        const domain: [number, number] = [
-          overviewXScale.invert(selectionStart),
-          overviewXScale.invert(selectionEnd),
-        ];
-        setViewDomain(domain);
-        onBrush?.(domain);
-      }
+    // Set initial zoom if not already set
+    if (!initialZoomRef.current) {
+      // Set initial zoom level
+      zoomGroup.transition().duration(750).call(zoomBehavior.scaleTo, 1); // Start with no zoom
+
+      initialZoomRef.current = true;
     }
 
     // Cleanup
     return () => {
-      brushGroup.on('.brush', null);
+      zoomGroup.on('.zoom', null);
     };
   }, [
     overviewXScale,
@@ -91,4 +94,27 @@ export function useChartBrush({
     setViewDomain,
     onBrush,
   ]);
+
+  // Function to reset the zoom
+  const resetZoom = () => {
+    if (!overviewRef.current || !zoomBehaviorRef.current) return;
+
+    const zoomGroup = select(overviewRef.current);
+    zoomGroup
+      .transition()
+      .duration(750)
+      .call(zoomBehaviorRef.current.scaleTo, 1);
+
+    // Reset to full domain
+    if (overviewXScale) {
+      const domain: [number, number] = [
+        overviewXScale.domain()[0],
+        overviewXScale.domain()[1],
+      ];
+      setViewDomain(domain);
+      onBrush?.(domain);
+    }
+  };
+
+  return { resetZoom };
 }

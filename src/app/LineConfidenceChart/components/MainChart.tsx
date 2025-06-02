@@ -2,6 +2,7 @@ import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
 import { AdditionalSensor } from '../LineConfidenceChart';
+import { useChartBrush } from '../hooks/useChartBrush';
 
 // Types
 interface TooltipData {
@@ -63,6 +64,9 @@ interface MainChartProps {
   }>;
   renderDataPoints: boolean;
   selectedSensorId: string;
+  overviewRef: React.RefObject<SVGGElement>;
+  setViewDomain: React.Dispatch<React.SetStateAction<[number, number] | null>>;
+  onBrush?: (domain: [number, number]) => void;
 }
 
 // Helper Components
@@ -123,6 +127,37 @@ const DataPoint: React.FC<DataPointProps> = React.memo(
   ),
 );
 
+// Add ResetButton component
+const ResetButton: React.FC<{
+  onClick: () => void;
+  x: number;
+  y: number;
+}> = React.memo(({ onClick, x, y }) => (
+  <g transform={`translate(${x},${y})`}>
+    <rect
+      x={0}
+      y={0}
+      width={80}
+      height={24}
+      rx={4}
+      fill="white"
+      stroke="var(--gray-400)"
+      style={{ cursor: 'pointer' }}
+      onClick={onClick}
+    />
+    <text
+      x={40}
+      y={16}
+      textAnchor="middle"
+      fill="var(--gray-600)"
+      className="text-xs"
+      style={{ pointerEvents: 'none' }}
+    >
+      Reset View
+    </text>
+  </g>
+));
+
 // Main component
 const MainChart: React.FC<MainChartProps> = ({
   data,
@@ -143,7 +178,20 @@ const MainChart: React.FC<MainChartProps> = ({
   colorPalette,
   renderDataPoints = true, // Default value
   selectedSensorId,
+  overviewRef,
+  setViewDomain,
+  onBrush,
 }) => {
+  // Get resetZoom function from useChartBrush
+  const { resetZoom } = useChartBrush({
+    overviewRef,
+    innerWidth: chartDimensions.innerWidth,
+    overviewInnerHeight: chartDimensions.mainInnerHeight,
+    overviewXScale: scales.xScale,
+    setViewDomain,
+    onBrush,
+  });
+
   // Helper function to handle tooltip positioning
   const handleTooltipPosition = React.useCallback(
     (
@@ -523,13 +571,37 @@ const MainChart: React.FC<MainChartProps> = ({
         {renderLinePaths}
         {renderDataPointCircles}
         {renderIndividualPoints}
-        {/* {renderInteractivePoints} */}
       </g>
 
       {/* Axes layer - rendered last to be on top */}
       <g className="axes-layer">
         {renderXAxis}
         {renderYAxis}
+      </g>
+
+      {/* Reset button */}
+      <ResetButton
+        x={chartDimensions.innerWidth - 90}
+        y={-30}
+        onClick={resetZoom}
+      />
+
+      <g
+        ref={overviewRef}
+        className="zoom-container"
+        style={{
+          pointerEvents: 'all',
+          cursor: 'grab',
+        }}
+      >
+        {/* Add a background rect to ensure the entire area is clickable */}
+        <rect
+          x={0}
+          y={0}
+          width={chartDimensions.innerWidth}
+          height={chartDimensions.mainInnerHeight}
+          fill="transparent"
+        />
       </g>
     </g>
   );
