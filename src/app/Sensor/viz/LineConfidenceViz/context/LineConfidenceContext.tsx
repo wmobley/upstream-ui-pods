@@ -109,6 +109,10 @@ interface LineConfidenceContextProps {
   sensorId: string;
   addSensorModalOpen: boolean;
   setAddSensorModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  maxValueChart: number | undefined;
+  setMaxValueChart: React.Dispatch<React.SetStateAction<number | undefined>>;
+  minValueChart: number | undefined;
+  setMinValueChart: React.Dispatch<React.SetStateAction<number | undefined>>;
 }
 
 const LineConfidenceContext = createContext<
@@ -175,6 +179,12 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const [additionalSensorsData, setAdditionalSensorsData] = useState<
     SensorData[]
   >([]);
+  const [maxValueChart, setMaxValueChart] = useState<number | undefined>(
+    undefined,
+  );
+  const [minValueChart, setMinValueChart] = useState<number | undefined>(
+    undefined,
+  );
   const [renderDataPoints, setRenderDataPoints] = useState<boolean>(false);
   const [addingSensor, setAddingSensor] = useState<boolean>(false);
   const [addSensorModalOpen, setAddSensorModalOpen] = useState<boolean>(false);
@@ -192,6 +202,20 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
         );
       } else {
         throw new Error('No measurement time range found');
+      }
+    }
+    if (data) {
+      if (data.statistics?.percentile99) {
+        setMaxValueChart(data.statistics?.percentile99);
+      } else {
+        setMaxValueChart(undefined);
+      }
+    }
+    if (data) {
+      if (data.statistics?.minValue) {
+        setMinValueChart(data.statistics?.minValue);
+      } else {
+        setMinValueChart(undefined);
       }
     }
   }, [data]);
@@ -218,7 +242,13 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     aggregationValue,
   );
 
-  const { data: allPoints } = useList(campaignId, stationId, sensorId);
+  const { data: allPoints } = useList(
+    campaignId,
+    stationId,
+    sensorId,
+    100000,
+    1000,
+  );
 
   // Function to add a new sensor
   const addSensor = (
@@ -332,6 +362,10 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     sensorId,
     addSensorModalOpen,
     setAddSensorModalOpen,
+    maxValueChart,
+    setMaxValueChart,
+    minValueChart,
+    setMinValueChart,
   };
 
   return (

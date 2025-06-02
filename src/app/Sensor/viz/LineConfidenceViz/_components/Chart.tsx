@@ -19,6 +19,8 @@ export const Chart = () => {
     addingSensor,
     data,
     sensorId,
+    maxValueChart,
+    minValueChart,
   } = useLineConfidence();
 
   // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
@@ -36,6 +38,9 @@ export const Chart = () => {
   // Calculate overall min and max values considering all sensors
   const calculateMinMax = () => {
     if (!aggregatedData) return { min: 0, max: 0 };
+    if (maxValueChart) {
+      return { min: 0, max: maxValueChart };
+    }
 
     let allData: AggregatedMeasurement[] = [...aggregatedData];
 
@@ -46,7 +51,7 @@ export const Chart = () => {
       }
     });
 
-    const optionOnlyParameterBounds = false;
+    const optionOnlyParameterBounds = true;
 
     if (optionOnlyParameterBounds) {
       allData = allData.filter(
@@ -69,10 +74,11 @@ export const Chart = () => {
       ),
     );
 
-    return { min, max };
+    return { min: 0, max };
   };
 
   const { min: minValue, max: maxValue } = calculateMinMax();
+
   const chartAdditionalSensors = adaptSensorsForChart();
 
   // Define a color palette for the sensors

@@ -143,8 +143,16 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     return <div>No data available</div>;
   }
 
-  if (!scales || !paths || !axisTicks) {
+  if (!scales) {
     return <div>Cannot calculate chart scales</div>;
+  }
+
+  if (!paths) {
+    return <div>Cannot calculate chart paths</div>;
+  }
+
+  if (!axisTicks) {
+    return <div>Cannot calculate chart axis ticks</div>;
   }
 
   return (
