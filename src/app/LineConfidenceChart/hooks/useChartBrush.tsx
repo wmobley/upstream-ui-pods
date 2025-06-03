@@ -35,7 +35,7 @@ export function useChartBrush({
 
     // Create zoom behavior
     const zoomBehavior = zoom<SVGGElement, unknown>()
-      .scaleExtent([1, 1000]) // Allow zooming from 1x to 32x
+      .scaleExtent([1, 1000]) // Allow zooming from 1x to 1000x
       .extent([
         [0, 0],
         [innerWidth, overviewInnerHeight],
@@ -44,6 +44,14 @@ export function useChartBrush({
         [0, -Infinity],
         [innerWidth, Infinity],
       ])
+      .filter((event) => {
+        // Only allow zoom on left mouse button or wheel
+        return (
+          event.type === 'wheel' ||
+          (event.type === 'mousedown' && event.button === 0) ||
+          (event.type === 'touchstart' && event.touches.length === 1)
+        );
+      })
       .wheelDelta((event) => {
         // Customize wheel zoom speed
         return -event.deltaY * 0.001;
@@ -78,7 +86,6 @@ export function useChartBrush({
     if (!initialZoomRef.current) {
       // Set initial zoom level
       zoomGroup.transition().duration(750).call(zoomBehavior.scaleTo, 1); // Start with no zoom
-
       initialZoomRef.current = true;
     }
 

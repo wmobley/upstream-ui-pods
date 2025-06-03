@@ -72,20 +72,14 @@ export const calculateChartDimensions = (
   height: number,
   margin: { top: number; right: number; bottom: number; left: number },
 ) => {
-  const mainHeight = height * 0.75; // Main chart takes 75% of total height
-  const overviewHeight = height * 0.2; // Overview takes 20% of total height
-  const spacing = height * 0.05; // 5% spacing between charts
+  const mainHeight = height;
 
   const innerWidth = width - margin.left - margin.right;
   const mainInnerHeight = mainHeight - margin.top - margin.bottom;
-  const overviewInnerHeight = overviewHeight - margin.top - margin.bottom;
 
   return {
     innerWidth,
     mainHeight,
     mainInnerHeight,
-    overviewHeight,
-    overviewInnerHeight,
-    spacing,
   };
 };

@@ -8,7 +8,6 @@ import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 export const Chart = () => {
   // Get the time range from context
   const {
-    selectedTimeRange,
     setSelectedTimeRange,
     aggregatedData,
     aggregatedLoading,
@@ -38,9 +37,9 @@ export const Chart = () => {
   // Calculate overall min and max values considering all sensors
   const calculateMinMax = () => {
     if (!aggregatedData) return { min: 0, max: 0 };
-    // if (maxValueChart) {
-    //   return { min: 0, max: maxValueChart };
-    // }
+    if (maxValueChart || minValueChart) {
+      return { min: minValueChart ?? 0, max: maxValueChart ?? 0 };
+    }
 
     let allData: AggregatedMeasurement[] = [...aggregatedData];
 
@@ -64,13 +63,6 @@ export const Chart = () => {
         optionOnlyParameterBounds
           ? item.parametricUpperBound
           : Math.max(item.parametricUpperBound, item.maxValue),
-      ),
-    );
-    const min = Math.min(
-      ...allData.map((item) =>
-        optionOnlyParameterBounds
-          ? item.parametricLowerBound
-          : Math.min(item.parametricLowerBound, item.minValue),
       ),
     );
 
@@ -110,16 +102,11 @@ export const Chart = () => {
             yAxisTitle={data?.units ?? 'value'}
             xFormatter={(date: Date | number) => {
               const dateObj = date instanceof Date ? date : new Date(date);
-              // For main chart - show time
-              if (selectedTimeRange) {
-                return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-              }
-              // For overview - show date
-              return dateObj.toLocaleDateString();
+              return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
             }}
             xFormatterOverview={(date: Date | number) => {
               const dateObj = date instanceof Date ? date : new Date(date);
-              return dateObj.toLocaleDateString();
+              return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
             }}
             yFormatter={(value: number) => {
               return formatNumber(value);

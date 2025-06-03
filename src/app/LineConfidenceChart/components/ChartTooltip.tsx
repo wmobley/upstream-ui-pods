@@ -41,7 +41,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
           className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
           style={{
             left: tooltip.x + 10,
-            top: tooltip.y - 10,
+            top: tooltip.y - 100,
             pointerEvents: 'auto',
           }}
         >
@@ -89,7 +89,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
           className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
           style={{
             left: tooltipPoint.x + 10,
-            top: tooltipPoint.y - 10,
+            top: tooltipPoint.y - 100,
             pointerEvents: 'auto',
           }}
         >

@@ -9,7 +9,6 @@ import { AdditionalSensor } from '../LineConfidenceChart';
 interface ChartDimensions {
   innerWidth: number;
   mainInnerHeight: number;
-  overviewInnerHeight: number;
 }
 
 interface UseChartScalesProps {
@@ -89,7 +88,7 @@ export function useChartScales({
 
     const overviewYScale = scaleLinear()
       .domain(yExtent)
-      .range([chartDimensions.overviewInnerHeight, 0]);
+      .range([chartDimensions.mainInnerHeight, 0]);
 
     return { xScale, yScale, overviewXScale, overviewYScale };
   }, [

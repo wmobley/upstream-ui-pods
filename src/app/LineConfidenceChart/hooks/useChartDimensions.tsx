@@ -20,7 +20,7 @@ export function useChartDimensions({
   // Add state for dimensions
   const [dimensions, setDimensions] = useState({
     width: width || 1000,
-    height: height || 800,
+    height: height || 700,
   });
 
   // Use resize observer to update dimensions when container size changes

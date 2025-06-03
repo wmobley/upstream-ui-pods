@@ -208,14 +208,14 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     }
     if (data) {
       if (data.statistics?.percentile99) {
-        setMaxValueChart(data.statistics?.percentile99);
+        setMaxValueChart(data.statistics?.maxValue ?? undefined);
       } else {
         setMaxValueChart(undefined);
       }
     }
     if (data) {
       if (data.statistics?.minValue) {
-        setMinValueChart(data.statistics?.minValue);
+        setMinValueChart(data.statistics?.minValue ?? undefined);
       } else {
         setMinValueChart(undefined);
       }

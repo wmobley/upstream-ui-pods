@@ -130,8 +130,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   useChartBrush({
     overviewRef,
     innerWidth: chartDimensions.innerWidth,
-    overviewInnerHeight: chartDimensions.overviewInnerHeight,
     overviewXScale: scales?.overviewXScale,
+    overviewInnerHeight: chartDimensions.mainInnerHeight,
     setViewDomain,
     onBrush,
   });
