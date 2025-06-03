@@ -1,10 +1,4 @@
-type AggregationInterval =
-  | 'second'
-  | 'minute'
-  | 'hour'
-  | 'day'
-  | 'week'
-  | 'month';
+type AggregationInterval = 'minute' | 'hour' | 'day' | 'week' | 'month';
 
 /**
  * Selects an appropriate time unit for aggregation based on the time span of the data
@@ -56,7 +50,7 @@ export function selectAggregationInterval(
  * @returns The equivalent AggregationInterval
  */
 export function timeIntervalToAggregationInterval(
-  timeInterval: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month',
+  timeInterval: 'minute' | 'hour' | 'day' | 'week' | 'month',
 ): AggregationInterval {
   return timeInterval as AggregationInterval;
 }
@@ -68,6 +62,6 @@ export function timeIntervalToAggregationInterval(
  */
 export function aggregationIntervalToTimeInterval(
   aggregationInterval: AggregationInterval,
-): 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' {
+): 'minute' | 'hour' | 'day' | 'week' | 'month' {
   return aggregationInterval;
 }
