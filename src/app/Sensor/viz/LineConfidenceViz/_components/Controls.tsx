@@ -9,12 +9,15 @@ const Controls = () => {
     aggregationInterval,
     renderDataPoints,
     setRenderDataPoints,
-    selectedTimeRange,
     aggregatedData,
     allPoints,
     additionalSensors,
     campaignId,
     stationId,
+    handleAggregationIntervalChange,
+    sampleSize,
+    setSampleSize,
+    sampleSizeLoading,
   } = useLineConfidence();
 
   // State for active button styling
@@ -179,22 +182,56 @@ const Controls = () => {
               htmlFor="aggregationInterval"
               className="mr-2 text-sm font-medium"
             >
-              Aggregation Interval: {aggregationInterval}
+              Aggregation Interval:
             </label>
+            <select
+              id="aggregationInterval"
+              value={aggregationInterval || ''}
+              onChange={handleAggregationIntervalChange}
+              className="form-select text-sm border rounded px-2 py-1"
+            >
+              <option value="">Select interval</option>
+              <option value="minute">Minute</option>
+              <option value="hour">Hour</option>
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+            </select>
           </div>
 
           <div className="h-8 border-r border-gray-300"></div>
-
-          <div className="text-sm">
-            {selectedTimeRange ? (
-              <span>
-                Viewing: {new Date(selectedTimeRange[0]).toLocaleString()} -{' '}
-                {new Date(selectedTimeRange[1]).toLocaleString()}
-              </span>
-            ) : (
-              <span>Viewing all data</span>
-            )}
-          </div>
+          {renderDataPoints && (
+            <div className="flex items-center">
+              <label htmlFor="sampleSize" className="mr-2 text-sm font-medium">
+                Sample Size:
+              </label>
+              <div className="relative">
+                <select
+                  id="sampleSize"
+                  value={sampleSize}
+                  onChange={(e) => setSampleSize(Number(e.target.value))}
+                  className={`form-select text-sm border rounded px-2 py-1 ${
+                    sampleSizeLoading ? 'opacity-50' : ''
+                  }`}
+                  disabled={sampleSizeLoading}
+                >
+                  <option value="500">500 points</option>
+                  <option value="1000">1,000 points</option>
+                  <option value="2000">2,000 points</option>
+                  <option value="5000">5,000 points</option>
+                  <option value="10000">10,000 points</option>
+                </select>
+                {sampleSizeLoading && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+                  </div>
+                )}
+              </div>
+              <div className="ml-2 text-xs text-yellow-600">
+                ⚠️ Higher values may slow down visualization
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-row justify-between gap-4 w-full">

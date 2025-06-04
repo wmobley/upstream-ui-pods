@@ -8,7 +8,6 @@ import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 export const Chart = () => {
   // Get the time range from context
   const {
-    selectedTimeRange,
     setSelectedTimeRange,
     aggregatedData,
     aggregatedLoading,
@@ -19,6 +18,8 @@ export const Chart = () => {
     addingSensor,
     data,
     sensorId,
+    maxValueChart,
+    minValueChart,
   } = useLineConfidence();
 
   // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
@@ -36,6 +37,9 @@ export const Chart = () => {
   // Calculate overall min and max values considering all sensors
   const calculateMinMax = () => {
     if (!aggregatedData) return { min: 0, max: 0 };
+    if (maxValueChart || minValueChart) {
+      return { min: minValueChart ?? 0, max: maxValueChart ?? 0 };
+    }
 
     let allData: AggregatedMeasurement[] = [...aggregatedData];
 
@@ -46,21 +50,27 @@ export const Chart = () => {
       }
     });
 
+    const optionOnlyParameterBounds = false;
+
+    if (optionOnlyParameterBounds) {
+      allData = allData.filter(
+        (item) => item.parametricUpperBound && item.parametricLowerBound,
+      );
+    }
+
     const max = Math.max(
       ...allData.map((item) =>
-        Math.max(item.parametricUpperBound, item.maxValue),
-      ),
-    );
-    const min = Math.min(
-      ...allData.map((item) =>
-        Math.min(item.parametricLowerBound, item.minValue),
+        optionOnlyParameterBounds
+          ? item.parametricUpperBound
+          : Math.max(item.parametricUpperBound, item.maxValue),
       ),
     );
 
-    return { min, max };
+    return { min: 0, max: max * 1.1 };
   };
 
   const { min: minValue, max: maxValue } = calculateMinMax();
+
   const chartAdditionalSensors = adaptSensorsForChart();
 
   // Define a color palette for the sensors
@@ -92,16 +102,11 @@ export const Chart = () => {
             yAxisTitle={data?.units ?? 'value'}
             xFormatter={(date: Date | number) => {
               const dateObj = date instanceof Date ? date : new Date(date);
-              // For main chart - show time
-              if (selectedTimeRange) {
-                return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-              }
-              // For overview - show date
-              return dateObj.toLocaleDateString();
+              return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
             }}
             xFormatterOverview={(date: Date | number) => {
               const dateObj = date instanceof Date ? date : new Date(date);
-              return dateObj.toLocaleDateString();
+              return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
             }}
             yFormatter={(value: number) => {
               return formatNumber(value);

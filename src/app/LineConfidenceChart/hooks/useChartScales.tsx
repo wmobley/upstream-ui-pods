@@ -9,7 +9,6 @@ import { AdditionalSensor } from '../LineConfidenceChart';
 interface ChartDimensions {
   innerWidth: number;
   mainInnerHeight: number;
-  overviewInnerHeight: number;
 }
 
 interface UseChartScalesProps {
@@ -61,7 +60,12 @@ export function useChartScales({
 
     const yExtent = [minValue, maxValue];
 
-    if (!xExtent[0] || !xExtent[1] || !yExtent[0] || !yExtent[1]) {
+    if (
+      xExtent[0] === undefined ||
+      xExtent[1] === undefined ||
+      yExtent[0] === undefined ||
+      yExtent[1] === undefined
+    ) {
       return null;
     }
 
@@ -84,7 +88,7 @@ export function useChartScales({
 
     const overviewYScale = scaleLinear()
       .domain(yExtent)
-      .range([chartDimensions.overviewInnerHeight, 0]);
+      .range([chartDimensions.mainInnerHeight, 0]);
 
     return { xScale, yScale, overviewXScale, overviewYScale };
   }, [

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import MainChart from './components/MainChart';
-import OverviewChart from './components/OverviewChart';
 import ChartTooltip, {
   TooltipData,
   PointTooltipData,
@@ -64,7 +63,6 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   width,
   height,
   margin = defaultChartStyles.margin,
-  showAreaOverview = defaultChartStyles.showAreaOverview,
   showLineOverview = defaultChartStyles.showLineOverview,
   pointRadius = defaultChartStyles.pointRadius,
   colors = defaultChartStyles.colors,
@@ -124,7 +122,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     minValue,
     maxValue,
     additionalSensors,
-    xFormatter,
+    xFormatter: showLineOverview ? xFormatterOverview : xFormatter,
     yFormatter,
   });
 
@@ -132,8 +130,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   useChartBrush({
     overviewRef,
     innerWidth: chartDimensions.innerWidth,
-    overviewInnerHeight: chartDimensions.overviewInnerHeight,
     overviewXScale: scales?.overviewXScale,
+    overviewInnerHeight: chartDimensions.mainInnerHeight,
     setViewDomain,
     onBrush,
   });
@@ -143,8 +141,16 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     return <div>No data available</div>;
   }
 
-  if (!scales || !paths || !axisTicks) {
+  if (!scales) {
     return <div>Cannot calculate chart scales</div>;
+  }
+
+  if (!paths) {
+    return <div>Cannot calculate chart paths</div>;
+  }
+
+  if (!axisTicks) {
+    return <div>Cannot calculate chart axis ticks</div>;
   }
 
   return (
@@ -173,20 +179,10 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           colorPalette={colorPalette}
           renderDataPoints={renderDataPoints}
           selectedSensorId={sensorId}
-        />
-
-        {/* Overview chart */}
-        <OverviewChart
-          showAreaOverview={showAreaOverview}
-          showLineOverview={showLineOverview}
-          paths={paths}
-          chartDimensions={chartDimensions}
-          scales={scales}
-          margin={margin}
-          colors={colors}
-          colorPalette={colorPalette}
-          xFormatterOverview={xFormatterOverview}
           overviewRef={overviewRef}
+          setViewDomain={setViewDomain}
+          onBrush={onBrush}
+          showLineOverview={showLineOverview}
         />
 
         {/* Right margin background */}

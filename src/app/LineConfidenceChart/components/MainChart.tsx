@@ -2,6 +2,8 @@ import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
 import { AdditionalSensor } from '../LineConfidenceChart';
+import { useChartBrush } from '../hooks/useChartBrush';
+import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContext';
 
 // Types
 interface TooltipData {
@@ -63,6 +65,10 @@ interface MainChartProps {
   }>;
   renderDataPoints: boolean;
   selectedSensorId: string;
+  overviewRef: React.RefObject<SVGGElement>;
+  setViewDomain: React.Dispatch<React.SetStateAction<[number, number] | null>>;
+  onBrush?: (domain: [number, number]) => void;
+  showLineOverview?: boolean;
 }
 
 // Helper Components
@@ -123,6 +129,37 @@ const DataPoint: React.FC<DataPointProps> = React.memo(
   ),
 );
 
+// Add ResetButton component
+const ResetButton: React.FC<{
+  onClick: () => void;
+  x: number;
+  y: number;
+}> = React.memo(({ onClick, x, y }) => (
+  <g transform={`translate(${x},${y})`}>
+    <rect
+      x={0}
+      y={0}
+      width={80}
+      height={24}
+      rx={4}
+      fill="white"
+      stroke="var(--gray-400)"
+      style={{ cursor: 'pointer' }}
+      onClick={onClick}
+    />
+    <text
+      x={40}
+      y={16}
+      textAnchor="middle"
+      fill="var(--gray-600)"
+      className="text-xs"
+      style={{ pointerEvents: 'none' }}
+    >
+      Reset View
+    </text>
+  </g>
+));
+
 // Main component
 const MainChart: React.FC<MainChartProps> = ({
   data,
@@ -143,7 +180,21 @@ const MainChart: React.FC<MainChartProps> = ({
   colorPalette,
   renderDataPoints = true, // Default value
   selectedSensorId,
+  overviewRef,
+  setViewDomain,
+  onBrush,
+  showLineOverview,
 }) => {
+  // Get resetZoom function from useChartBrush
+  const { resetZoom } = useChartBrush({
+    overviewRef,
+    innerWidth: chartDimensions.innerWidth,
+    overviewInnerHeight: chartDimensions.mainInnerHeight,
+    overviewXScale: scales.xScale,
+    setViewDomain,
+    onBrush,
+  });
+
   // Helper function to handle tooltip positioning
   const handleTooltipPosition = React.useCallback(
     (
@@ -170,6 +221,7 @@ const MainChart: React.FC<MainChartProps> = ({
     },
     [colorPalette, colors],
   );
+  const { sampleSizeLoading } = useLineConfidence();
 
   // Memoized components
   const renderAreaPaths = React.useMemo(
@@ -240,7 +292,7 @@ const MainChart: React.FC<MainChartProps> = ({
 
   const renderDataPointCircles = React.useMemo(
     () => (
-      <>
+      <g className="data-points-layer" style={{ pointerEvents: 'all' }}>
         {/* Primary Sensor Points */}
         {data.map((d) => (
           <DataPoint
@@ -252,6 +304,7 @@ const MainChart: React.FC<MainChartProps> = ({
             pointKey={`point-${d.measurementTime.getTime()}`}
             isInteractive={true}
             onClick={(e) => {
+              e.stopPropagation(); // Prevent event from bubbling to zoom container
               const tooltipPos = handleTooltipPosition(e, d);
               if (tooltipPos) {
                 setTooltipAggregation({
@@ -277,6 +330,7 @@ const MainChart: React.FC<MainChartProps> = ({
               pointKey={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
               isInteractive={true}
               onClick={(e) => {
+                e.stopPropagation(); // Prevent event from bubbling to zoom container
                 const tooltipPos = handleTooltipPosition(e, d);
                 if (tooltipPos) {
                   setTooltipAggregation({
@@ -290,34 +344,31 @@ const MainChart: React.FC<MainChartProps> = ({
             />
           )),
         )}
-      </>
+      </g>
     ),
-    [data, additionalSensors, scales, pointRadius, getSensorColor],
+    [
+      data,
+      additionalSensors,
+      scales,
+      pointRadius,
+      getSensorColor,
+      selectedSensorId,
+      setTooltipAggregation,
+    ],
   );
 
   const renderIndividualPoints = React.useMemo(() => {
-    // First check renderDataPoints flag - if false, don't render points
-    if (!renderDataPoints) {
-      console.log('Individual points not rendered: renderDataPoints is false');
-      return null;
-    } else {
-      console.log('Individual points rendered: renderDataPoints is true');
-    }
-    // Then check if we have the data needed to render points
-    if (!allPoints || allPoints.length === 0) {
-      console.log('Individual points not rendered: no data points available');
+    if (
+      !renderDataPoints ||
+      !allPoints ||
+      allPoints.length === 0 ||
+      !setTooltipPoint
+    ) {
       return null;
     }
 
-    // Finally check if we have the tooltip handler
-    if (!setTooltipPoint) {
-      console.log('Individual points not rendered: missing tooltip handler');
-      return null;
-    }
-
-    // If all conditions are met, render the points
     return (
-      <>
+      <g className="individual-points-layer" style={{ pointerEvents: 'all' }}>
         {allPoints.map((d) => (
           <DataPoint
             key={`individual-${d.collectiontime.getTime()}-${d.value}`}
@@ -328,6 +379,7 @@ const MainChart: React.FC<MainChartProps> = ({
             pointKey={`individual-${d.collectiontime.getTime()}-${d.value}`}
             isInteractive
             onClick={(e) => {
+              e.stopPropagation(); // Prevent event from bubbling to zoom container
               const tooltipPos = handleTooltipPosition(e, d);
               if (tooltipPos) {
                 setTooltipPoint({
@@ -350,6 +402,7 @@ const MainChart: React.FC<MainChartProps> = ({
               pointKey={`individual-${d.collectiontime.getTime()}-${d.value}-${index}`}
               isInteractive
               onClick={(e) => {
+                e.stopPropagation(); // Prevent event from bubbling to zoom container
                 const tooltipPos = handleTooltipPosition(e, d);
                 if (tooltipPos) {
                   setTooltipPoint({
@@ -362,7 +415,7 @@ const MainChart: React.FC<MainChartProps> = ({
             />
           )),
         )}
-      </>
+      </g>
     );
   }, [
     allPoints,
@@ -372,6 +425,8 @@ const MainChart: React.FC<MainChartProps> = ({
     pointRadius,
     colors.point,
     handleTooltipPosition,
+    additionalSensors,
+    getSensorColor,
   ]);
 
   const renderXAxis = React.useMemo(
@@ -461,8 +516,8 @@ const MainChart: React.FC<MainChartProps> = ({
         ))}
         <text
           transform="rotate(-90)"
-          x={-chartDimensions.mainInnerHeight - 100}
-          y={-30}
+          x={-chartDimensions.mainInnerHeight}
+          y={0}
           textAnchor="start"
           fill="var(--gray-600)"
           className="text-xs"
@@ -496,41 +551,80 @@ const MainChart: React.FC<MainChartProps> = ({
       />
 
       {/* Loading indicator */}
-      {loading && (
-        <g className="loading-layer">
+      {loading ||
+        (sampleSizeLoading && (
+          <g className="loading-layer">
+            <rect
+              x={0}
+              y={0}
+              width={chartDimensions.innerWidth}
+              height={chartDimensions.mainInnerHeight}
+              fill="white"
+            />
+            <text
+              x={chartDimensions.innerWidth / 2}
+              y={chartDimensions.mainInnerHeight / 2}
+              textAnchor="middle"
+              fill="var(--gray-600)"
+              className="text-xs"
+            >
+              Loading...
+            </text>
+          </g>
+        ))}
+
+      {/* Zoom container - rendered first to handle wheel events */}
+      {showLineOverview && (
+        <g
+          ref={overviewRef}
+          className="zoom-container"
+          style={{
+            pointerEvents: 'all',
+            cursor: 'grab',
+          }}
+        >
           <rect
             x={0}
             y={0}
             width={chartDimensions.innerWidth}
             height={chartDimensions.mainInnerHeight}
-            fill="white"
+            fill="transparent"
+            style={{ pointerEvents: 'all' }}
           />
-          <text
-            x={chartDimensions.innerWidth / 2}
-            y={chartDimensions.mainInnerHeight / 2}
-            textAnchor="middle"
-            fill="var(--gray-600)"
-            className="text-xs"
-          >
-            Loading...
-          </text>
         </g>
       )}
 
-      {/* Data visualization layer */}
-      <g className="data-layer">
+      {/* Data visualization layer - rendered on top of zoom container */}
+      <g
+        className="data-layer"
+        style={{
+          pointerEvents: 'all',
+          isolation: 'isolate', // Creates a new stacking context
+        }}
+      >
         {renderAreaPaths}
         {renderLinePaths}
         {renderDataPointCircles}
         {renderIndividualPoints}
-        {/* {renderInteractivePoints} */}
       </g>
 
       {/* Axes layer - rendered last to be on top */}
-      <g className="axes-layer">
+      <g
+        className="axes-layer"
+        style={{
+          pointerEvents: 'none', // Axes should not interfere with interactions
+        }}
+      >
         {renderXAxis}
         {renderYAxis}
       </g>
+
+      {/* Reset button */}
+      <ResetButton
+        x={chartDimensions.innerWidth - 90}
+        y={-30}
+        onClick={resetZoom}
+      />
     </g>
   );
 };

@@ -17,7 +17,7 @@ const TimeSeriesGraph = ({
   const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="mx-auto flex flex-col max-w-screen-xl px-4 sm:px-6 lg:px-8">
         {data && <MeasurementSummary data={data} />}
         <Chart
           campaignId={campaignId}
