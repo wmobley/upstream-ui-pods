@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { FaFire, FaChartLine } from 'react-icons/fa';
-import { MdScatterPlot } from 'react-icons/md';
 import { GetSensorResponse } from '@upstream/upstream-api';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 interface MeasurementsSummaryProps {

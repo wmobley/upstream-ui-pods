@@ -9,7 +9,6 @@ const Controls = () => {
     aggregationInterval,
     renderDataPoints,
     setRenderDataPoints,
-    selectedTimeRange,
     aggregatedData,
     allPoints,
     additionalSensors,

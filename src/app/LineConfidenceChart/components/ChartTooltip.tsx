@@ -1,6 +1,7 @@
 import React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import NumberFormatter from '../../common/NumberFormatter/NumberFormatter';
+import GeometryMap from '../../common/GeometryMap/GeometryMap';
 
 // Types
 export interface TooltipData {
@@ -88,8 +89,13 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
         <div
           className="absolute bg-white border border-gray-300 rounded shadow-lg p-2 text-sm"
           style={{
-            left: tooltipPoint.x + 10,
-            top: tooltipPoint.y - 100,
+            left:
+              tooltipPoint.x > window.innerWidth / 2
+                ? tooltipPoint.x - 310
+                : tooltipPoint.x + 10,
+            top: Math.min(tooltipPoint.y - 100, window.innerHeight - 310),
+            width: '300px',
+            height: '300px',
             pointerEvents: 'auto',
           }}
         >
@@ -119,7 +125,14 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
           <div>
             Value: <NumberFormatter value={tooltipPoint.value ?? 0} />
           </div>
-          <div>Sensor ID: {tooltipPoint.sensorid}</div>
+          <div>Alias: {tooltipPoint.variablename}</div>
+          <div>
+            <div className="h-48 w-full">
+              <GeometryMap
+                geoJSON={tooltipPoint.geometry as GeoJSON.Geometry}
+              />
+            </div>
+          </div>
         </div>
       )}
     </>
