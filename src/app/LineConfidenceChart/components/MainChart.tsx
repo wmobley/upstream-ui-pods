@@ -3,6 +3,7 @@ import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
 import { AdditionalSensor } from '../LineConfidenceChart';
 import { useChartBrush } from '../hooks/useChartBrush';
+import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContext';
 
 // Types
 interface TooltipData {
@@ -220,6 +221,7 @@ const MainChart: React.FC<MainChartProps> = ({
     },
     [colorPalette, colors],
   );
+  const { sampleSizeLoading } = useLineConfidence();
 
   // Memoized components
   const renderAreaPaths = React.useMemo(
@@ -549,26 +551,27 @@ const MainChart: React.FC<MainChartProps> = ({
       />
 
       {/* Loading indicator */}
-      {loading && (
-        <g className="loading-layer">
-          <rect
-            x={0}
-            y={0}
-            width={chartDimensions.innerWidth}
-            height={chartDimensions.mainInnerHeight}
-            fill="white"
-          />
-          <text
-            x={chartDimensions.innerWidth / 2}
-            y={chartDimensions.mainInnerHeight / 2}
-            textAnchor="middle"
-            fill="var(--gray-600)"
-            className="text-xs"
-          >
-            Loading...
-          </text>
-        </g>
-      )}
+      {loading ||
+        (sampleSizeLoading && (
+          <g className="loading-layer">
+            <rect
+              x={0}
+              y={0}
+              width={chartDimensions.innerWidth}
+              height={chartDimensions.mainInnerHeight}
+              fill="white"
+            />
+            <text
+              x={chartDimensions.innerWidth / 2}
+              y={chartDimensions.mainInnerHeight / 2}
+              textAnchor="middle"
+              fill="var(--gray-600)"
+              className="text-xs"
+            >
+              Loading...
+            </text>
+          </g>
+        ))}
 
       {/* Zoom container - rendered first to handle wheel events */}
       {showLineOverview && (

@@ -8,7 +8,6 @@ import React, {
 import { useDetail } from '../../../../../hooks/sensor/useDetail';
 import { useList } from '../../../../../hooks/measurements/useList';
 import { useListConfidenceValues } from '../../../../../hooks/measurements/useListConfidenceValues';
-import { selectAggregationInterval } from '../../../../../utils/aggregationProcessing';
 import {
   GetSensorResponse,
   AggregatedMeasurement,
@@ -44,6 +43,7 @@ const useSensorData = (
   sensorInfo: SensorInfo,
   effectiveInterval: string,
   aggregationValue: number,
+  sampleSize: number,
 ): SensorData => {
   const {
     data: sensorAggregatedData,
@@ -61,6 +61,8 @@ const useSensorData = (
     sensorInfo.campaignId,
     sensorInfo.stationId,
     sensorInfo.id,
+    100000,
+    sampleSize,
   );
 
   return {
@@ -106,6 +108,9 @@ interface LineConfidenceContextProps {
   setMaxValueChart: React.Dispatch<React.SetStateAction<number | undefined>>;
   minValueChart: number | undefined;
   setMinValueChart: React.Dispatch<React.SetStateAction<number | undefined>>;
+  sampleSize: number;
+  setSampleSize: React.Dispatch<React.SetStateAction<number>>;
+  sampleSizeLoading: boolean;
 }
 
 const LineConfidenceContext = createContext<
@@ -120,36 +125,23 @@ interface LineConfidenceProviderProps {
 }
 
 // Helper component to manage additional sensor data
-const AdditionalSensor = ({
-  sensorInfo,
-  effectiveInterval,
-  aggregationValue,
-  onDataReady,
-}: {
+const AdditionalSensor: React.FC<{
   sensorInfo: SensorInfo;
   effectiveInterval: string;
   aggregationValue: number;
-  onDataReady: (data: SensorData) => void;
-}) => {
+  onDataReady: (sensorData: SensorData) => void;
+}> = ({ sensorInfo, effectiveInterval, aggregationValue, onDataReady }) => {
+  const { sampleSize } = useLineConfidence();
   const sensorData = useSensorData(
     sensorInfo,
     effectiveInterval,
     aggregationValue,
+    sampleSize,
   );
 
   useEffect(() => {
-    // Only call onDataReady when we have actual data updates
-    if (sensorData.aggregatedData !== null || sensorData.allPoints !== null) {
-      onDataReady(sensorData);
-    }
-  }, [
-    sensorData.aggregatedData,
-    sensorData.allPoints,
-    sensorData.aggregatedLoading,
-    sensorData.aggregatedError,
-    sensorInfo.id,
-    onDataReady,
-  ]);
+    onDataReady(sensorData);
+  }, [sensorData, onDataReady]);
 
   return null;
 };
@@ -181,6 +173,9 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const [renderDataPoints, setRenderDataPoints] = useState<boolean>(false);
   const [addingSensor, setAddingSensor] = useState<boolean>(false);
   const [addSensorModalOpen, setAddSensorModalOpen] = useState<boolean>(false);
+  const [sampleSize, setSampleSize] = useState<number>(2000);
+  const [sampleSizeLoading, setSampleSizeLoading] = useState<boolean>(false);
+
   useEffect(() => {
     if (data) {
       if (aggregationInterval === null) {
@@ -209,7 +204,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     setAggregationInterval(event.target.value as AggregationInterval);
   };
 
-  const aggregationValue = aggregationInterval === 'second' ? 10 : 1;
+  const aggregationValue = 1;
 
   const effectiveInterval = aggregationInterval || 'minute';
 
@@ -224,14 +219,18 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     effectiveInterval,
     aggregationValue,
   );
-
-  const { data: allPoints } = useList(
+  const { data: allPoints, isLoading: allPointsLoading } = useList(
     campaignId,
     stationId,
     sensorId,
     100000,
-    1000,
+    sampleSize,
   );
+
+  // Update sampleSizeLoading when allPointsLoading changes
+  useEffect(() => {
+    setSampleSizeLoading(allPointsLoading);
+  }, [allPointsLoading]);
 
   // Function to add a new sensor
   const addSensor = (
@@ -349,6 +348,9 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     setMaxValueChart,
     minValueChart,
     setMinValueChart,
+    sampleSize,
+    setSampleSize,
+    sampleSizeLoading,
   };
 
   return (
