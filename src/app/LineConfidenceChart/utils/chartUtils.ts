@@ -3,12 +3,30 @@ import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils'
 
 /**
  * Gets segments of data with gaps for proper rendering
+ * @param data - Array of aggregated measurements
+ * @param gapThresholdMinutes - Default gap threshold in minutes (default: 120)
+ * @param aggregationInterval - The interval at which data is aggregated (e.g., 'minute', 'hour', 'day', 'week', 'month')
+ * @returns Array of data segments, where each segment is an array of continuous measurements
  */
 export const getDataSegments = (
   data: AggregatedMeasurement[],
   gapThresholdMinutes: number = 120, // 2 hours default
+  aggregationInterval?: 'minute' | 'hour' | 'day' | 'week' | 'month',
 ): AggregatedMeasurement[][] => {
   if (data.length === 0) return [];
+  // Calculate dynamic gap threshold based on aggregation interval
+  let dynamicGapThreshold = gapThresholdMinutes;
+  if (aggregationInterval) {
+    const intervals = {
+      minute: 5, // 5 minutes
+      hour: 120, // 2 hours
+      day: 2880, // 2 days
+      week: 20160, // 2 weeks
+      month: 86400, // 2 months
+    };
+    dynamicGapThreshold = intervals[aggregationInterval];
+  }
+
   const segments: AggregatedMeasurement[][] = [];
   let currentSegment: AggregatedMeasurement[] = [data[0]];
 
@@ -18,7 +36,7 @@ export const getDataSegments = (
         data[i - 1].measurementTime.getTime()) /
       (1000 * 60); // Convert to minutes
 
-    if (timeDiff > gapThresholdMinutes) {
+    if (timeDiff > dynamicGapThreshold) {
       segments.push(currentSegment);
       currentSegment = [];
     }

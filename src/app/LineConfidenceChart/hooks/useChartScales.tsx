@@ -5,6 +5,7 @@ import { line, curveCatmullRom, area } from 'd3-shape';
 import { AggregatedMeasurement } from '@upstream/upstream-api';
 import { getDataSegments } from '../utils/chartUtils';
 import { AdditionalSensor } from '../LineConfidenceChart';
+import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContext';
 
 interface ChartDimensions {
   innerWidth: number;
@@ -37,6 +38,7 @@ export function useChartScales({
   xFormatter = (value) => value.toString(),
   yFormatter = (value) => value.toString(),
 }: UseChartScalesProps) {
+  const { aggregationInterval } = useLineConfidence();
   // Memoize scales for both charts
   const scales = useMemo(() => {
     const xExtent = extent(data, (d) => d.measurementTime.getTime());
@@ -105,7 +107,11 @@ export function useChartScales({
     if (!scales) return null;
 
     // Get data segments for primary sensor
-    const segments = getDataSegments(data, gapThresholdMinutes);
+    const segments = getDataSegments(
+      data,
+      gapThresholdMinutes,
+      aggregationInterval ?? 'minute',
+    );
 
     // Main chart paths
     const mainLineGenerator = line<AggregatedMeasurement>()
@@ -155,6 +161,7 @@ export function useChartScales({
       const sensorSegments = getDataSegments(
         sensor.aggregatedData,
         gapThresholdMinutes,
+        aggregationInterval ?? 'minute',
       );
 
       return {
@@ -180,7 +187,13 @@ export function useChartScales({
       overviewAreaPaths,
       additionalSensorPaths,
     };
-  }, [data, additionalSensors, scales, gapThresholdMinutes]);
+  }, [
+    data,
+    additionalSensors,
+    scales,
+    gapThresholdMinutes,
+    aggregationInterval,
+  ]);
 
   // Memoize axis ticks for main chart
   const axisTicks = useMemo(() => {
