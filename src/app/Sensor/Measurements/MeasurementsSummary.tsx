@@ -62,7 +62,7 @@ const MeasurementsSummary = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/heat-map`}
           className="block"
@@ -72,7 +72,7 @@ const MeasurementsSummary = ({
             <span>View Heat Map</span>
           </button>
         </Link>
-        <Link
+        {/* <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/scatter-time`}
           className="block"
         >
@@ -80,14 +80,14 @@ const MeasurementsSummary = ({
             <MdScatterPlot className="text-lg" />
             <span>View Scatter Time</span>
           </button>
-        </Link>
+        </Link> */}
         <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/line-confidence`}
           className="block"
         >
           <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
             <FaChartLine className="text-lg" />
-            <span>View Line Confidence</span>
+            <span>View Time Series</span>
           </button>
         </Link>
       </div>
