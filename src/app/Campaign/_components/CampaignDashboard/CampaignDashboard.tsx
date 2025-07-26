@@ -2,6 +2,7 @@ import { useDetail } from '../../../../hooks/campaign/useDetail';
 import QueryWrapper from '../../../common/QueryWrapper';
 import StationCard from '../../../Station/_components/StationCard';
 import GeometryMap from '../../../common/GeometryMap/GeometryMap';
+import { hasValidGeometry } from '../../../../utils/geometryValidation';
 
 interface CampaignDashboardProps {
   campaignId: string;
@@ -31,16 +32,20 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
           </div>
         </header>
 
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 h-96">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Campaign Coverage</h2>
-            <div className="h-3/4 w-full">
-              {campaign && campaign.geometry && (
-                <GeometryMap geoJSON={campaign.geometry as GeoJSON.Geometry} />
-              )}
-            </div>
-          </div>
-        </section>
+        {hasValidGeometry(campaign) && (
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 h-96">
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold mb-4">
+                  Campaign Coverage
+                </h2>
+                <div className="h-3/4 w-full">
+                  <GeometryMap
+                    geoJSON={campaign.geometry as GeoJSON.Geometry}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
 
         <section className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold">Stations</h2>

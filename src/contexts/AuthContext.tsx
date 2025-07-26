@@ -58,8 +58,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password: password,
       });
 
-      if (response.access_token) {
-        localStorage.setItem('access_token', response.access_token);
+      if (response.accessToken) {
+        localStorage.setItem('access_token', response.accessToken);
         setIsAuthenticated(true);
       } else {
         throw new Error('No access token received');

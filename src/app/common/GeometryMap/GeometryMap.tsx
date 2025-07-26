@@ -9,7 +9,7 @@ type Position = GeoJSON.Position;
 type Coordinates = Position | Position[] | Position[][] | Position[][][];
 
 const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
-  if (!geoJSON) {
+  if (!geoJSON || Object.keys(geoJSON).length === 0) {
     console.log('no geoJSON');
     return null;
   }
