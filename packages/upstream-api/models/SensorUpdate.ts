@@ -13,118 +13,93 @@
  */
 
 import { mapValues } from '../runtime';
-import type { SensorStatistics } from './SensorStatistics';
-import {
-    SensorStatisticsFromJSON,
-    SensorStatisticsFromJSONTyped,
-    SensorStatisticsToJSON,
-    SensorStatisticsToJSONTyped,
-} from './SensorStatistics';
-
 /**
  * 
  * @export
- * @interface SensorItem
+ * @interface SensorUpdate
  */
-export interface SensorItem {
-    /**
-     * 
-     * @type {number}
-     * @memberof SensorItem
-     */
-    id: number;
+export interface SensorUpdate {
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof SensorUpdate
      */
     alias?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof SensorUpdate
      */
     description?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof SensorItem
+     * @memberof SensorUpdate
      */
     postprocess?: boolean | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof SensorUpdate
      */
     postprocessscript?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof SensorUpdate
      */
     units?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof SensorItem
+     * @memberof SensorUpdate
      */
     variablename?: string | null;
-    /**
-     * 
-     * @type {SensorStatistics}
-     * @memberof SensorItem
-     */
-    statistics?: SensorStatistics | null;
 }
 
 /**
- * Check if a given object implements the SensorItem interface.
+ * Check if a given object implements the SensorUpdate interface.
  */
-export function instanceOfSensorItem(value: object): value is SensorItem {
-    if (!('id' in value) || value['id'] === undefined) return false;
+export function instanceOfSensorUpdate(value: object): value is SensorUpdate {
     return true;
 }
 
-export function SensorItemFromJSON(json: any): SensorItem {
-    return SensorItemFromJSONTyped(json, false);
+export function SensorUpdateFromJSON(json: any): SensorUpdate {
+    return SensorUpdateFromJSONTyped(json, false);
 }
 
-export function SensorItemFromJSONTyped(json: any, ignoreDiscriminator: boolean): SensorItem {
+export function SensorUpdateFromJSONTyped(json: any, ignoreDiscriminator: boolean): SensorUpdate {
     if (json == null) {
         return json;
     }
     return {
         
-        'id': json['id'],
         'alias': json['alias'] == null ? undefined : json['alias'],
         'description': json['description'] == null ? undefined : json['description'],
         'postprocess': json['postprocess'] == null ? undefined : json['postprocess'],
         'postprocessscript': json['postprocessscript'] == null ? undefined : json['postprocessscript'],
         'units': json['units'] == null ? undefined : json['units'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
-        'statistics': json['statistics'] == null ? undefined : SensorStatisticsFromJSON(json['statistics']),
     };
 }
 
-export function SensorItemToJSON(json: any): SensorItem {
-    return SensorItemToJSONTyped(json, false);
+export function SensorUpdateToJSON(json: any): SensorUpdate {
+    return SensorUpdateToJSONTyped(json, false);
 }
 
-export function SensorItemToJSONTyped(value?: SensorItem | null, ignoreDiscriminator: boolean = false): any {
+export function SensorUpdateToJSONTyped(value?: SensorUpdate | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'alias': value['alias'],
         'description': value['description'],
         'postprocess': value['postprocess'],
         'postprocessscript': value['postprocessscript'],
         'units': value['units'],
         'variablename': value['variablename'],
-        'statistics': SensorStatisticsToJSON(value['statistics']),
     };
 }
 

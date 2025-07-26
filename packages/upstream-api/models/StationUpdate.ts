@@ -24,89 +24,87 @@ import {
 /**
  * 
  * @export
- * @interface StationCreate
+ * @interface StationUpdate
  */
-export interface StationCreate {
+export interface StationUpdate {
     /**
      * 
      * @type {string}
-     * @memberof StationCreate
+     * @memberof StationUpdate
      */
-    name: string;
+    name?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof StationCreate
+     * @memberof StationUpdate
      */
     description?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof StationCreate
+     * @memberof StationUpdate
      */
     contactName?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof StationCreate
+     * @memberof StationUpdate
      */
     contactEmail?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof StationCreate
+     * @memberof StationUpdate
      */
     active?: boolean | null;
     /**
      * 
      * @type {Date}
-     * @memberof StationCreate
+     * @memberof StationUpdate
      */
-    startDate: Date;
+    startDate?: Date | null;
     /**
      * 
      * @type {StationType}
-     * @memberof StationCreate
+     * @memberof StationUpdate
      */
-    stationType?: StationType;
+    stationType?: StationType | null;
 }
 
 
 
 /**
- * Check if a given object implements the StationCreate interface.
+ * Check if a given object implements the StationUpdate interface.
  */
-export function instanceOfStationCreate(value: object): value is StationCreate {
-    if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('startDate' in value) || value['startDate'] === undefined) return false;
+export function instanceOfStationUpdate(value: object): value is StationUpdate {
     return true;
 }
 
-export function StationCreateFromJSON(json: any): StationCreate {
-    return StationCreateFromJSONTyped(json, false);
+export function StationUpdateFromJSON(json: any): StationUpdate {
+    return StationUpdateFromJSONTyped(json, false);
 }
 
-export function StationCreateFromJSONTyped(json: any, ignoreDiscriminator: boolean): StationCreate {
+export function StationUpdateFromJSONTyped(json: any, ignoreDiscriminator: boolean): StationUpdate {
     if (json == null) {
         return json;
     }
     return {
         
-        'name': json['name'],
+        'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'contactName': json['contact_name'] == null ? undefined : json['contact_name'],
         'contactEmail': json['contact_email'] == null ? undefined : json['contact_email'],
         'active': json['active'] == null ? undefined : json['active'],
-        'startDate': (new Date(json['start_date'])),
+        'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
     };
 }
 
-export function StationCreateToJSON(json: any): StationCreate {
-    return StationCreateToJSONTyped(json, false);
+export function StationUpdateToJSON(json: any): StationUpdate {
+    return StationUpdateToJSONTyped(json, false);
 }
 
-export function StationCreateToJSONTyped(value?: StationCreate | null, ignoreDiscriminator: boolean = false): any {
+export function StationUpdateToJSONTyped(value?: StationUpdate | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -118,7 +116,7 @@ export function StationCreateToJSONTyped(value?: StationCreate | null, ignoreDis
         'contact_name': value['contactName'],
         'contact_email': value['contactEmail'],
         'active': value['active'],
-        'start_date': ((value['startDate']).toISOString()),
+        'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
     };
 }

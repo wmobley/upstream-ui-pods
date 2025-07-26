@@ -16,30 +16,30 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface StationCreateResponse
+ * @interface SensorCreateResponse
  */
-export interface StationCreateResponse {
+export interface SensorCreateResponse {
     /**
      * 
      * @type {number}
-     * @memberof StationCreateResponse
+     * @memberof SensorCreateResponse
      */
     id: number;
 }
 
 /**
- * Check if a given object implements the StationCreateResponse interface.
+ * Check if a given object implements the SensorCreateResponse interface.
  */
-export function instanceOfStationCreateResponse(value: object): value is StationCreateResponse {
+export function instanceOfSensorCreateResponse(value: object): value is SensorCreateResponse {
     if (!('id' in value) || value['id'] === undefined) return false;
     return true;
 }
 
-export function StationCreateResponseFromJSON(json: any): StationCreateResponse {
-    return StationCreateResponseFromJSONTyped(json, false);
+export function SensorCreateResponseFromJSON(json: any): SensorCreateResponse {
+    return SensorCreateResponseFromJSONTyped(json, false);
 }
 
-export function StationCreateResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): StationCreateResponse {
+export function SensorCreateResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): SensorCreateResponse {
     if (json == null) {
         return json;
     }
@@ -49,11 +49,11 @@ export function StationCreateResponseFromJSONTyped(json: any, ignoreDiscriminato
     };
 }
 
-export function StationCreateResponseToJSON(json: any): StationCreateResponse {
-    return StationCreateResponseToJSONTyped(json, false);
+export function SensorCreateResponseToJSON(json: any): SensorCreateResponse {
+    return SensorCreateResponseToJSONTyped(json, false);
 }
 
-export function StationCreateResponseToJSONTyped(value?: StationCreateResponse | null, ignoreDiscriminator: boolean = false): any {
+export function SensorCreateResponseToJSONTyped(value?: SensorCreateResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
