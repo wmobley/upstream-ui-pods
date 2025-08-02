@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 const Left = () => {
   return (
-    <Link to="/" className="block text-primary-600">
+    <Link to="/" className="block text-primary-200">
       <span className="sr-only">Home</span>
       <svg
         className="h-8"

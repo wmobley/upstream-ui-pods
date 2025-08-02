@@ -19,7 +19,7 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
                 logout();
                 window.location.href = '/login';
               }}
-              className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
+              className="hidden px-5 py-2.5 text-sm font-medium text-white transition sm:block header-button"
             >
               Logout
             </button>
@@ -28,7 +28,7 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
       ) : (
         <div className="sm:flex sm:gap-4">
           <button
-            className="block rounded-md bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700"
+            className="block px-5 py-2.5 text-sm font-medium text-white transition header-button"
             onClick={() => {
               history.push('/login');
             }}
@@ -37,7 +37,7 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
           </button>
 
           <a
-            className="hidden rounded-md bg-secondary-100 px-5 py-2.5 text-sm font-medium text-primary-600 transition hover:text-primary-600/75 sm:block"
+            className="hidden  px-5 py-2.5 text-sm font-medium text-white transition sm:block header-button"
             href="https://accounts.tacc.utexas.edu/register"
           >
             Sign up
@@ -45,6 +45,7 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
         </div>
       )}
 
+      {false &&
       <button
         className="block rounded bg-secondary-100 p-2.5 text-secondary-600 transition hover:text-secondary-600/75 md:hidden"
         onClick={toggleMenu}
@@ -65,6 +66,7 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
           />
         </svg>
       </button>
+      }
     </div>
   );
 };
