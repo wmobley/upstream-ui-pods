@@ -9,6 +9,7 @@ import { ItemsPerPage } from './ItemsPerPage';
 import { Link } from 'react-router-dom';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { renderChm } from '../../../utils/helpers';
 
 interface DataTableProps<
   T extends Record<string, string | number | boolean | null>,
@@ -36,7 +37,7 @@ const DataCell = ({
   getRowLink?: (item: SensorItem) => string;
 }) => {
   if (column.includes('statistics')) {
-    console.log(item.statistics);
+    //console.log(item.statistics);
     const key = column.split('.')[1] as keyof SensorStatistics;
     return (
       <td className="px-6 py-4 whitespace-nowrap">
@@ -50,11 +51,16 @@ const DataCell = ({
       </td>
     );
   }
+  // @ts-ignore
+  let cur : string = item[column]
   return (
     <td className="px-6 py-4 whitespace-nowrap">
       {getRowLink ? (
-        // @ts-ignore
-        <Link to={getRowLink(item)}>{item[column]}</Link>
+        <Link to={getRowLink(item)}> {
+                      cur && typeof cur === 'string' ?
+                      renderChm(cur)
+                      : cur
+        } </Link>
       ) : (
         // @ts-ignore
         item[column]

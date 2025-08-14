@@ -73,3 +73,11 @@
 .breadcrumbs > a:hover {
     text-decoration: underline;
 }
+
+main {
+    min-height: calc(100vh - 140px);
+}
+
+.h-map {
+    height: calc(100vh - 140px);
+}

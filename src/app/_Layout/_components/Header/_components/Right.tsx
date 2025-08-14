@@ -1,6 +1,10 @@
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../../../../contexts/AuthContext';
 
+import { FaUser } from 'react-icons/fa';
+import { FaUserCircle } from 'react-icons/fa';
+import { FaRegUserCircle } from 'react-icons/fa';
+
 interface RightProps {
   toggleMenu: () => void;
 }
@@ -19,27 +23,30 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
                 logout();
                 window.location.href = '/login';
               }}
-              className="hidden px-5 py-2.5 text-sm font-medium text-white transition sm:block header-button"
+              className="px-5 py-2.5 text-sm font-medium text-white transition header-button flex items-center"
             >
-              Logout
+              <FaUser className="text-gray-100 text-lg mr-3" />
+              <span>Logout</span>
             </button>
           </div>
         </div>
       ) : (
         <div className="sm:flex sm:gap-4">
           <button
-            className="block px-5 py-2.5 text-sm font-medium text-white transition header-button"
+            className="px-3 py-2.5 text-sm font-medium text-white transition header-button flex items-center"
             onClick={() => {
               history.push('/login');
             }}
           >
+            <FaUserCircle className="text-gray-100 text-lg mr-3" />
             Log in
           </button>
 
           <a
-            className="hidden  px-5 py-2.5 text-sm font-medium text-white transition sm:block header-button"
+            className="px-3 py-2.5 text-sm font-medium text-white transition header-button md:flex items-center hidden"
             href="https://accounts.tacc.utexas.edu/register"
           >
+            <FaRegUserCircle className="text-gray-100 text-lg mr-3" />
             Sign up
           </a>
         </div>

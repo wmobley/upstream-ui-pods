@@ -138,19 +138,27 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // Quick validation checks
   if (data.length === 0) {
-    return <div>No data available</div>;
-  }
+    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
+      No data available
+    </div>;
+  } 
 
   if (!scales) {
-    return <div>Cannot calculate chart scales</div>;
+    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
+      Cannot calculate chart scales
+      </div>;
   }
 
   if (!paths) {
-    return <div>Cannot calculate chart paths</div>;
+    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
+      Cannot calculate chart paths
+    </div>;
   }
 
   if (!axisTicks) {
-    return <div>Cannot calculate chart axis ticks</div>;
+    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
+      Cannot calculate chart axis ticks
+    </div>;
   }
 
   return (

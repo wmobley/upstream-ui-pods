@@ -5,6 +5,7 @@ import MeasurementsSummary from '../Sensor/Measurements/MeasurementsSummary';
 import StatsSection from './_components/StatsSection';
 import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import {useDetail as stationInfo} from '../../hooks/station/useDetail';
+import { renderChm } from '../../utils/helpers';
 
 interface SensorDashboardProps {
   campaignId: string;
@@ -26,18 +27,18 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
       <div className="px-4 md:px-8 lg:px-12 lg:py-12 lg:h-5/6 py-12 bg-secondary-100">
         <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
           <div className='breadcrumbs'>
-            <a href='/'>Explore campaigns</a>
+            <a href='/'>Campaigns</a>
             <span>&gt;</span>
             <a href={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</a>
             <span>&gt;</span>
             <a href={'/campaigns/' + campaignId + "/stations/" + stationId}>{ station?.name || "station " + campaignId + " ..." }</a>
             <span>&gt;</span>
-            <a href='#' className='active'>{data?.variablename}</a>
+            <a href='#' className='active'>{renderChm(data?.variablename || data?.alias || "")}</a>
           </div>
 
           <header className="mb-8">
             <div className="mt-6">
-              <h1 className="text-3xl font-bold">{data?.variablename}</h1>
+              <h1 className="text-3xl font-bold">{renderChm(data?.variablename || "")}</h1>
               <p className="text-gray-600">{data?.description}</p>
             </div>
           </header>

@@ -39,22 +39,26 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
           </header>
 
           {hasValidGeometry(campaign) && (
-              <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 h-96">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Campaign Coverage
-                  </h2>
-                  <div className="h-3/4 w-full">
-                    <GeometryMap
-                      geoJSON={campaign.geometry as GeoJSON.Geometry}
-                    />
-                  </div>
+            <section className="col-span-2 grid grid-cols-1 gap-8 mb-8 h-96 w-full">
+              <div className="bg-white rounded-lg shadow-md p-6 w-full">
+                <h2 className="text-xl font-semibold mb-4">
+                  Campaign Coverage
+                </h2>
+                <div className="h-3/4 w-full">
+                  <GeometryMap
+                    geoJSON={campaign.geometry as GeoJSON.Geometry}
+                  />
                 </div>
-              </section>
-            )}
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
 
-          <section className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-xl font-semibold">Stations</h2>
+      <div className="px-4 md:px-8 lg:px-12 lg:py-12 lg:h-5/6 py-12">
+        <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
+          <h2 className="text-xl font-semibold mb-4">Stations</h2>
+          <section>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {campaign &&
                 campaign?.stations?.map((station) => (

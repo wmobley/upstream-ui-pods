@@ -9,6 +9,7 @@ interface StationCardProps {
 const StationCard: React.FC<StationCardProps> = ({ station, to }) => {
   return (
     <Card
+      alternative
       title={station.name}
       subtitle={station.description ?? ''} // Assuming station has a location property
       to={to ?? `/stations/${station.id}`}

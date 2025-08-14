@@ -49,7 +49,7 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
   ];
 
   return (
-    <div className="h-screen w-full ">
+    <div className="h-map w-full ">
       <MapContainer center={center} zoom={9} className="h-full w-full">
         <Tile />
         <CarLine measurements={filteredMeasurements} />

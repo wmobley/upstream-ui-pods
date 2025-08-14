@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { renderChm } from '../../../utils/helpers';
 
 interface CardProps {
   title: string;
@@ -8,6 +9,7 @@ interface CardProps {
   to: string;
   maxTags?: number;
   className?: string;
+  alternative?: boolean,
   children?: React.ReactNode;
 }
 
@@ -19,12 +21,14 @@ const Card: React.FC<CardProps> = ({
   to,
   className = '',
   children,
+  alternative = false,
   subtitleChildren,
 }) => {
+
   return (
     <Link to={to} className="h-64 sm:h-80 lg:h-96">
       <div
-        className={`relative flex-col h-full transform items-end border-2 border-black bg-white transition-transform hover:scale-105 ${className}`}
+        className={`relative flex-col h-full transform items-end border-2 transition-transform hover:scale-105 ${className} ${alternative ? "bg-secondary-50 border-gray-100" : "border-gray-200 bg-white"}`}
       >
         <div className="p-4 h-1/2 transition-opacity sm:p-6 lg:p-6">
           <div className="flex flex-col h-full">
@@ -38,7 +42,7 @@ const Card: React.FC<CardProps> = ({
                     key={tag}
                     className="rounded-full bg-gray-100 px-2 py-1 text-sm text-gray-700"
                   >
-                    {tag}
+                    {renderChm(tag)}
                   </span>
                 ))}
                 {tags.length > maxTags && (

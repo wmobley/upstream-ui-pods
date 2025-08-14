@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import Modal from '../../../../../../common/Modal';
 import { useList } from '../../../../../../../hooks/sensorVariables/useList';
+import { renderChm } from '../../../../../../../utils/helpers';
 
 interface FilteringModalProps {
   isOpen: boolean;
@@ -66,7 +67,7 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
     setSearchTerm(e.target.value);
     setCurrentPage(1); // Reset to first page when searching
   };
-
+  
   return (
     <Modal
       isOpen={isOpen}
@@ -113,7 +114,7 @@ const FilteringVariablesModal: React.FC<FilteringModalProps> = ({
                       htmlFor={variable}
                       className="text-gray-700 cursor-pointer select-none"
                     >
-                      {variable}
+                      {renderChm(variable)}
                     </label>
                   </div>
                 ))}

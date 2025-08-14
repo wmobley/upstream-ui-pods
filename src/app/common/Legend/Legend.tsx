@@ -16,7 +16,7 @@ export default function Legend({
   onIntervalSelect,
 }: LegendProps) {
   return (
-    <div className="absolute bottom-8 right-8 z-[1000] bg-white p-4 rounded-lg shadow-lg">
+    <div className="absolute bottom-16 right-4 z-[1000] bg-white p-4 rounded-lg shadow-lg">
       <h3 className="font-semibold mb-2">{title}</h3>
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">

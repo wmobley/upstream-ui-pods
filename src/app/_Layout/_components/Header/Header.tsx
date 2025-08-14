@@ -21,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMenu }) => {
         </a>
       </div>
 
-      <div className="mx-auto flex h-16 max-w-screen-xl items-center gap-8 px-4 sm:px-6 lg:px-8 h50">
+      <div className="mx-auto flex h-16 items-center gap-8 px-4 sm:px-6 lg:px-8 h50">
         <Left />
         <Center />
         <Right toggleMenu={toggleMenu} />

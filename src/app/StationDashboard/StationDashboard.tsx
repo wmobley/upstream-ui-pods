@@ -45,7 +45,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             </div>
           </header>
 
-          <section className="h-[400px] grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <section className="h-[400px] grid grid-cols-1 gap-8 mb-8">
             {station && <StatsSection station={station} />}
           </section>
 
