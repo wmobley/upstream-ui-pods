@@ -108,7 +108,7 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
       <div className="flex gap-4 flex-wrap">
-        {filters.map(renderFilter)}
+        {filters.map(f => <span key={f.id}>{renderFilter(f)}</span> )}
         {children}
       </div>
     </div>

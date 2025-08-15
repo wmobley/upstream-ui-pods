@@ -1,6 +1,10 @@
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../../../../contexts/AuthContext';
 
+import { FaUser } from 'react-icons/fa';
+import { FaUserCircle } from 'react-icons/fa';
+import { FaRegUserCircle } from 'react-icons/fa';
+
 interface RightProps {
   toggleMenu: () => void;
 }
@@ -19,32 +23,36 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
                 logout();
                 window.location.href = '/login';
               }}
-              className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
+              className="px-5 py-2.5 text-sm font-medium text-white transition header-button flex items-center"
             >
-              Logout
+              <FaUser className="text-gray-100 text-lg mr-3" />
+              <span>Logout</span>
             </button>
           </div>
         </div>
       ) : (
         <div className="sm:flex sm:gap-4">
           <button
-            className="block rounded-md bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700"
+            className="px-3 py-2.5 text-sm font-medium text-white transition header-button flex items-center"
             onClick={() => {
               history.push('/login');
             }}
           >
+            <FaUserCircle className="text-gray-100 text-lg mr-3" />
             Log in
           </button>
 
           <a
-            className="hidden rounded-md bg-secondary-100 px-5 py-2.5 text-sm font-medium text-primary-600 transition hover:text-primary-600/75 sm:block"
+            className="px-3 py-2.5 text-sm font-medium text-white transition header-button md:flex items-center hidden"
             href="https://accounts.tacc.utexas.edu/register"
           >
+            <FaRegUserCircle className="text-gray-100 text-lg mr-3" />
             Sign up
           </a>
         </div>
       )}
 
+      {false &&
       <button
         className="block rounded bg-secondary-100 p-2.5 text-secondary-600 transition hover:text-secondary-600/75 md:hidden"
         onClick={toggleMenu}
@@ -65,6 +73,7 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
           />
         </svg>
       </button>
+      }
     </div>
   );
 };

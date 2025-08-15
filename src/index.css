@@ -1,3 +1,83 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.bg-black {
+    background-color: #222222;
+}
+
+.branding {
+    border-bottom: 1px solid white;
+    background-color: #222222;
+    height: 50px;
+    font-family: "Roboto", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.branding > a:hover {
+    text-decoration: none;
+    background-color: unset;
+}
+
+.branding > a > img {
+    height: 24px;
+}
+
+.branding > .separator {
+    border-left: 1px solid white;
+    height: 24px;
+    margin: 0 15px;
+    vertical-align: middle;
+    width: 1px;
+}
+
+.h50 {
+    height: 50px;
+}
+
+.header-button {
+    height: 50px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+}
+
+.header-button:hover {
+    border-bottom: 4px solid #d5b57c;
+}
+
+.bg-login {
+    background-color: #D7D7D7;
+    height: calc(100vh - 140px);
+}
+
+.breadcrumbs {
+    font-size: .9em;
+}
+
+
+.breadcrumbs > span {
+    margin: 0px .5em;
+}
+
+.breadcrumbs > a {
+    color: rgb(61, 106, 204);
+}
+
+.breadcrumbs > a.active {
+    font-weight: bold;
+    color: black;
+}
+
+.breadcrumbs > a:hover {
+    text-decoration: underline;
+}
+
+main {
+    min-height: calc(100vh - 140px);
+}
+
+.h-map {
+    height: calc(100vh - 140px);
+}
