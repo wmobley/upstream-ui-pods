@@ -1,10 +1,14 @@
 import React from 'react';
 import { Route, Switch, RouteComponentProps } from 'react-router-dom';
 import StationDashboard from '../../StationDashboard/StationDashboard';
+import CreateStationPage from '../_components/CreateStationPage';
 import Sensor from '../../Sensor';
 const Router: React.FC = () => {
   return (
     <Switch>
+      <Route exact path={`/campaigns/:campaignId/stations/new`}>
+        <CreateStationPage />
+      </Route>
       <Route
         exact
         path={`/campaigns/:campaignId/stations/:stationId`}

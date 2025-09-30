@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useDetail } from '../../../../hooks/campaign/useDetail';
 import QueryWrapper from '../../../common/QueryWrapper';
 import StationCard from '../../../Station/_components/StationCard';
@@ -57,7 +58,15 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
 
       <div className="px-4 md:px-8 lg:px-12 lg:py-12 lg:h-5/6 py-12">
         <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
-          <h2 className="text-xl font-semibold mb-4">Stations</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Stations</h2>
+            <Link
+              to={`/campaigns/${campaignId}/stations/new`}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              Create New Station
+            </Link>
+          </div>
           <section>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {campaign &&
