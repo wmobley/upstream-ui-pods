@@ -198,13 +198,13 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     }
   }, [data]);
 
+  const aggregationValue = 1;
+
   const handleAggregationIntervalChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setAggregationInterval(event.target.value as AggregationInterval);
   };
-
-  const aggregationValue = 1;
 
   const effectiveInterval = aggregationInterval || 'minute';
 
@@ -226,6 +226,65 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     100000,
     sampleSize,
   );
+
+  // If the aggregated data endpoint returns no data, synthesize a minimal
+  // AggregatedMeasurement list from the raw measurement points so the
+  // chart can still render a sensible time series.
+  const synthesizedAggregated: AggregatedMeasurement[] | null = (() => {
+    try {
+      const items = allPoints?.items as any[] | undefined;
+      if (!items || items.length === 0) return null;
+
+      return items.map((it) => {
+        const val = (it as any).value ?? (it as any).measurementvalue ?? 0;
+        const time = (it as any).collectiontime ? new Date(String((it as any).collectiontime)) : new Date();
+        const agg: AggregatedMeasurement = {
+          measurementTime: time,
+          value: val,
+          medianValue: val,
+          pointCount: 1,
+          lowerBound: val,
+          upperBound: val,
+          parametricLowerBound: val,
+          parametricUpperBound: val,
+          stdDev: 0,
+          minValue: val,
+          maxValue: val,
+          percentile25: val,
+          percentile75: val,
+          ciMethod: 'none',
+          confidenceLevel: 1,
+        };
+        return agg;
+      });
+    } catch (e) {
+      return null;
+    }
+  })();
+
+  const aggregatedDataToProvide: AggregatedMeasurement[] | null =
+    aggregatedData && aggregatedData.length > 0
+      ? aggregatedData
+      : synthesizedAggregated;
+
+  // Debugging: log aggregated and raw points so we can see whether data
+  // is arriving from the API and why the chart may be empty. Placed after
+  // the declarations of `aggregatedData` and `allPoints` to avoid TDZ.
+  useEffect(() => {
+    try {
+      console.debug('LineConfidence debug sensor detail', { sensor: data });
+      console.debug('LineConfidence debug aggregatedData', {
+        length: aggregatedData ? aggregatedData.length : 0,
+        sample: aggregatedData ? aggregatedData.slice(0, 2) : null,
+      });
+      console.debug('LineConfidence debug allPoints', {
+        count: allPoints?.items?.length ?? 0,
+        sample: allPoints?.items?.slice(0, 2) ?? null,
+      });
+    } catch (e) {
+      // swallow debug errors
+    }
+  }, [data, aggregatedData, allPoints]);
 
   // Update sampleSizeLoading when allPointsLoading changes
   useEffect(() => {
@@ -329,9 +388,9 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     aggregationInterval,
     setAggregationInterval,
     handleAggregationIntervalChange,
-    aggregatedData,
-    aggregatedLoading,
-    aggregatedError,
+  aggregatedData: aggregatedDataToProvide,
+  aggregatedLoading,
+  aggregatedError,
     allPoints,
     additionalSensors: additionalSensorsData,
     addSensor,

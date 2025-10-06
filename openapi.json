@@ -1840,6 +1840,9 @@
               { "type": "null" }
             ]
           }
+          ,
+          "is_published": { "type": "boolean", "title": "Is Published", "default": false },
+          "published_at": { "anyOf": [ { "type": "string", "format": "date-time" }, { "type": "null" } ], "title": "Published At" }
         },
         "type": "object",
         "required": ["id"],
@@ -2686,6 +2689,9 @@
             "type": "array",
             "title": "Sensor Variables"
           }
+          ,
+          "is_published": { "type": "boolean", "title": "Is Published", "default": false },
+          "published_at": { "anyOf": [ { "type": "string", "format": "date-time" }, { "type": "null" } ], "title": "Published At" }
         },
         "type": "object",
         "required": [

@@ -73,6 +73,14 @@ export const Chart = () => {
 
   const chartAdditionalSensors = adaptSensorsForChart();
 
+  // Debug: log what data is being passed to the chart
+  try {
+    console.debug('Chart debug aggregatedData count', aggregatedData ? aggregatedData.length : 0);
+    console.debug('Chart debug allPoints count', allPoints ? (allPoints.items ? allPoints.items.length : 0) : 0);
+  } catch (e) {
+    // ignore
+  }
+
   // Define a color palette for the sensors
   const colorPalette = [
     { line: '#9a6fb0', area: '#9a6fb0', point: '#9a6fb0' }, // Primary sensor

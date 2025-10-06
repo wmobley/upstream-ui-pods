@@ -3,6 +3,7 @@ import { Route, Switch } from 'react-router-dom';
 import Home from '../Home';
 import Campaign from '../Campaign';
 import ProtectedRoute from '../common/ProtectedRoute';
+import OptionalProtectedRoute from '../common/OptionalProtectedRoute';
 import Login from '../Login/Login';
 import { useAuth } from '../../contexts/AuthContext';
 import { Loading } from '../common/Loading';
@@ -18,12 +19,12 @@ const Router: React.FC = () => {
       <Route exact path="/login">
         <Login />
       </Route>
-      <ProtectedRoute isAuthenticated={isAuthenticated} exact path="/">
+      <OptionalProtectedRoute exact path="/">
         <Home />
-      </ProtectedRoute>
-      <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
+      </OptionalProtectedRoute>
+      <OptionalProtectedRoute path="/campaigns">
         <Campaign />
-      </ProtectedRoute>
+      </OptionalProtectedRoute>
       <ProtectedRoute
         isAuthenticated={isAuthenticated}
         path="/docs/confidence-explanation"

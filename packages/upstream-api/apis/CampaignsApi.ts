@@ -21,6 +21,8 @@ import type {
   GetCampaignResponse,
   HTTPValidationError,
   ListCampaignsResponsePagination,
+  PublishRequest,
+  PublishResponse,
 } from '../models/index';
 import {
     CampaignCreateResponseFromJSON,
@@ -35,6 +37,10 @@ import {
     HTTPValidationErrorToJSON,
     ListCampaignsResponsePaginationFromJSON,
     ListCampaignsResponsePaginationToJSON,
+    PublishRequestFromJSON,
+    PublishRequestToJSON,
+    PublishResponseFromJSON,
+    PublishResponseToJSON,
 } from '../models/index';
 
 export interface CreateCampaignApiV1CampaignsPostRequest {
@@ -68,8 +74,17 @@ export interface UpdateCampaignApiV1CampaignsCampaignIdPutRequest {
     campaignsIn: CampaignsIn;
 }
 
+export interface PublishCampaignApiV1CampaignsCampaignIdPublishPostRequest {
+    campaignId: number;
+    publishRequest?: PublishRequest;
+}
+
+export interface UnpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRequest {
+    campaignId: number;
+}
+
 /**
- * 
+ *
  */
 export class CampaignsApi extends runtime.BaseAPI {
 
@@ -337,6 +352,83 @@ export class CampaignsApi extends runtime.BaseAPI {
      */
     async updateCampaignApiV1CampaignsCampaignIdPut(requestParameters: UpdateCampaignApiV1CampaignsCampaignIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignCreateResponse> {
         const response = await this.updateCampaignApiV1CampaignsCampaignIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Publish Campaign
+     */
+    async publishCampaignApiV1CampaignsCampaignIdPublishPostRaw(requestParameters: PublishCampaignApiV1CampaignsCampaignIdPublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublishResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling publishCampaignApiV1CampaignsCampaignIdPublishPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/publish`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PublishRequestToJSON(requestParameters['publishRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Publish Campaign
+     */
+    async publishCampaignApiV1CampaignsCampaignIdPublishPost(requestParameters: PublishCampaignApiV1CampaignsCampaignIdPublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
+        const response = await this.publishCampaignApiV1CampaignsCampaignIdPublishPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Unpublish Campaign
+     */
+    async unpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRaw(requestParameters: UnpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublishResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling unpublishCampaignApiV1CampaignsCampaignIdUnpublishPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/unpublish`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Unpublish Campaign
+     */
+    async unpublishCampaignApiV1CampaignsCampaignIdUnpublishPost(requestParameters: UnpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
+        const response = await this.unpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -1,5 +1,8 @@
 import { useDetail } from '../../hooks/sensor/useDetail';
+import { usePublish, useUnpublish } from '../../hooks/sensor/usePublish';
+import { useIsOwner } from '../../hooks/auth/usePermissions';
 import QueryWrapper from '../common/QueryWrapper';
+import PublishButton from '../common/PublishButton/PublishButton';
 import React from 'react';
 import MeasurementsSummary from '../Sensor/Measurements/MeasurementsSummary';
 import StatsSection from './_components/StatsSection';
@@ -21,6 +24,65 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
   const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
   const { campaign } = campaignInfo(campaignId);
   const { station } = stationInfo(campaignId, stationId );
+  const { canDelete: canDeleteData } = useIsOwner(campaignId);
+  const publishSensor = usePublish();
+  const unpublishSensor = useUnpublish();
+
+  const handlePublishSensor = async (cascade?: boolean) => {
+    try {
+      await publishSensor.mutateAsync({
+        campaignId: parseInt(campaignId),
+        stationId: parseInt(stationId),
+        sensorId: parseInt(sensorId),
+        cascade: cascade || false,
+      });
+    } catch (error) {
+      console.error('Failed to publish sensor:', error);
+      // If server indicates parent station is not published, offer to force publish
+      try {
+        const body = (error as unknown as Record<string, unknown>).__bodyText as string | undefined;
+        if (body && body.includes('parent station is not published')) {
+          const confirmForce = window.confirm('Parent station is not published. Force publish this sensor (this will ignore parent published state)?');
+          if (confirmForce) {
+            try {
+              await publishSensor.mutateAsync({
+                campaignId: parseInt(campaignId),
+                stationId: parseInt(stationId),
+                sensorId: parseInt(sensorId),
+                cascade: cascade || false,
+                force: true,
+              });
+            } catch (err2) {
+              console.error('Failed to force publish sensor:', err2);
+            }
+          }
+        }
+      } catch {
+        // ignore parsing errors
+      }
+    }
+  };
+
+  const handleUnpublishSensor = async () => {
+    try {
+      await unpublishSensor.mutateAsync({
+        campaignId: parseInt(campaignId),
+        stationId: parseInt(stationId),
+        sensorId: parseInt(sensorId),
+      });
+    } catch (error) {
+      console.error('Failed to unpublish sensor:', error);
+    }
+  };
+
+  const isPublished = (() => {
+    if (!data) return false;
+    // Some endpoints/models expose snake_case (is_published) or camelCase (isPublished)
+    const d: Record<string, unknown> = data as unknown as Record<string, unknown>;
+    const camel = d['isPublished'];
+    const snake = d['is_published'];
+    return (typeof camel === 'boolean' ? camel : typeof snake === 'boolean' ? snake : false);
+  })();
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
@@ -37,9 +99,31 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
           </div>
 
           <header className="mb-8">
-            <div className="mt-6">
-              <h1 className="text-3xl font-bold">{renderChm(data?.variablename || "")}</h1>
-              <p className="text-gray-600">{data?.description}</p>
+            <div className="mt-6 flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold">{renderChm(data?.variablename || "")}</h1>
+                <p className="text-gray-600">{data?.description}</p>
+              </div>
+              {canDeleteData && data && (
+                isPublished ? (
+                  <button
+                    onClick={handleUnpublishSensor}
+                    disabled={unpublishSensor.isPending}
+                    className="flex items-center gap-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
+                    title="Unpublish this sensor"
+                  >
+                    <span>Unpublish</span>
+                  </button>
+                ) : (
+                  <PublishButton
+                    isPublished={isPublished}
+                    onPublish={handlePublishSensor}
+                    onUnpublish={handleUnpublishSensor}
+                    entityType="sensor"
+                    showCascadeOption={true}
+                  />
+                )
+              )}
             </div>
           </header>
 

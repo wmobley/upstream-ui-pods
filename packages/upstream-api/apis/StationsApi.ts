@@ -18,6 +18,8 @@ import type {
   GetStationResponse,
   HTTPValidationError,
   ListStationsResponsePagination,
+  PublishRequest,
+  PublishResponse,
   StationCreate,
   StationCreateResponse,
   StationUpdate,
@@ -29,6 +31,10 @@ import {
     HTTPValidationErrorToJSON,
     ListStationsResponsePaginationFromJSON,
     ListStationsResponsePaginationToJSON,
+    PublishRequestFromJSON,
+    PublishRequestToJSON,
+    PublishResponseFromJSON,
+    PublishResponseToJSON,
     StationCreateFromJSON,
     StationCreateToJSON,
     StationCreateResponseFromJSON,
@@ -79,6 +85,17 @@ export interface UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutReques
     stationId: number;
     campaignId: number;
     stationUpdate: StationUpdate;
+}
+
+export interface PublishStationApiV1CampaignsCampaignIdStationsStationIdPublishPostRequest {
+    campaignId: number;
+    stationId: number;
+    publishRequest?: PublishRequest;
+}
+
+export interface UnpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRequest {
+    campaignId: number;
+    stationId: number;
 }
 
 /**
@@ -479,6 +496,98 @@ export class StationsApi extends runtime.BaseAPI {
      */
     async updateStationApiV1CampaignsCampaignIdStationsStationIdPut(requestParameters: UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StationCreateResponse> {
         const response = await this.updateStationApiV1CampaignsCampaignIdStationsStationIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Publish Station
+     */
+    async publishStationApiV1CampaignsCampaignIdStationsStationIdPublishPostRaw(requestParameters: PublishStationApiV1CampaignsCampaignIdStationsStationIdPublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublishResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling publishStationApiV1CampaignsCampaignIdStationsStationIdPublishPost().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling publishStationApiV1CampaignsCampaignIdStationsStationIdPublishPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/publish`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PublishRequestToJSON(requestParameters['publishRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Publish Station
+     */
+    async publishStationApiV1CampaignsCampaignIdStationsStationIdPublishPost(requestParameters: PublishStationApiV1CampaignsCampaignIdStationsStationIdPublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
+        const response = await this.publishStationApiV1CampaignsCampaignIdStationsStationIdPublishPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Unpublish Station
+     */
+    async unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRaw(requestParameters: UnpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublishResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPost().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/unpublish`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Unpublish Station
+     */
+    async unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPost(requestParameters: UnpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
+        const response = await this.unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

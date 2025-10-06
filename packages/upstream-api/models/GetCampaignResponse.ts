@@ -113,6 +113,18 @@ export interface GetCampaignResponse {
      * @memberof GetCampaignResponse
      */
     stations?: Array<StationsListResponseItem>;
+    /**
+     * Published flag
+     * @type {boolean}
+     * @memberof GetCampaignResponse
+     */
+    isPublished?: boolean;
+    /**
+     * Published timestamp
+     * @type {Date}
+     * @memberof GetCampaignResponse
+     */
+    publishedAt?: Date | null;
 }
 
 /**
@@ -148,6 +160,8 @@ export function GetCampaignResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'summary': SummaryGetCampaignFromJSON(json['summary']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
         'stations': json['stations'] == null ? undefined : ((json['stations'] as Array<any>).map(StationsListResponseItemFromJSON)),
+        'isPublished': json['is_published'] == null ? false : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
     };
 }
 
@@ -174,6 +188,8 @@ export function GetCampaignResponseToJSONTyped(value?: GetCampaignResponse | nul
         'summary': SummaryGetCampaignToJSON(value['summary']),
         'geometry': value['geometry'],
         'stations': value['stations'] == null ? undefined : ((value['stations'] as Array<any>).map(StationsListResponseItemToJSON)),
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
     };
 }
 

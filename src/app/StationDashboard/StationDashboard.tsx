@@ -1,6 +1,7 @@
 import { useDetail } from '../../hooks/station/useDetail';
 import { useDelete as useDeleteSensors } from '../../hooks/sensor/useDelete';
 import { useDeleteStation } from '../../hooks/station/useDeleteStation';
+import { usePublish, useUnpublish } from '../../hooks/station/usePublish';
 import { useIsOwner } from '../../hooks/auth/usePermissions';
 import QueryWrapper from '../common/QueryWrapper';
 import ConfirmDialog from '../common/ConfirmDialog';
@@ -26,10 +27,14 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const { canDelete: canDeleteData } = useIsOwner(campaignId);
   const deleteSensors = useDeleteSensors(campaignId, stationId);
   const deleteStation = useDeleteStation();
+  const publishStation = usePublish();
+  const unpublishStation = useUnpublish();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [showDeleteSensorsDialog, setShowDeleteSensorsDialog] = useState(false);
   const [showDeleteStationDialog, setShowDeleteStationDialog] = useState(false);
   const [showActionDropdown, setShowActionDropdown] = useState(false);
+  const [showForcePublishDialog, setShowForcePublishDialog] = useState(false);
+  const [forcePublishArgs, setForcePublishArgs] = useState<{ cascade: boolean } | null>(null);
 
   const handleDeleteSensors = async () => {
     try {
@@ -53,6 +58,51 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
       console.error('Failed to delete station:', error);
     }
   };
+
+  const handlePublishStation = async (cascade?: boolean) => {
+    try {
+      await publishStation.mutateAsync({
+        campaignId: parseInt(campaignId),
+        stationId: parseInt(stationId),
+        cascade: cascade || false,
+      });
+      setShowActionDropdown(false);
+    } catch (error) {
+      console.error('Failed to publish station:', error);
+      // If server indicates parent campaign is not published, open confirm dialog to force publish
+      try {
+        const body = (error as unknown as Record<string, unknown>).__bodyText as string | undefined;
+        if (body && body.includes('parent campaign is not published')) {
+          setForcePublishArgs({ cascade: cascade || false });
+          setShowForcePublishDialog(true);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const handleUnpublishStation = async () => {
+    try {
+      await unpublishStation.mutateAsync({
+        campaignId: parseInt(campaignId),
+        stationId: parseInt(stationId),
+      });
+      setShowActionDropdown(false);
+    } catch (error) {
+      console.error('Failed to unpublish station:', error);
+    }
+  };
+
+  // ...existing code...
+
+  const isPublished = (() => {
+    if (!station) return false;
+    const s: Record<string, unknown> = station as unknown as Record<string, unknown>;
+    const camel = s['isPublished'];
+    const snake = s['is_published'];
+    return (typeof camel === 'boolean' ? camel : typeof snake === 'boolean' ? snake : false);
+  })();
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
@@ -94,7 +144,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
 
                 {/* Dropdown Menu */}
                 {showActionDropdown && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-20">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-[99999]" style={{ zIndex: 99999 }}>
                     <button
                       onClick={() => {
                         setShowActionDropdown(false);
@@ -109,6 +159,44 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
                         Add New Data
                       </div>
                     </button>
+
+                    {/* Publishing options */}
+                    {canDeleteData && (
+                      <>
+                            {isPublished ? (
+                              <button
+                                onClick={() => {
+                                  setShowActionDropdown(false);
+                                  handleUnpublishStation();
+                                }}
+                                className="block w-full text-left px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 hover:text-orange-900 transition-colors border-b border-gray-100"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L4.636 4.636m5.242 5.242L15.121 15.121" />
+                                  </svg>
+                                  Unpublish Station
+                                </div>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setShowActionDropdown(false);
+                                  handlePublishStation(true);
+                                }}
+                                className="block w-full text-left px-4 py-3 text-sm text-green-600 hover:bg-green-50 hover:text-green-900 transition-colors border-b border-gray-100"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                  Publish Station (with sensors)
+                                </div>
+                              </button>
+                            )}
+                      </>
+                    )}
 
                     {/* Only show delete options if user has permission */}
                     {canDeleteData && (
@@ -155,6 +243,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
           </header>
 
           <section className="h-[400px] grid grid-cols-1 gap-8 mb-8">
+            {/* banner removed per user request */}
             {station && <StatsSection station={station} />}
           </section>
 
@@ -189,6 +278,35 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             onCancel={() => setShowDeleteSensorsDialog(false)}
             isLoading={deleteSensors.isPending}
             danger={true}
+          />
+
+          <ConfirmDialog
+            isOpen={showForcePublishDialog}
+            title="Force Publish Station"
+            message={`The parent campaign is not published. Force publishing the station will ignore the parent campaign's published state. Are you sure you want to continue?`}
+            confirmText="Force Publish"
+            cancelText="Cancel"
+            onConfirm={async () => {
+              try {
+                await publishStation.mutateAsync({
+                  campaignId: parseInt(campaignId),
+                  stationId: parseInt(stationId),
+                  cascade: forcePublishArgs?.cascade || false,
+                  force: true,
+                });
+              } catch (err) {
+                console.error('Failed to force publish station:', err);
+              } finally {
+                setShowForcePublishDialog(false);
+                setForcePublishArgs(null);
+              }
+            }}
+            onCancel={() => {
+              setShowForcePublishDialog(false);
+              setForcePublishArgs(null);
+            }}
+            isLoading={publishStation.isPending}
+            danger={false}
           />
         </div>
       </div>

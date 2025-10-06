@@ -83,13 +83,25 @@ export interface ListCampaignsResponseItem {
      */
     endDate?: Date | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListCampaignsResponseItem
      */
     allocation?: string | null;
     /**
-     * 
+     *
+     * @type {boolean}
+     * @memberof ListCampaignsResponseItem
+     */
+    isPublished: boolean;
+    /**
+     *
+     * @type {Date}
+     * @memberof ListCampaignsResponseItem
+     */
+    publishedAt?: Date | null;
+    /**
+     *
      * @type {SummaryListCampaigns}
      * @memberof ListCampaignsResponseItem
      */
@@ -108,6 +120,7 @@ export interface ListCampaignsResponseItem {
 export function instanceOfListCampaignsResponseItem(value: object): value is ListCampaignsResponseItem {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('isPublished' in value) || value['isPublished'] === undefined) return false;
     if (!('summary' in value) || value['summary'] === undefined) return false;
     return true;
 }
@@ -131,6 +144,8 @@ export function ListCampaignsResponseItemFromJSONTyped(json: any, ignoreDiscrimi
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'endDate': json['end_date'] == null ? undefined : (new Date(json['end_date'])),
         'allocation': json['allocation'] == null ? undefined : json['allocation'],
+        'isPublished': json['is_published'] == null ? false : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
         'summary': SummaryListCampaignsFromJSON(json['summary']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
     };
@@ -156,6 +171,8 @@ export function ListCampaignsResponseItemToJSONTyped(value?: ListCampaignsRespon
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'end_date': value['endDate'] == null ? undefined : ((value['endDate'] as any).toISOString()),
         'allocation': value['allocation'],
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
         'summary': SummaryListCampaignsToJSON(value['summary']),
         'geometry': value['geometry'],
     };

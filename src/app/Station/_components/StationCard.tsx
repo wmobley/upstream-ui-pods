@@ -4,6 +4,7 @@ import { StationsListResponseItem } from '@upstream/upstream-api';
 import { useDeleteStation } from '../../../hooks/station/useDeleteStation';
 import { useIsOwner } from '../../../hooks/auth/usePermissions';
 import ConfirmDialog from '../../common/ConfirmDialog';
+import PublishingStatusIndicator from '../../common/PublishingStatusIndicator/PublishingStatusIndicator';
 import { renderChm } from '../../../utils/helpers';
 
 interface StationCardProps {
@@ -88,6 +89,20 @@ const StationCard: React.FC<StationCardProps> = ({ station, campaignId, to }) =>
             <div className="flex flex-col h-full">
               <h2 className="mt-4 text-xl font-medium sm:text-2xl my-1">{station.name}</h2>
               {station.description && <p className="text-sm text-gray-500">{station.description}</p>}
+              <div className="mt-2">
+                {(() => {
+                  const s: Record<string, unknown> = station as unknown as Record<string, unknown>;
+                  const isPub = (typeof s['isPublished'] === 'boolean') ? s['isPublished'] : (typeof s['is_published'] === 'boolean' ? s['is_published'] : false);
+                  const pubAtRaw = (s['publishedAt'] as string | undefined) ?? (s['published_at'] as string | undefined) ?? undefined;
+                  const pubAtDate = pubAtRaw ? new Date(pubAtRaw) : undefined;
+                  return (
+                    <PublishingStatusIndicator
+                      isPublished={isPub}
+                      publishedAt={pubAtDate ?? null}
+                    />
+                  );
+                })()}
+              </div>
               {station.sensors && station.sensors.length > 0 && (
                 <div className="flex flex-wrap gap-2 my-1">
                   {station.sensors.slice(0, 5).map((sensor) => (
