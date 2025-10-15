@@ -5,7 +5,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDelete } from '../../../../hooks/campaign/useDelete';
 import { usePublish, useUnpublish } from '../../../../hooks/campaign/usePublish';
 import { useDelete as useDeleteStations } from '../../../../hooks/station/useDelete';
-import { useIsOwner } from '../../../../hooks/auth/usePermissions';
 import QueryWrapper from '../../../common/QueryWrapper';
 import ConfirmDialog from '../../../common/ConfirmDialog';
 import StationCard from '../../../Station/_components/StationCard';

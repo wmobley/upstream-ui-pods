@@ -2,7 +2,6 @@ import { useDetail } from '../../hooks/station/useDetail';
 import { useDelete as useDeleteSensors } from '../../hooks/sensor/useDelete';
 import { useDeleteStation } from '../../hooks/station/useDeleteStation';
 import { usePublish, useUnpublish } from '../../hooks/station/usePublish';
-import { useIsOwner } from '../../hooks/auth/usePermissions';
 import QueryWrapper from '../common/QueryWrapper';
 import ConfirmDialog from '../common/ConfirmDialog';
 import React, { useState } from 'react';

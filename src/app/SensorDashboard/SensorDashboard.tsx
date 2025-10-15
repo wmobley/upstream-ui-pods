@@ -1,6 +1,5 @@
 import { useDetail } from '../../hooks/sensor/useDetail';
 import { usePublish, useUnpublish } from '../../hooks/sensor/usePublish';
-import { useIsOwner } from '../../hooks/auth/usePermissions';
 import QueryWrapper from '../common/QueryWrapper';
 import PublishButton from '../common/PublishButton/PublishButton';
 import React from 'react';

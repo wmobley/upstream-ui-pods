@@ -11,6 +11,39 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
   const startDate = campaign.startDate?.toLocaleDateString();
   const endDate = campaign.endDate?.toLocaleDateString();
   const dates = `${startDate} ${endDate ? `- ${endDate}` : '- Present'}`;
+  const rawCampaign = campaign as unknown as Record<string, unknown>;
+  const isPublished = (() => {
+    const camel = rawCampaign['isPublished'];
+    if (typeof camel === 'boolean') {
+      return camel;
+    }
+    const snake = rawCampaign['is_published'];
+    if (typeof snake === 'boolean') {
+      return snake;
+    }
+    const summary = rawCampaign['summary'] as Record<string, unknown> | undefined;
+    const summaryCamel = summary?.['isPublished'];
+    if (typeof summaryCamel === 'boolean') {
+      return summaryCamel;
+    }
+    const summarySnake = summary?.['is_published'];
+    if (typeof summarySnake === 'boolean') {
+      return summarySnake;
+    }
+    const publishedAtValue = rawCampaign['publishedAt'] ?? rawCampaign['published_at'];
+    return Boolean(publishedAtValue);
+  })();
+  const publishedAt = (() => {
+    const value = rawCampaign['publishedAt'] ?? rawCampaign['published_at'];
+    if (value instanceof Date) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    return null;
+  })();
   const Map = () => {
     if (campaign.geometry) {
       return <GeometryMap geoJSON={campaign.geometry as GeoJSON.Geometry} />;
@@ -21,8 +54,8 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
   const StatusIndicator = () => (
     <div className="mt-2">
       <PublishingStatusIndicator
-        isPublished={campaign.isPublished || false}
-        publishedAt={campaign.publishedAt}
+        isPublished={isPublished}
+        publishedAt={publishedAt}
       />
     </div>
   );
