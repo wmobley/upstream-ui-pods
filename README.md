@@ -395,7 +395,16 @@ graph LR
    cd packages/upstream-api && npm run build && cd ../..
    ```
 
-4. Start the development server:
+4. Configure the API base URL before running any build or dev commands. You can either:
+   - Set `VITE_UPSTREAM_API_URL` in `.env` or export it in your shell:
+
+     ```bash
+     export VITE_UPSTREAM_API_URL="https://your-upstream-api.example.com"
+     ```
+
+   - Or, for containerized deployments, provide the value via the `VITE_UPSTREAM_API_URL` environment variable. The Docker image rewrites `runtime-config.js` at startup to pick up that value.
+
+5. Start the development server:
    ```bash
    npm run dev
    ```
