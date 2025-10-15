@@ -11,23 +11,32 @@ interface RightProps {
 
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
   const history = useHistory();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isTapisAuth, username, logout } = useAuth();
 
   return (
     <div className="flex items-center gap-4">
       {isAuthenticated ? (
         <div className="sm:flex sm:gap-4">
           <div className="flex items-center gap-4 text-primary-600">
-            <button
-              onClick={() => {
-                logout();
-                window.location.href = '/login';
-              }}
-              className="px-5 py-2.5 text-sm font-medium text-white transition header-button flex items-center"
-            >
-              <FaUser className="text-gray-100 text-lg mr-3" />
-              <span>Logout</span>
-            </button>
+            {isTapisAuth ? (
+              // Tapis authentication - show username, no logout (managed by Tapis)
+              <div className="px-5 py-2.5 text-sm font-medium text-white flex items-center">
+                <FaUser className="text-gray-100 text-lg mr-3" />
+                <span>{username || 'User'}</span>
+              </div>
+            ) : (
+              // JWT authentication - show logout button
+              <button
+                onClick={() => {
+                  logout();
+                  window.location.href = '/login';
+                }}
+                className="px-5 py-2.5 text-sm font-medium text-white transition header-button flex items-center"
+              >
+                <FaUser className="text-gray-100 text-lg mr-3" />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
       ) : (

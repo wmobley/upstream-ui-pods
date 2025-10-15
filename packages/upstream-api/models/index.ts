@@ -22,6 +22,8 @@ export * from './MeasurementIn';
 export * from './MeasurementItem';
 export * from './MeasurementUpdate';
 export * from './Point';
+export * from './PublishRequest';
+export * from './PublishResponse';
 export * from './PyTASAllocation';
 export * from './PyTASPi';
 export * from './PyTASProject';
