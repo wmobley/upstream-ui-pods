@@ -1,4 +1,4 @@
-# Upstream Viz
+# Upstream Viz  
 
 A modern visualization platform for environmental sensor data. This application provides powerful tools for analyzing, visualizing, and exploring time-series data from environmental monitoring campaigns.
 
