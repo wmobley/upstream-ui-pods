@@ -6,10 +6,16 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd());
 
-  // Validate required environment variables
-  if (!env.VITE_UPSTREAM_API_URL) {
-    throw new Error(
-      'VITE_UPSTREAM_API_URL is required in environment variables',
+  // Allow the value to come from either .env files or the Node process env
+  const upstreamApiUrl =
+    env.VITE_UPSTREAM_API_URL ?? process.env.VITE_UPSTREAM_API_URL;
+
+  if (upstreamApiUrl) {
+    // Ensure downstream tooling sees the resolved value
+    process.env.VITE_UPSTREAM_API_URL = upstreamApiUrl;
+  } else {
+    console.warn(
+      'VITE_UPSTREAM_API_URL was not provided; runtime-config.js must define it before the app loads.',
     );
   }
 

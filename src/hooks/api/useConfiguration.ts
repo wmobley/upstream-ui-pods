@@ -2,7 +2,10 @@ import { Configuration } from '@upstream/upstream-api';
 import { getTapisHeaders, isTapisAuthenticated } from '../../utils/tapisAuth';
 
 const useConfiguration = () => {
-  const basePath = import.meta.env.VITE_UPSTREAM_API_URL;
+  const runtimeBasePath =
+    window.__UPSTREAM_CONFIG__?.VITE_UPSTREAM_API_URL?.trim() || undefined;
+  const envBasePath = import.meta.env.VITE_UPSTREAM_API_URL?.trim() || undefined;
+  const basePath = runtimeBasePath ?? envBasePath;
 
   if (!basePath) {
     throw new Error('UPSTREAM_API_URL is not set');
