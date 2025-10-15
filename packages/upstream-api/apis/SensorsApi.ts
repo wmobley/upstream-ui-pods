@@ -18,6 +18,8 @@ import type {
   GetSensorResponse,
   HTTPValidationError,
   ListSensorsResponsePagination,
+  PublishRequest,
+  PublishResponse,
   SensorCreateResponse,
   SensorUpdate,
   SortField,
@@ -29,6 +31,10 @@ import {
     HTTPValidationErrorToJSON,
     ListSensorsResponsePaginationFromJSON,
     ListSensorsResponsePaginationToJSON,
+    PublishRequestFromJSON,
+    PublishRequestToJSON,
+    PublishResponseFromJSON,
+    PublishResponseToJSON,
     SensorCreateResponseFromJSON,
     SensorCreateResponseToJSON,
     SensorUpdateFromJSON,
@@ -74,6 +80,19 @@ export interface UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSen
     stationId: number;
     campaignId: number;
     sensorUpdate: SensorUpdate;
+}
+
+export interface PublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPostRequest {
+    campaignId: number;
+    stationId: number;
+    sensorId: number;
+    publishRequest?: PublishRequest;
+}
+
+export interface UnpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPostRequest {
+    campaignId: number;
+    stationId: number;
+    sensorId: number;
 }
 
 /**
@@ -379,6 +398,112 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut(requestParameters: UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorCreateResponse> {
         const response = await this.updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Publish Sensor
+     */
+    async publishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPostRaw(requestParameters: PublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublishResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling publishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPost().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling publishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPost().'
+            );
+        }
+
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling publishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}/publish`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PublishRequestToJSON(requestParameters['publishRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Publish Sensor
+     */
+    async publishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPost(requestParameters: PublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
+        const response = await this.publishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Unpublish Sensor
+     */
+    async unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPostRaw(requestParameters: UnpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublishResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPost().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPost().'
+            );
+        }
+
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}/unpublish`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Unpublish Sensor
+     */
+    async unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPost(requestParameters: UnpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
+        const response = await this.unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

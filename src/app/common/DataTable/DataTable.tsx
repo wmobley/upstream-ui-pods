@@ -23,6 +23,7 @@ interface DataTableProps<
   setItemsPerPage: (page: number) => void;
   getRowLink?: (item: SensorItem) => string;
   onSort?: (column: string, direction: 'asc' | 'desc') => void;
+  actions?: (item: SensorItem) => React.ReactNode;
 }
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -79,6 +80,7 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
   setItemsPerPage,
   getRowLink,
   onSort,
+  actions,
 }: DataTableProps<T>) => {
   const totalPages = data.pages;
   const paginatedData = data.items;
@@ -145,6 +147,11 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
                   </div>
                 </th>
               ))}
+              {actions && (
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -159,11 +166,16 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
                       getRowLink={getRowLink}
                     />
                   ))}
+                  {actions && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {actions(item)}
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-4 text-center">
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-4 text-center">
                   No results found
                 </td>
               </tr>

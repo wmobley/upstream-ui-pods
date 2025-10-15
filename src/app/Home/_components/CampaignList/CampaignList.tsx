@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import CampaignCard from '../CampaignCard/CampaignCard';
 import QueryWrapper from '../../../common/QueryWrapper';
 import { useList } from '../../../../hooks/campaign/useList';
@@ -78,9 +79,17 @@ const CampaignList: React.FC = () => {
         <div className='breadcrumbs'>
           <a href='#' className='active'>Explore campaigns</a>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
-          Explore campaigns
-        </h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+            Explore campaigns
+          </h2>
+          <Link
+            to="/campaigns/new"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          >
+            Create New Campaign
+          </Link>
+        </div>
 
         <FilterToolbar title="Campaign Filters" filters={filterConfigs} />
 

@@ -25,6 +25,9 @@ export const useList = ({ filters }: UseListProps): UseListReturn => {
     queryFn: async () => {
       const response =
         await campaignsApi.listCampaignsApiV1CampaignsGet(filters);
+      console.log('Campaigns API response:', response);
+      console.log('Campaigns items:', response.items);
+      console.log('Total campaigns:', response.items?.length);
       return response.items;
     },
   });
