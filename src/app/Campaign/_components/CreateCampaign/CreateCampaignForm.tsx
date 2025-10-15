@@ -20,6 +20,7 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
     description: '',
     startDate: null,
     endDate: null,
+    allocation: '',
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CampaignsIn, string>>>({});
@@ -37,6 +38,9 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
 
     if (!formData.name.trim()) {
       newErrors.name = 'Campaign name is required';
+    }
+    if (!formData.allocation?.trim()) {
+      newErrors.allocation = 'Allocation is required';
     }
 
     if (formData.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
@@ -131,6 +135,24 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
               placeholder="Enter contact email"
             />
             {errors.contactEmail && <p className="mt-1 text-sm text-red-600">{errors.contactEmail}</p>}
+          </div>
+
+          {/* Allocation */}
+          <div>
+            <label htmlFor="allocation" className="block text-sm font-medium text-gray-700 mb-2">
+              Allocation *
+            </label>
+            <input
+              type="text"
+              id="allocation"
+              value={formData.allocation}
+              onChange={(e) => handleInputChange('allocation', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.allocation ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Enter allocation identifier"
+            />
+            {errors.allocation && <p className="mt-1 text-sm text-red-600">{errors.allocation}</p>}
           </div>
 
           {/* Description */}

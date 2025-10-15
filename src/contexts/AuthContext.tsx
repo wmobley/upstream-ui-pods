@@ -9,7 +9,6 @@ import { AuthApi } from '@upstream/upstream-api';
 import useConfiguration from '../hooks/api/useConfiguration';
 import {
   initializeTapisAuth,
-  isTapisAuthenticated,
   clearTapisHeaders,
   getTapisUser
 } from '../utils/tapisAuth';
