@@ -402,7 +402,7 @@ graph LR
      export VITE_UPSTREAM_API_URL="https://your-upstream-api.example.com"
      ```
 
-   - Or, for containerized deployments, provide the value via the `VITE_UPSTREAM_API_URL` environment variable. The Docker image rewrites `runtime-config.js` at startup to pick up that value.
+   - Or, for containerized deployments, edit `public/runtime-config.js` (or replace it at runtime) to assign `window.__UPSTREAM_CONFIG__.VITE_UPSTREAM_API_URL`.
 
 5. Start the development server:
    ```bash
