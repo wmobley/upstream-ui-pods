@@ -56,7 +56,7 @@ const PublishingStatusIndicator: React.FC<PublishingStatusIndicatorProps> = ({
       title="Not published - only visible to authenticated users"
     >
       <FaEyeSlash className={iconSizeClasses[size]} />
-      {showText && <span>Draft</span>}
+      {showText && <span>Private</span>}
     </div>
   );
 };

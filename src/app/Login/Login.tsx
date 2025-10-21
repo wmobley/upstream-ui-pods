@@ -14,7 +14,6 @@ const Login: React.FC = () => {
       await login(email, password);
       history.push('/');
     } catch (err) {
-      // Error is already handled in the AuthContext
       console.error('Login failed:', err);
     }
   };
@@ -61,7 +60,7 @@ const Login: React.FC = () => {
           )}
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="username" className="sr-only">
+              <label htmlFor="email" className="sr-only">
                 TACC Username
               </label>
               <input

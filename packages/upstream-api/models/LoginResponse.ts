@@ -31,6 +31,24 @@ export interface LoginResponse {
      * @memberof LoginResponse
      */
     tokenType: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof LoginResponse
+     */
+    tapisAccessToken?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof LoginResponse
+     */
+    tapisRefreshToken?: string | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof LoginResponse
+     */
+    tapisExpiresAt?: number | null;
 }
 
 /**
@@ -54,6 +72,9 @@ export function LoginResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         
         'accessToken': json['access_token'],
         'tokenType': json['token_type'],
+        'tapisAccessToken': json['tapis_access_token'] ?? undefined,
+        'tapisRefreshToken': json['tapis_refresh_token'] ?? undefined,
+        'tapisExpiresAt': json['tapis_expires_at'] ?? undefined,
     };
 }
 
@@ -70,6 +91,8 @@ export function LoginResponseToJSONTyped(value?: LoginResponse | null, ignoreDis
         
         'access_token': value['accessToken'],
         'token_type': value['tokenType'],
+        'tapis_access_token': value['tapisAccessToken'] ?? undefined,
+        'tapis_refresh_token': value['tapisRefreshToken'] ?? undefined,
+        'tapis_expires_at': value['tapisExpiresAt'] ?? undefined,
     };
 }
-

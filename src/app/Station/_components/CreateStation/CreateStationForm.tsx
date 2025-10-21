@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { StationCreate, StationType } from '@upstream/upstream-api';
+import { StationCreate, StationType, GetCampaignResponse } from '@upstream/upstream-api';
 import { useCreate } from '../../../../hooks/station/useCreate';
 
 interface CreateStationFormProps {
   campaignId: string;
+  campaign: GetCampaignResponse;
   onCancel?: () => void;
 }
 
-const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCancel }) => {
+const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, campaign, onCancel }) => {
   const history = useHistory();
   const createStation = useCreate(campaignId);
 

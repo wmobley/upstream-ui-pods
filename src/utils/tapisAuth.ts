@@ -8,7 +8,12 @@ export interface TapisHeaders {
   'X-Tapis-Tenant'?: string;
   'X-Tapis-Site'?: string;
   'Internal'?: string;
+  'X-Tapis-Token'?: string;
 }
+
+const TAPIS_ACCESS_TOKEN_KEY = 'Tapis-Access-Token';
+const TAPIS_REFRESH_TOKEN_KEY = 'Tapis-Refresh-Token';
+const TAPIS_EXPIRES_AT_KEY = 'Tapis-Expires-At';
 
 export interface TapisUser {
   username: string;
@@ -28,8 +33,18 @@ export const getTapisHeaders = (): TapisHeaders | null => {
   const tenant = sessionStorage.getItem('X-Tapis-Tenant');
   const site = sessionStorage.getItem('X-Tapis-Site');
   const internal = sessionStorage.getItem('Internal');
+  const accessToken = sessionStorage.getItem(TAPIS_ACCESS_TOKEN_KEY);
 
   if (!username || !tenant || !site) {
+    if (accessToken) {
+      return {
+        ...(username && { 'X-Tapis-Username': username }),
+        ...(tenant && { 'X-Tapis-Tenant': tenant }),
+        ...(site && { 'X-Tapis-Site': site }),
+        ...(internal && { 'Internal': internal }),
+        'X-Tapis-Token': accessToken,
+      } as TapisHeaders;
+    }
     return null;
   }
 
@@ -38,6 +53,7 @@ export const getTapisHeaders = (): TapisHeaders | null => {
     'X-Tapis-Tenant': tenant,
     'X-Tapis-Site': site,
     ...(internal && { 'Internal': internal }),
+    ...(accessToken && { 'X-Tapis-Token': accessToken }),
   };
 };
 
@@ -68,6 +84,67 @@ export const clearTapisHeaders = (): void => {
   sessionStorage.removeItem('X-Tapis-Tenant');
   sessionStorage.removeItem('X-Tapis-Site');
   sessionStorage.removeItem('Internal');
+};
+
+interface TapisTokenPayload {
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  expiresAt?: number | null;
+}
+
+export const clearTapisTokens = (): void => {
+  sessionStorage.removeItem(TAPIS_ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(TAPIS_REFRESH_TOKEN_KEY);
+  sessionStorage.removeItem(TAPIS_EXPIRES_AT_KEY);
+};
+
+export const storeTapisTokens = (tokens: TapisTokenPayload): void => {
+  clearTapisTokens();
+
+  if (tokens.accessToken) {
+    sessionStorage.setItem(TAPIS_ACCESS_TOKEN_KEY, tokens.accessToken);
+    try {
+      const payload = decodeJwt(tokens.accessToken);
+      if (payload) {
+        if (typeof payload['tapis/username'] === 'string') {
+          sessionStorage.setItem('X-Tapis-Username', payload['tapis/username']);
+        } else if (typeof payload['preferred_username'] === 'string') {
+          sessionStorage.setItem('X-Tapis-Username', payload['preferred_username']);
+        }
+        if (typeof payload['tapis/tenant_id'] === 'string') {
+          sessionStorage.setItem('X-Tapis-Tenant', payload['tapis/tenant_id']);
+        }
+        if (typeof payload['tapis/site'] === 'string') {
+          sessionStorage.setItem('X-Tapis-Site', payload['tapis/site']);
+        }
+      }
+    } catch (error) {
+      console.warn('[TapisAuth] Unable to decode Tapis access token', error);
+    }
+  }
+  if (tokens.refreshToken) {
+    sessionStorage.setItem(TAPIS_REFRESH_TOKEN_KEY, tokens.refreshToken);
+  }
+  if (typeof tokens.expiresAt === 'number') {
+    sessionStorage.setItem(TAPIS_EXPIRES_AT_KEY, tokens.expiresAt.toString());
+  }
+};
+
+const decodeJwt = (token: string): Record<string, unknown> | null => {
+  try {
+    const segments = token.split('.');
+    if (segments.length < 2) {
+      return null;
+    }
+    const payloadSeg = segments[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    const payload = JSON.parse(atob(payloadSeg.padEnd(payloadSeg.length + (4 - (payloadSeg.length % 4)) % 4, '=')));
+    return payload as Record<string, unknown>;
+  } catch (error) {
+    console.warn('[TapisAuth] Failed to decode JWT', error);
+    return null;
+  }
 };
 
 /**

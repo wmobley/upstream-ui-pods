@@ -395,14 +395,15 @@ graph LR
    cd packages/upstream-api && npm run build && cd ../..
    ```
 
-4. Configure the API base URL before running any build or dev commands. You can either:
-   - Set `VITE_UPSTREAM_API_URL` in `.env` or export it in your shell:
+4. Configure required environment variables before running any build or dev commands. You can either:
+   - Set the URLs in `.env` or export them in your shell:
 
      ```bash
      export VITE_UPSTREAM_API_URL="https://your-upstream-api.example.com"
+     export VITE_CKAN_URL="https://your-ckan.example.com"
      ```
 
-   - Or, for containerized deployments, edit `public/runtime-config.js` (or replace it at runtime) to assign `window.__UPSTREAM_CONFIG__.VITE_UPSTREAM_API_URL`.
+   - Or, for containerized deployments, edit `public/runtime-config.js` (or replace it at runtime) to assign `window.__UPSTREAM_CONFIG__.VITE_UPSTREAM_API_URL` and `window.__UPSTREAM_CONFIG__.VITE_CKAN_URL`.
 
 5. Start the development server:
    ```bash

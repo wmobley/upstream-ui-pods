@@ -1,16 +1,18 @@
 import React, {
   createContext,
   useContext,
+  useEffect,
   useState,
   ReactNode,
-  useEffect,
 } from 'react';
 import { AuthApi } from '@upstream/upstream-api';
 import useConfiguration from '../hooks/api/useConfiguration';
 import {
   initializeTapisAuth,
   clearTapisHeaders,
-  getTapisUser
+  getTapisUser,
+  storeTapisTokens,
+  clearTapisTokens,
 } from '../utils/tapisAuth';
 
 interface AuthContextType {
@@ -40,7 +42,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // First, check for Tapis authentication
       const tapisInitialized = initializeTapisAuth();
 
       if (tapisInitialized) {
@@ -54,20 +55,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
-      // Fall back to JWT token authentication
       const token = localStorage.getItem('access_token');
       if (token) {
-        try {
-          // You might want to add an API call here to validate the token
-          // For now, we'll just check if it exists
-          setIsAuthenticated(true);
-          setIsTapisAuth(false);
-          // Could decode JWT to get username if needed
-        } catch (error) {
-          console.error('Error checking authentication:', error);
-          localStorage.removeItem('access_token');
-          setIsAuthenticated(false);
-        }
+        setIsAuthenticated(true);
+        setIsTapisAuth(false);
       }
       setIsLoading(false);
     };
@@ -81,41 +72,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(null);
       const response = await authApi.loginApiV1TokenPost({
         username: email,
-        password: password,
+        password,
       });
 
-      if (response.accessToken) {
-        localStorage.setItem('access_token', response.accessToken);
-        setIsAuthenticated(true);
-      } else {
+      if (!response.accessToken) {
         throw new Error('No access token received');
+      }
+
+      localStorage.setItem('access_token', response.accessToken);
+
+      if (response.tapisAccessToken || response.tapisRefreshToken || response.tapisExpiresAt) {
+        storeTapisTokens({
+          accessToken: response.tapisAccessToken ?? undefined,
+          refreshToken: response.tapisRefreshToken ?? undefined,
+          expiresAt: response.tapisExpiresAt ?? undefined,
+        });
+      } else {
+        clearTapisTokens();
+      }
+
+      setIsAuthenticated(true);
+      setIsTapisAuth(Boolean(response.tapisAccessToken));
+
+      if (response.tapisAccessToken) {
+        const tapisUser = getTapisUser();
+        setUsername(tapisUser?.username ?? email);
+      } else {
+        setUsername(email);
       }
     } catch (err) {
       let errorMessage = 'Invalid username or password';
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (typeof err === 'object' && err !== null) {
-        // Try to extract error message from API response
-        interface ApiError {
-          body?: {
-            detail?: string;
-            message?: string;
-          };
-          status?: number;
-        }
-        const apiError = err as ApiError;
-
+        const apiError = err as { body?: { detail?: string; message?: string }; status?: number };
         if (apiError.status === 401) {
           errorMessage = 'Invalid username or password';
         } else if (apiError.status === 500) {
           errorMessage = 'Server error. Please try again later.';
         } else if (apiError.body && typeof apiError.body === 'object') {
-          errorMessage =
-            apiError.body.detail || apiError.body.message || errorMessage;
+          errorMessage = apiError.body.detail || apiError.body.message || errorMessage;
         }
       }
       setError(new Error(errorMessage));
       console.error('Error during login:', err);
+      clearTapisTokens();
       throw err;
     } finally {
       setIsLoading(false);
@@ -125,6 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('access_token');
     clearTapisHeaders();
+    clearTapisTokens();
     setIsAuthenticated(false);
     setIsTapisAuth(false);
     setUsername(null);

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { CampaignsIn } from '@upstream/upstream-api';
 import { useCreate } from '../../../../hooks/campaign/useCreate';
 import { useQueryClient } from '@tanstack/react-query';
+import useOrganizations from '../../../../hooks/ckan/useOrganizations';
 
 interface CreateCampaignFormProps {
   onCancel?: () => void;
@@ -12,6 +13,11 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
   const history = useHistory();
   const createCampaign = useCreate();
   const queryClient = useQueryClient();
+  const {
+    data: organizations,
+    isLoading: isOrgLoading,
+    error: orgError,
+  } = useOrganizations();
 
   const [formData, setFormData] = useState<CampaignsIn>({
     name: '',
@@ -24,6 +30,8 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CampaignsIn, string>>>({});
+
+  const hasOrganizations = useMemo(() => (organizations?.length ?? 0) > 0, [organizations]);
 
   const handleInputChange = (field: keyof CampaignsIn, value: string | Date | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -40,7 +48,7 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
       newErrors.name = 'Campaign name is required';
     }
     if (!formData.allocation?.trim()) {
-      newErrors.allocation = 'Allocation is required';
+      newErrors.allocation = 'CKAN organization selection is required';
     }
 
     if (formData.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
@@ -137,21 +145,34 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
             {errors.contactEmail && <p className="mt-1 text-sm text-red-600">{errors.contactEmail}</p>}
           </div>
 
-          {/* Allocation */}
+          {/* CKAN Organization */}
           <div>
             <label htmlFor="allocation" className="block text-sm font-medium text-gray-700 mb-2">
-              Allocation *
+              CKAN Organization *
             </label>
-            <input
-              type="text"
-              id="allocation"
-              value={formData.allocation}
-              onChange={(e) => handleInputChange('allocation', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.allocation ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Enter allocation identifier"
-            />
+            {isOrgLoading ? (
+              <p className="text-sm text-gray-500">Loading organizations…</p>
+            ) : hasOrganizations ? (
+              <select
+                id="allocation"
+                value={formData.allocation ?? ''}
+                onChange={(e) => handleInputChange('allocation', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.allocation ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select an organization</option>
+                {organizations?.map((org) => (
+                  <option key={org.name} value={org.name}>
+                    {org.display_name || org.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-sm text-red-600">
+                {orgError?.message || 'You do not have editor or admin access to any CKAN organizations.'}
+              </p>
+            )}
             {errors.allocation && <p className="mt-1 text-sm text-red-600">{errors.allocation}</p>}
           </div>
 
@@ -213,7 +234,7 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
             </button>
             <button
               type="submit"
-              disabled={createCampaign.isPending}
+              disabled={createCampaign.isPending || !hasOrganizations}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createCampaign.isPending ? 'Creating...' : 'Create Campaign'}

@@ -61,6 +61,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   };
 
   const handlePublishStation = async (cascade?: boolean) => {
+    if (!campaign || !station) {
+      console.error('Campaign or station details missing; cannot publish to CKAN.');
+      return;
+    }
     try {
       await publishStation.mutateAsync({
         campaignId: parseInt(campaignId),
@@ -85,6 +89,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   };
 
   const handleUnpublishStation = async () => {
+    if (!campaign || !station) {
+      console.error('Campaign or station details missing; cannot unpublish CKAN dataset.');
+      return;
+    }
     try {
       await unpublishStation.mutateAsync({
         campaignId: parseInt(campaignId),
@@ -298,6 +306,9 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             cancelText="Cancel"
             onConfirm={async () => {
               try {
+                if (!campaign || !station) {
+                  throw new Error('Missing campaign or station detail.');
+                }
                 await publishStation.mutateAsync({
                   campaignId: parseInt(campaignId),
                   stationId: parseInt(stationId),
