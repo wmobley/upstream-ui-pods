@@ -9,7 +9,7 @@ interface CreateStationFormProps {
   onCancel?: () => void;
 }
 
-const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, campaign, onCancel }) => {
+const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCancel }) => {
   const history = useHistory();
   const createStation = useCreate(campaignId);
 

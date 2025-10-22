@@ -16,12 +16,34 @@ const useConfiguration = () => {
   const tapisHeaders = getTapisHeaders();
 
   if (isTapisAuthenticated() && tapisHeaders) {
-    const headers: Record<string, string> = { ...tapisHeaders } as Record<string, string>;
+    const headers = Object.entries(tapisHeaders).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (value) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     const jwtToken = localStorage.getItem('access_token');
-    const bearer = jwtToken ? `Bearer ${jwtToken}` : undefined;
-    if (bearer) {
-      headers['Authorization'] = bearer;
+    if (jwtToken) {
+      const bearer = `Bearer ${jwtToken}`;
+      headers.Authorization = bearer;
+
+      return new Configuration({
+        basePath,
+        headers,
+        accessToken: bearer,
+      });
     }
+
+    return new Configuration({ basePath, headers });
+  }
+
+  // Fall back to JWT token authentication
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    const bearer = `Bearer ${token}`;
+    const headers: Record<string, string> = {
+      Authorization: bearer,
+    };
 
     return new Configuration({
       basePath,
@@ -30,15 +52,7 @@ const useConfiguration = () => {
     });
   }
 
-  // Fall back to JWT token authentication
-  const token = localStorage.getItem('access_token');
-  const accessToken = token ? `Bearer ${token}` : undefined;
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers['Authorization'] = accessToken;
-  }
-
-  return new Configuration({ basePath, accessToken, headers });
+  return new Configuration({ basePath });
 };
 
 export default useConfiguration;
