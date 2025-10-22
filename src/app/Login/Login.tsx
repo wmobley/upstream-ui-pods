@@ -68,6 +68,7 @@ const Login: React.FC = () => {
                 name="email"
                 type="text"
                 required
+                autoComplete="username"
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="TACC Username"
                 value={email}
@@ -83,6 +84,7 @@ const Login: React.FC = () => {
                 name="password"
                 type="password"
                 required
+                autoComplete="current-password"
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="Password"
                 value={password}

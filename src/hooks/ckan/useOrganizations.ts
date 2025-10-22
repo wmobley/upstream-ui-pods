@@ -19,6 +19,7 @@ export const useOrganizations = () => {
         'Content-Type': 'application/json',
         ...(config.headers as Record<string, string> | undefined),
       };
+      console.debug('[CKAN] Requesting organizations from %s', url);
 
       if (config.accessToken) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,9 +32,15 @@ export const useOrganizations = () => {
       const response = await fetch(url, { method: 'GET', headers });
       if (!response.ok) {
         const text = await response.text();
+        console.error('[CKAN] Failed to fetch organizations (%s): %s', response.status, text);
         throw new Error(text || `Failed to fetch CKAN organizations (${response.status})`);
       }
-      return (await response.json()) as CkanOrganization[];
+      const cloned = response.clone();
+      const rawText = await cloned.text();
+      console.debug('[CKAN] Raw organizations response:', rawText);
+      const result = JSON.parse(rawText) as CkanOrganization[];
+      console.debug('[CKAN] Retrieved %d organizations', result.length);
+      return result;
     },
   });
 
