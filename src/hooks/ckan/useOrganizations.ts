@@ -19,6 +19,17 @@ export const useOrganizations = () => {
         'Content-Type': 'application/json',
         ...(config.headers as Record<string, string> | undefined),
       };
+
+      // If the upstream configuration provided a Tapis token header, prefer
+      // that and remove any Authorization header that may come from other
+      // auth flows to avoid sending conflicting auth headers.
+      if (headers['X-TAPIS-TOKEN'] || headers['X-Tapis-Token'] || headers['x-tapis-token']) {
+        delete headers['Authorization'];
+        delete headers['authorization'];
+      }
+
+      // Ensure we request JSON
+      headers['Accept'] = headers['Accept'] || 'application/json';
       console.debug('[CKAN] Requesting organizations from %s', url);
 
       if (config.accessToken) {
