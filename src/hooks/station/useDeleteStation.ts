@@ -16,18 +16,29 @@ export const useDeleteStation = () => {
       // DELETE /api/v1/campaigns/{campaign_id}/stations/{station_id}
       const url = `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}`;
 
-      // Build headers with Tapis headers if present
+      // Build headers with Tapis headers if present. If a Tapis access token
+      // was stored in sessionStorage (from login), forward it explicitly as
+      // X-TAPIS-TOKEN so the backend can perform CKAN operations. When we
+      // attach X-TAPIS-TOKEN, remove Authorization to avoid confusing the
+      // server's auth resolution (it prefers explicit X-TAPIS-TOKEN).
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
-        // Include Tapis headers if present
         ...(config.headers as Record<string, string> || {}),
       };
 
-      // Get the actual token by calling the accessToken function if JWT auth
-      if (config.accessToken) {
-        const token = await config.accessToken();
-        if (token) {
-          headers['Authorization'] = String(token).startsWith('Bearer') ? String(token) : `Bearer ${String(token)}`;
+      const tapisToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+      if (tapisToken) {
+        (headers as Record<string, string>)['X-TAPIS-TOKEN'] = tapisToken;
+        // Ensure we don't send the app Authorization header alongside X-TAPIS-TOKEN
+        delete (headers as Record<string, string>)['Authorization'];
+        delete (headers as Record<string, string>)['authorization'];
+      } else {
+        // No tapis token present — fall back to the configured accessToken
+        if (config.accessToken) {
+          const token = await config.accessToken();
+          if (token) {
+            headers['Authorization'] = String(token).startsWith('Bearer') ? String(token) : `Bearer ${String(token)}`;
+          }
         }
       }
 
