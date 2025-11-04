@@ -1,10 +1,28 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { StationsApi, StationCreate, StationCreateResponse } from '@upstream/upstream-api';
+import { StationsApi, StationCreate, StationCreateResponse, Configuration } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 
 export const useCreate = (campaignId: string) => {
   const config = useConfiguration();
-  const stationsApi = new StationsApi(config);
+
+  // If a Tapis access token is stored in sessionStorage (from login), forward
+  // it explicitly as X-TAPIS-TOKEN for CKAN-related server calls. This lets
+  // the backend perform CKAN dataset registration when the token is present.
+  const tapisToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+  let apiConfig = config;
+  if (tapisToken) {
+    const headers: Record<string, string> = {
+      ...(config.headers as Record<string, string> | undefined),
+      'X-TAPIS-TOKEN': tapisToken,
+    };
+    // Prevent sending Authorization alongside X-TAPIS-TOKEN to avoid
+    // confusing the backend auth resolution.
+    delete headers['Authorization'];
+    delete headers['authorization'];
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+  }
+
+  const stationsApi = new StationsApi(apiConfig);
   const queryClient = useQueryClient();
 
   return useMutation<StationCreateResponse, Error, StationCreate>({

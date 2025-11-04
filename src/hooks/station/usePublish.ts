@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { StationsApi, PublishRequest, PublishResponse } from '@upstream/upstream-api';
+import { StationsApi, PublishRequest, PublishResponse, Configuration } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 
 interface PublishStationRequest {
@@ -11,7 +11,21 @@ interface PublishStationRequest {
 
 export const usePublish = () => {
   const config = useConfiguration();
-  const stationsApi = new StationsApi(config);
+
+  // Forward Tapis token for CKAN operations when present in sessionStorage.
+  const tapisToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+  let apiConfig = config;
+  if (tapisToken) {
+    const headers: Record<string, string> = {
+      ...(config.headers as Record<string, string> | undefined),
+      'X-TAPIS-TOKEN': tapisToken,
+    };
+    delete headers['Authorization'];
+    delete headers['authorization'];
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+  }
+
+  const stationsApi = new StationsApi(apiConfig);
   const queryClient = useQueryClient();
 
   return useMutation<PublishResponse, Error, PublishStationRequest>({
@@ -78,7 +92,20 @@ interface UnpublishStationRequest {
 
 export const useUnpublish = () => {
   const config = useConfiguration();
-  const stationsApi = new StationsApi(config);
+
+  const tapisToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+  let apiConfig = config;
+  if (tapisToken) {
+    const headers: Record<string, string> = {
+      ...(config.headers as Record<string, string> | undefined),
+      'X-TAPIS-TOKEN': tapisToken,
+    };
+    delete headers['Authorization'];
+    delete headers['authorization'];
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+  }
+
+  const stationsApi = new StationsApi(apiConfig);
   const queryClient = useQueryClient();
 
   return useMutation<PublishResponse, Error, UnpublishStationRequest>({
