@@ -1,5 +1,5 @@
 import { Configuration } from '@upstream/upstream-api';
-import { getTapisHeaders, isTapisAuthenticated } from '../../utils/tapisAuth';
+import { getTapisHeaders } from '../../utils/tapisAuth';
 
 const useConfiguration = () => {
   const runtimeBasePath =
@@ -12,10 +12,23 @@ const useConfiguration = () => {
     throw new Error('UPSTREAM_API_URL is not set');
   }
 
-  // Check for Tapis authentication first
+  // Check for Tapis authentication first. Only treat the environment as a
+  // Tapis "pod" when the full Tapis headers (username, tenant, site)
+  // are present. Previously we considered a lone Tapis access token as
+  // enough, which caused the client to prefer `X-TAPIS-TOKEN` and omit
+  // the application's `Authorization: Bearer` header. That could result
+  // in 401s for endpoints that expect the app JWT. Keep the tokens
+  // distinct: prefer full Tapis headers only when the full set exists.
   const tapisHeaders = getTapisHeaders();
 
-  if (isTapisAuthenticated() && tapisHeaders) {
+  const hasFullTapisHeaders = Boolean(
+    tapisHeaders &&
+      tapisHeaders['X-Tapis-Username'] &&
+      tapisHeaders['X-Tapis-Tenant'] &&
+      tapisHeaders['X-Tapis-Site']
+  );
+
+  if (hasFullTapisHeaders && tapisHeaders) {
     // Prefer Tapis-provided headers. Normalize token header to the
     // server-expected `X-TAPIS-TOKEN` and set Accept header for JSON.
     const headers = Object.entries(tapisHeaders).reduce<Record<string, string>>((acc, [key, value]) => {
@@ -33,30 +46,16 @@ const useConfiguration = () => {
     // Ensure the API receives JSON responses
     headers['Accept'] = 'application/json';
 
-    // When running inside a Tapis pod, prefer the Tapis headers and do
-    // not attach the local Authorization bearer token which may belong
-    // to a different auth system. If a JWT is still desired for non-Tapis
-    // flows, the fallback below will handle it.
-
+    // When running inside a Tapis pod with full headers, prefer the
+    // Tapis headers and do not attach the local Authorization bearer token.
     return new Configuration({ basePath, headers });
   }
 
-  // Fallback: some environments may populate the Tapis access token into
-  // sessionStorage under the key 'Tapis-Access-Token' but not provide the
-  // full tapis headers. If we find that token, expose it as X-TAPIS-TOKEN so
-  // backend proxies that expect that header will receive it.
-  try {
-    const sessionToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
-    if (sessionToken) {
-      const headers: Record<string, string> = {
-        'X-TAPIS-TOKEN': sessionToken,
-        'Accept': 'application/json',
-      };
-      return new Configuration({ basePath, headers });
-    }
-  } catch (e) {
-    // sessionStorage may be unavailable in some environments; ignore.
-  }
+  // NOTE: do NOT treat a lone tapis token in sessionStorage as the default
+  // auth for the main API client. The application access token (stored in
+  // localStorage as 'access_token') must be used for most upstream API
+  // requests. CKAN-specific calls that require the Tapis token will read
+  // it directly from sessionStorage where needed.
 
   // Fall back to JWT token authentication
   const token = localStorage.getItem('access_token');

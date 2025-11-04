@@ -75,6 +75,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password,
       });
 
+      // Debug: show the raw login response for troubleshooting tapis tokens
+      // (Do not enable in production logs with real tokens.)
+      // eslint-disable-next-line no-console
+      console.debug('[Auth] login response:', response);
+
       if (!response.accessToken) {
         throw new Error('No access token received');
       }
@@ -92,10 +97,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       setIsAuthenticated(true);
-      setIsTapisAuth(Boolean(response.tapisAccessToken));
 
-      if (response.tapisAccessToken) {
-        const tapisUser = getTapisUser();
+      // Only treat this session as Tapis-authenticated when the stored
+      // Tapis headers contain a usable user (username/tenant/site). A
+      // presence of a bare tapisAccessToken alone should not flip the
+      // app into 'Tapis mode' where Authorization: Bearer is omitted.
+      const tapisUser = getTapisUser();
+      const hasTapisUser = Boolean(tapisUser && tapisUser.username && tapisUser.tenant && tapisUser.site);
+      setIsTapisAuth(hasTapisUser);
+
+      if (hasTapisUser) {
         setUsername(tapisUser?.username ?? email);
       } else {
         setUsername(email);

@@ -102,15 +102,34 @@ export const storeTapisTokens = (tokens: TapisTokenPayload): void => {
   clearTapisTokens();
 
   if (tokens.accessToken) {
-    sessionStorage.setItem(TAPIS_ACCESS_TOKEN_KEY, tokens.accessToken);
+    // Store the raw access token in sessionStorage so downstream code can
+    // forward it as X-TAPIS-TOKEN. Add a brief debug message to confirm
+    // storage during development.
     try {
+      sessionStorage.setItem(TAPIS_ACCESS_TOKEN_KEY, tokens.accessToken);
+      // Mask the token when logging to avoid accidentally exposing full value
+      const masked = `${tokens.accessToken.slice(0, 6)}...${tokens.accessToken.slice(-6)}`;
+      // eslint-disable-next-line no-console
+      console.debug('[TapisAuth] stored access token in sessionStorage (masked):', masked);
+    } catch (e) {
+      // sessionStorage may be unavailable in some contexts (SSR, private mode)
+      // eslint-disable-next-line no-console
+      console.warn('[TapisAuth] Unable to store tapis access token in sessionStorage', e);
+    }
+      try {
       const payload = decodeJwt(tokens.accessToken);
       if (payload) {
+        // Support multiple possible claim names for username
         if (typeof payload['tapis/username'] === 'string') {
           sessionStorage.setItem('X-Tapis-Username', payload['tapis/username']);
         } else if (typeof payload['preferred_username'] === 'string') {
           sessionStorage.setItem('X-Tapis-Username', payload['preferred_username']);
+        } else if (typeof payload['username'] === 'string') {
+          // Some Tapis tokens include a plain 'username' claim
+          sessionStorage.setItem('X-Tapis-Username', payload['username']);
         }
+
+        // Tenant and site claims may be namespaced under 'tapis/*'
         if (typeof payload['tapis/tenant_id'] === 'string') {
           sessionStorage.setItem('X-Tapis-Tenant', payload['tapis/tenant_id']);
         }
@@ -119,6 +138,7 @@ export const storeTapisTokens = (tokens: TapisTokenPayload): void => {
         }
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('[TapisAuth] Unable to decode Tapis access token', error);
     }
   }

@@ -20,12 +20,21 @@ export const useOrganizations = () => {
         ...(config.headers as Record<string, string> | undefined),
       };
 
-      // If the upstream configuration provided a Tapis token header, prefer
-      // that and remove any Authorization header that may come from other
-      // auth flows to avoid sending conflicting auth headers.
-      if (headers['X-TAPIS-TOKEN'] || headers['X-Tapis-Token'] || headers['x-tapis-token']) {
-        delete headers['Authorization'];
-        delete headers['authorization'];
+      // If a tapis token was stored in sessionStorage (from login), use it
+      // explicitly for CKAN requests by forwarding it as X-TAPIS-TOKEN. This
+      // ensures CKAN calls receive the tapis_access_token while keeping the
+      // application's Authorization: Bearer available for other endpoints.
+      try {
+        const tapisTokenFromSession = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+        if (tapisTokenFromSession) {
+          (headers as Record<string, string>)['X-TAPIS-TOKEN'] = tapisTokenFromSession;
+          // Prevent sending Authorization alongside X-TAPIS-TOKEN to avoid
+          // confusing the backend auth resolution.
+          delete (headers as Record<string, string>)['Authorization'];
+          delete (headers as Record<string, string>)['authorization'];
+        }
+      } catch (e) {
+        // sessionStorage may be unavailable; ignore and continue.
       }
 
       // Ensure we request JSON
@@ -40,14 +49,34 @@ export const useOrganizations = () => {
   // Tapis pod.
   //
   console.debug('[CKAN] Final request headers:', headers);
-
-      if (config.accessToken) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const token = await (config.accessToken as any)();
-        if (token) {
-          headers['Authorization'] = token;
-        }
+      // Also log the tapis token if present (from headers or sessionStorage)
+      try {
+        const tapisTokenFromHeaders =
+          (headers as Record<string, any>)['X-TAPIS-TOKEN'] ||
+          (headers as Record<string, any>)['X-Tapis-Token'] ||
+          (headers as Record<string, any>)['x-tapis-token'];
+        const tapisTokenFromSession =
+          typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+        const tapisToken = tapisTokenFromHeaders || tapisTokenFromSession;
+        console.debug('[CKAN] Tapis token (headers/sessionStorage):', tapisToken);
+      } catch (e) {
+        console.debug('[CKAN] Unable to read tapis token for debug', e);
       }
+
+        if (config.accessToken) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const token = await (config.accessToken as any)();
+          // Only attach an Authorization header if a Tapis token header is
+          // NOT already present. This prevents the local JWT from overwriting
+          // or conflicting with the X-TAPIS-TOKEN header when running inside
+          // a Tapis pod or when the tapis token is stored in sessionStorage.
+          const hasTapisToken = Boolean(
+            headers['X-TAPIS-TOKEN'] || headers['X-Tapis-Token'] || headers['x-tapis-token'],
+          );
+          if (token && !hasTapisToken) {
+            headers['Authorization'] = token;
+          }
+        }
 
       const response = await fetch(url, { method: 'GET', headers });
       if (!response.ok) {
@@ -57,7 +86,7 @@ export const useOrganizations = () => {
       }
       const cloned = response.clone();
       const rawText = await cloned.text();
-      console.debug('[CKAN] Raw organizations response:', rawText);
+      console.debug('[CKAN] Raw organizations response:', response);
       const result = JSON.parse(rawText) as CkanOrganization[];
       console.debug('[CKAN] Retrieved %d organizations', result.length);
       return result;
