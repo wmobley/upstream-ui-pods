@@ -15,10 +15,6 @@ export const useCreate = (campaignId: string) => {
       ...(config.headers as Record<string, string> | undefined),
       'X-TAPIS-TOKEN': tapisToken,
     };
-    // Prevent sending Authorization alongside X-TAPIS-TOKEN to avoid
-    // confusing the backend auth resolution.
-    delete headers['Authorization'];
-    delete headers['authorization'];
     apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
   }
 

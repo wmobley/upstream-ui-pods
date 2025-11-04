@@ -20,8 +20,6 @@ export const usePublish = () => {
       ...(config.headers as Record<string, string> | undefined),
       'X-TAPIS-TOKEN': tapisToken,
     };
-    delete headers['Authorization'];
-    delete headers['authorization'];
     apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
   }
 
@@ -100,8 +98,6 @@ export const useUnpublish = () => {
       ...(config.headers as Record<string, string> | undefined),
       'X-TAPIS-TOKEN': tapisToken,
     };
-    delete headers['Authorization'];
-    delete headers['authorization'];
     apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
   }
 

@@ -29,9 +29,6 @@ export const useDeleteStation = () => {
       const tapisToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
       if (tapisToken) {
         (headers as Record<string, string>)['X-TAPIS-TOKEN'] = tapisToken;
-        // Ensure we don't send the app Authorization header alongside X-TAPIS-TOKEN
-        delete (headers as Record<string, string>)['Authorization'];
-        delete (headers as Record<string, string>)['authorization'];
       } else {
         // No tapis token present — fall back to the configured accessToken
         if (config.accessToken) {
