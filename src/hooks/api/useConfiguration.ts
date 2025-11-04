@@ -16,23 +16,27 @@ const useConfiguration = () => {
   const tapisHeaders = getTapisHeaders();
 
   if (isTapisAuthenticated() && tapisHeaders) {
+    // Prefer Tapis-provided headers. Normalize token header to the
+    // server-expected `X-TAPIS-TOKEN` and set Accept header for JSON.
     const headers = Object.entries(tapisHeaders).reduce<Record<string, string>>((acc, [key, value]) => {
       if (value) {
-        acc[key] = value;
+        // Normalize the token header name to the server-expected casing
+        if (key.toLowerCase() === 'x-tapis-token') {
+          acc['X-TAPIS-TOKEN'] = value;
+        } else {
+          acc[key] = value;
+        }
       }
       return acc;
     }, {});
-    const jwtToken = localStorage.getItem('access_token');
-    if (jwtToken) {
-      const bearer = `Bearer ${jwtToken}`;
-      headers.Authorization = bearer;
 
-      return new Configuration({
-        basePath,
-        headers,
-        accessToken: bearer,
-      });
-    }
+    // Ensure the API receives JSON responses
+    headers['Accept'] = 'application/json';
+
+    // When running inside a Tapis pod, prefer the Tapis headers and do
+    // not attach the local Authorization bearer token which may belong
+    // to a different auth system. If a JWT is still desired for non-Tapis
+    // flows, the fallback below will handle it.
 
     return new Configuration({ basePath, headers });
   }
@@ -44,6 +48,8 @@ const useConfiguration = () => {
     const headers: Record<string, string> = {
       Authorization: bearer,
     };
+    // Request JSON responses by default
+    headers['Accept'] = 'application/json';
 
     return new Configuration({
       basePath,
