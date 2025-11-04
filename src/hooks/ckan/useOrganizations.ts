@@ -30,7 +30,16 @@ export const useOrganizations = () => {
 
       // Ensure we request JSON
       headers['Accept'] = headers['Accept'] || 'application/json';
-      console.debug('[CKAN] Requesting organizations from %s', url);
+  console.debug('[CKAN] Requesting organizations from %s', url);
+  // Debug final headers to help diagnose which auth header is being sent
+  // (X-TAPIS-TOKEN vs Authorization). Remove this once the issue is resolved.
+  // Note: token values will be printed in console; avoid sharing them.
+  //
+  // Example output to look for: headers['X-TAPIS-TOKEN'] should be present
+  // and headers['Authorization'] should be undefined when running inside a
+  // Tapis pod.
+  //
+  console.debug('[CKAN] Final request headers:', headers);
 
       if (config.accessToken) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

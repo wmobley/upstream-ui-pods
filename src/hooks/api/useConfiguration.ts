@@ -41,6 +41,23 @@ const useConfiguration = () => {
     return new Configuration({ basePath, headers });
   }
 
+  // Fallback: some environments may populate the Tapis access token into
+  // sessionStorage under the key 'Tapis-Access-Token' but not provide the
+  // full tapis headers. If we find that token, expose it as X-TAPIS-TOKEN so
+  // backend proxies that expect that header will receive it.
+  try {
+    const sessionToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+    if (sessionToken) {
+      const headers: Record<string, string> = {
+        'X-TAPIS-TOKEN': sessionToken,
+        'Accept': 'application/json',
+      };
+      return new Configuration({ basePath, headers });
+    }
+  } catch (e) {
+    // sessionStorage may be unavailable in some environments; ignore.
+  }
+
   // Fall back to JWT token authentication
   const token = localStorage.getItem('access_token');
   if (token) {
