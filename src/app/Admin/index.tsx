@@ -65,17 +65,21 @@ const replaceAll = (value: string, search: string, replace: string) =>
   value.split(search).join(replace);
 
 const ensurePort = (value: string, port?: number) => {
-  if (!port || [80, 443].includes(port)) return value;
   try {
     const url = new URL(value);
+    // Remove accidental double slashes before modifying
+    url.pathname = url.pathname.replace(/\/\/+$/, '/');
+    if (!port || [80, 443].includes(port)) {
+      return url.toString().replace(/\/$/, '');
+    }
     if (!url.port) {
       url.port = String(port);
-      return url.toString();
+      return url.toString().replace(/\/$/, '');
     }
   } catch {
     // ignore bad URLs
   }
-  return value;
+  return value.replace(/\/$/, '');
 };
 
 const rewriteHostInUrl = (value: string, base: string) => {
