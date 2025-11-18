@@ -6,6 +6,7 @@ import Login from '../Login/Login';
 import { useAuth } from '../../contexts/AuthContext';
 import { Loading } from '../common/Loading';
 import ConfidenceMethodExplanation from '../Sensor/viz/ConfidenceMethodExplanation';
+import Admin from '../Admin';
 
 const Router: React.FC = () => {
   const { isLoading, isTapisAuth } = useAuth();
@@ -29,6 +30,9 @@ const Router: React.FC = () => {
       </Route>
       <Route path="/campaigns">
         <Campaign />
+      </Route>
+      <Route path="/admin">
+        <Admin />
       </Route>
       <Route path="/docs/confidence-explanation">
         <ConfidenceMethodExplanation />

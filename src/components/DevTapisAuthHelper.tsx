@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { storeTapisHeaders, getTapisUser, clearTapisHeaders, isTapisAuthenticated } from '../utils/tapisAuth';
+import {
+  storeTapisHeaders,
+  getTapisUser,
+  clearTapisHeaders,
+  isTapisAuthenticated,
+  storeTapisTokens,
+  clearTapisTokens,
+} from '../utils/tapisAuth';
 
 /**
  * Development helper component for testing Tapis authentication.
@@ -16,12 +23,15 @@ const DevTapisAuthHelper: React.FC = () => {
   const [tenant, setTenant] = useState('tacc');
   const [site, setSite] = useState('tacc');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [accessTokenInput, setAccessTokenInput] = useState('');
+  const [hasStoredToken, setHasStoredToken] = useState(false);
 
   const isDev = import.meta.env.DEV;
 
   useEffect(() => {
     if (isDev) {
       updateCurrentUser();
+      setHasStoredToken(Boolean(sessionStorage.getItem('Tapis-Access-Token')));
     }
   }, [isDev]);
 
@@ -47,6 +57,7 @@ const DevTapisAuthHelper: React.FC = () => {
 
   const handleClearHeaders = () => {
     clearTapisHeaders();
+    clearTapisTokens();
     updateCurrentUser();
     alert('Tapis headers cleared! Refresh the page to apply.');
   };
@@ -60,6 +71,24 @@ const DevTapisAuthHelper: React.FC = () => {
     });
     updateCurrentUser();
     alert('Quick test headers set! Refresh the page to apply.');
+  };
+
+  const handleSetAccessToken = () => {
+    if (!accessTokenInput.trim()) {
+      alert('Paste a Tapis access token first.');
+      return;
+    }
+    storeTapisTokens({ accessToken: accessTokenInput.trim() });
+    setHasStoredToken(true);
+    updateCurrentUser();
+    alert('Tapis access token stored in sessionStorage.');
+  };
+
+  const handleClearAccessToken = () => {
+    clearTapisTokens();
+    setHasStoredToken(false);
+    updateCurrentUser();
+    alert('Tapis access token cleared.');
   };
 
   // Only show in development mode
@@ -239,6 +268,62 @@ const DevTapisAuthHelper: React.FC = () => {
             >
               Clear Headers
             </button>
+
+            <div style={{ borderTop: '1px solid #eee', paddingTop: '8px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px' }}>
+                Tapis Access Token (JWT):
+                <textarea
+                  value={accessTokenInput}
+                  onChange={(e) => setAccessTokenInput(e.target.value)}
+                  rows={3}
+                  placeholder="Paste X-Tapis-Token value"
+                  style={{
+                    width: '100%',
+                    padding: '6px',
+                    marginTop: '3px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontFamily: 'monospace',
+                  }}
+                />
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleSetAccessToken}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: '#673ab7',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    flex: 1,
+                  }}
+                >
+                  Store Access Token
+                </button>
+                <button
+                  onClick={handleClearAccessToken}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: '#9e9e9e',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    flex: 1,
+                  }}
+                >
+                  Clear Token
+                </button>
+              </div>
+              <div style={{ marginTop: '6px', fontSize: '12px', color: '#555' }}>
+                Status: {hasStoredToken ? 'Token stored in sessionStorage' : 'No token stored'}
+              </div>
+            </div>
           </div>
 
           <div style={{

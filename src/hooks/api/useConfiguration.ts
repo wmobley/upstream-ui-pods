@@ -6,7 +6,8 @@ const useConfiguration = () => {
     window.__UPSTREAM_CONFIG__?.VITE_UPSTREAM_API_URL?.trim() || undefined;
   const envBasePath = import.meta.env.VITE_UPSTREAM_API_URL?.trim() || undefined;
   const defaultBasePath = 'http://127.0.0.1:8000';
-  const basePath = runtimeBasePath ?? envBasePath ?? defaultBasePath;
+  const rawBasePath = runtimeBasePath ?? envBasePath ?? defaultBasePath;
+  const basePath = rawBasePath.replace(/\/+$/, '');
 
   if (!basePath) {
     throw new Error('UPSTREAM_API_URL is not set');
