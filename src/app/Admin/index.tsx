@@ -265,7 +265,8 @@ const Admin = () => {
         if (res.ok) {
           const data = await res.json();
           const pod: Pods.PodResponseModel | undefined = data?.result;
-          const phase = pod?.status_container?.phase;
+          const statusContainer = pod?.status_container as { phase?: string } | undefined;
+          const phase = statusContainer?.phase;
           const status = pod?.status;
           if (status === 'AVAILABLE' || phase === 'Running') {
             return;
@@ -362,7 +363,7 @@ const Admin = () => {
     return { volumeId, volume };
   };
 
-  const formatVolumeUsage = (volume?: Record<string, unknown> | null) => {
+  const formatVolumeUsage = (volume?: Pods.VolumeResponseModel | Record<string, unknown> | null) => {
     if (!volume) return null;
     const toNumber = (v: unknown): number | null => {
       if (typeof v === 'number') return v;
@@ -685,7 +686,7 @@ const Admin = () => {
                             : null;
                           const volumeUsageText =
                             volumeInfo && volumesQuery.isSuccess
-                              ? formatVolumeUsage(volumeInfo.volume)
+                              ? formatVolumeUsage(volumeInfo.volume as Pods.VolumeResponseModel)
                               : null;
                           return (
                             <button
