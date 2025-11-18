@@ -13,12 +13,24 @@ const useDeleteVolume = () => {
       if (!token) throw new Error('Missing Tapis access token.');
 
       try {
-        const configuration = new Pods.Configuration({
-          basePath,
+        let url = `${basePath}/v3/pods/volumes/${encodeURIComponent(volumeId)}`;
+        try {
+          const parsed = new URL(url);
+          if (!parsed.hostname.startsWith('pods.')) {
+            parsed.hostname = `pods.${parsed.hostname}`;
+            url = parsed.toString();
+          }
+        } catch {
+          // ignore parse issues and use original url
+        }
+        const res = await fetch(url, {
+          method: 'DELETE',
           headers: buildPodsHeaders(token),
         });
-        const api = new Pods.VolumesApi(configuration);
-        await api.deleteVolume({ volumeId });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || `Failed to delete volume (${res.status})`);
+        }
         return volumeId;
       } catch (error) {
         throw await normalizePodsApiError(error, 'Unable to delete volume');

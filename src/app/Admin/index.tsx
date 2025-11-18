@@ -318,7 +318,7 @@ const Admin = () => {
     if (!token) throw new Error('Missing Tapis access token.');
     for (let i = 0; i < attempts; i += 1) {
       try {
-        const res = await fetch(`${basePath}/v3/volumes/${encodeURIComponent(volumeId)}`, {
+        const res = await fetch(`${basePath}/v3/pods/volumes/${encodeURIComponent(volumeId)}`, {
           headers: buildPodsHeaders(token),
         });
         if (res.status === 404) {
@@ -377,11 +377,14 @@ const Admin = () => {
       return null;
     };
 
+    // Pods API returns size_limit (capacity) and size (current) per docs.
     const used =
+      toNumber((volume as { size?: unknown }).size) ??
       toNumber((volume as { used_bytes?: unknown }).used_bytes) ??
       toNumber((volume as { usage_bytes?: unknown }).usage_bytes) ??
       toNumber((volume as { used?: unknown }).used);
     const capacity =
+      toNumber((volume as { size_limit?: unknown }).size_limit) ??
       toNumber((volume as { capacity_bytes?: unknown }).capacity_bytes) ??
       toNumber((volume as { requested_capacity_bytes?: unknown }).requested_capacity_bytes) ??
       toNumber((volume as { size_bytes?: unknown }).size_bytes);
@@ -445,6 +448,7 @@ const Admin = () => {
           val = replaceAll(val, '.pods.tacc.tapis.io', '.pods.tacc.develop.tapis.io');
           if (k.toUpperCase().includes('UPSTREAM_API_URL') || k.toUpperCase().includes('API_BASE_URL')) {
             val = ensurePort(val, apiPort);
+            val = val.replace(/\/+$/, '');
           }
           val = replaceAll(val, 'disasterpostgres', `${base}postgres`);
           val = replaceAll(val, 'upstreamapi', `${base}api`);
@@ -575,11 +579,19 @@ const Admin = () => {
       )}
 
       <section className="rounded-lg border border-gray-200 bg-white shadow-sm p-4 space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">Create bundle (3 pods + 1 volume)</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Create an Upstream System for Your Lab</h3>
         <p className="text-sm text-gray-600">
-          Uses embedded upstream blueprints (volume → postgres → api → ui). Enter a base name like
-          <code className="mx-1 rounded bg-gray-100 px-1">sniffer</code> to create snifferpostgres, sniffer, snifferapi
-          and a <code className="mx-1 rounded bg-gray-100 px-1">sniffer-volume</code>.
+          Manage your sensors, workflows, and data products in a unified, reproducible ecosystem.
+        </p>
+        <p className="text-sm text-gray-600">
+          Upstream lets any research group, field team, or instrument developer stand up a fully-functioning data
+          infrastructure without building everything from scratch. Whether you’re running a mobile lab like SNIFFER,
+          deploying long-term environmental monitors, integrating UAV or fixed-wing payloads, or experimenting with novel
+          high-resolution sensors, Upstream gives you the tools to capture, store, analyze, and publish your data with confidence.
+        </p>
+        <p className="text-sm text-gray-600">
+          Enter your upstream system name (e.g., <code className="mx-1 rounded bg-gray-100 px-1">sniffer</code>) to create
+          snifferpostgres, snifferapi, sniffer, and a <code className="mx-1 rounded bg-gray-100 px-1">sniffervolume</code>.
         </p>
         <div className="flex flex-wrap gap-2">
           <input
@@ -641,8 +653,26 @@ const Admin = () => {
               <div className="p-4 text-sm text-gray-700">Loading pods…</div>
             )}
             {podsQuery.isError && (
-              <div className="p-4 text-sm text-red-600">
-                {(podsQuery.error as Error)?.message || 'Unable to load pods'}
+              <div className="p-4 space-y-3">
+                <div className="text-sm text-red-600">
+                  {(podsQuery.error as Error)?.message || 'Unable to load pods'}
+                </div>
+                <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
+                  <p className="text-sm text-gray-800 font-semibold">Pods not loading?</p>
+                  <p className="text-sm text-gray-700">
+                    You can manage and troubleshoot your pods directly in the Pods admin interface.
+                  </p>
+                  <div className="mt-3">
+                    <a
+                      href="https://upstream.pods.tacc.utexas.edu"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      Open Pods Admin (upstream.pods.tacc.utexas.edu)
+                    </a>
+                  </div>
+                </div>
               </div>
             )}
             {!podsQuery.isLoading && !podsQuery.isError && pods.length === 0 && (

@@ -17,7 +17,16 @@ const useVolumesList = () => {
         throw new Error('Missing Tapis access token.');
       }
 
-      const url = `${basePath}/v3/volumes`;
+      let url = `${basePath}/v3/pods/volumes`;
+      try {
+        const parsed = new URL(url);
+        if (!parsed.hostname.startsWith('pods.')) {
+          parsed.hostname = `pods.${parsed.hostname}`;
+          url = parsed.toString();
+        }
+      } catch {
+        // ignore parse errors
+      }
       const headers = buildPodsHeaders(token);
 
       try {
@@ -26,7 +35,10 @@ const useVolumesList = () => {
           const text = await res.text();
           throw new Error(text || `Failed to load volumes (${res.status})`);
         }
-        return res.json();
+        const json = await res.json();
+        // eslint-disable-next-line no-console
+        console.debug('[Pods] volumes response', json);
+        return json;
       } catch (error) {
         throw await normalizePodsApiError(error, 'Unable to load volumes');
       }
