@@ -578,64 +578,66 @@ const Admin = () => {
         </div>
       )}
 
-      <section className="rounded-lg border border-gray-200 bg-white shadow-sm p-4 space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">Create an Upstream System for Your Lab</h3>
-        <p className="text-sm text-gray-600">
-          Manage your sensors, workflows, and data products in a unified, reproducible ecosystem.
-        </p>
-        <p className="text-sm text-gray-600">
-          Upstream lets any research group, field team, or instrument developer stand up a fully-functioning data
-          infrastructure without building everything from scratch. Whether you’re running a mobile lab like SNIFFER,
-          deploying long-term environmental monitors, integrating UAV or fixed-wing payloads, or experimenting with novel
-          high-resolution sensors, Upstream gives you the tools to capture, store, analyze, and publish your data with confidence.
-        </p>
-        <p className="text-sm text-gray-600">
-          Enter your upstream system name (e.g., <code className="mx-1 rounded bg-gray-100 px-1">sniffer</code>) to create
-          snifferpostgres, snifferapi, sniffer, and a <code className="mx-1 rounded bg-gray-100 px-1">sniffervolume</code>.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <input
-            type="text"
-            placeholder="Base name (e.g., sniffer)"
-            value={bundleBase}
-            onChange={(e) => setBundleBase(e.target.value)}
-            className="flex-1 min-w-[200px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-            disabled={createPod.isPending || createVolume.isPending}
-          />
-          <input
-            type="text"
-            placeholder="Postgres username"
-            value={pgUser}
-            onChange={(e) => setPgUser(e.target.value)}
-            className="min-w-[180px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-            disabled={createPod.isPending || createVolume.isPending}
-          />
-          <input
-            type="password"
-            placeholder="Postgres password"
-            value={pgPassword}
-            onChange={(e) => setPgPassword(e.target.value)}
-            className="min-w-[180px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-            disabled={createPod.isPending || createVolume.isPending}
-          />
-          <button
-            type="button"
-            onClick={handleCreateBundle}
-            className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-            disabled={createPod.isPending || createVolume.isPending || !bundleBase.trim()}
-          >
-            {createPod.isPending || createVolume.isPending ? 'Creating…' : 'Create bundle'}
-          </button>
-        </div>
-        {(createPod.isError || createVolume.isError) && (
-          <div className="text-xs text-red-600">
-            {(createPod.error as Error)?.message || (createVolume.error as Error)?.message || 'Failed to create bundle'}
+      {!podsQuery.isError && (
+        <section className="rounded-lg border border-gray-200 bg-white shadow-sm p-4 space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900">Create an Upstream System for Your Lab</h3>
+          <p className="text-sm text-gray-600">
+            Manage your sensors, workflows, and data products in a unified, reproducible ecosystem.
+          </p>
+          <p className="text-sm text-gray-600">
+            Upstream lets any research group, field team, or instrument developer stand up a fully-functioning data
+            infrastructure without building everything from scratch. Whether you’re running a mobile lab like SNIFFER,
+            deploying long-term environmental monitors, integrating UAV or fixed-wing payloads, or experimenting with novel
+            high-resolution sensors, Upstream gives you the tools to capture, store, analyze, and publish your data with confidence.
+          </p>
+          <p className="text-sm text-gray-600">
+            Enter your upstream system name (e.g., <code className="mx-1 rounded bg-gray-100 px-1">sniffer</code>) to create
+            snifferpostgres, snifferapi, sniffer, and a <code className="mx-1 rounded bg-gray-100 px-1">sniffervolume</code>.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <input
+              type="text"
+              placeholder="Base name (e.g., sniffer)"
+              value={bundleBase}
+              onChange={(e) => setBundleBase(e.target.value)}
+              className="flex-1 min-w-[200px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+              disabled={createPod.isPending || createVolume.isPending}
+            />
+            <input
+              type="text"
+              placeholder="Postgres username"
+              value={pgUser}
+              onChange={(e) => setPgUser(e.target.value)}
+              className="min-w-[180px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+              disabled={createPod.isPending || createVolume.isPending}
+            />
+            <input
+              type="password"
+              placeholder="Postgres password"
+              value={pgPassword}
+              onChange={(e) => setPgPassword(e.target.value)}
+              className="min-w-[180px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+              disabled={createPod.isPending || createVolume.isPending}
+            />
+            <button
+              type="button"
+              onClick={handleCreateBundle}
+              className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              disabled={createPod.isPending || createVolume.isPending || !bundleBase.trim()}
+            >
+              {createPod.isPending || createVolume.isPending ? 'Creating…' : 'Create bundle'}
+            </button>
           </div>
-        )}
-        {(createPod.isSuccess || createVolume.isSuccess) && (
-          <div className="text-xs text-green-700">Bundle creation requested.</div>
-        )}
-      </section>
+          {(createPod.isError || createVolume.isError) && (
+            <div className="text-xs text-red-600">
+              {(createPod.error as Error)?.message || (createVolume.error as Error)?.message || 'Failed to create bundle'}
+            </div>
+          )}
+          {(createPod.isSuccess || createVolume.isSuccess) && (
+            <div className="text-xs text-green-700">Bundle creation requested.</div>
+          )}
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="lg:col-span-2 rounded-lg border border-gray-200 bg-white shadow-sm">
