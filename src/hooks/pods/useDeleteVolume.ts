@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Pods } from '@tapis/tapis-typescript';
 import usePodsConfig from './usePodsConfig';
 import { buildPodsHeaders, normalizePodsApiError } from '../../utils/pods';
 
