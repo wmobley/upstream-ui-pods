@@ -34,14 +34,13 @@ export const resolvePodsBaseUrl = (): string | null => {
   const derivedFromTapisBase =
     derivePodsUrlFromTapisBase(runtimeTapisBase) || derivePodsUrlFromTapisBase(envTapisBase);
 
-  // Default to the shared pods endpoint if nothing else is set. The public Docs/CLI often
-  // reference https://hub.pods.tacc.tapis.io which matches the cert; use that as the safe
-  // fallback and trim trailing slashes to avoid double-slash routes when calling /v3/ endpoints.
+  // Default to the TACC develop tenant endpoint if nothing else is set. This matches the
+  // environment the Admin tooling targets and avoids pointing to the deprecated hub hostname.
   return clean(
     runtimePodsBase ||
       envPodsBase ||
       derivedFromTapisBase ||
-      'https://hub.pods.tacc.tapis.io'
+      'https://tacc.tapis.io'
   )
     ?.replace(/\/+$/, '') || null;
 };
