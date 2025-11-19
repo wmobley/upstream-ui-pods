@@ -86,18 +86,18 @@ const rewriteHostInUrl = (value: string, base: string) => {
   try {
     const url = new URL(value);
     const isProdApi = url.hostname.includes('upstreamapi.pods.tacc.tapis.io');
-    const isDevApi = url.hostname.includes('upstreamapi.pods.tacc.develop.tapis.io');
+    const isDevApi = url.hostname.includes('upstreamapi.pods.tacc.tapis.io');
     const isProdUi = url.hostname.includes('upstream.pods.tacc.tapis.io');
-    const isDevUi = url.hostname.includes('upstream.pods.tacc.develop.tapis.io');
+    const isDevUi = url.hostname.includes('upstream.pods.tacc.tapis.io');
     const isProdPg = url.hostname.includes('disasterpostgres.pods.tacc.tapis.io');
-    const isDevPg = url.hostname.includes('disasterpostgres.pods.tacc.develop.tapis.io');
+    const isDevPg = url.hostname.includes('disasterpostgres.pods.tacc.tapis.io');
 
     if (isProdApi || isDevApi) {
-      url.hostname = `${base}api.pods.tacc.develop.tapis.io`;
+      url.hostname = `${base}api.pods.tacc.tapis.io`;
     } else if (isProdUi || isDevUi) {
-      url.hostname = `${base}.pods.tacc.develop.tapis.io`;
+      url.hostname = `${base}.pods.tacc.tapis.io`;
     } else if (isProdPg || isDevPg) {
-      url.hostname = `${base}postgres.pods.tacc.develop.tapis.io`;
+      url.hostname = `${base}postgres.pods.tacc.tapis.io`;
     }
     return url.toString();
   } catch {
@@ -143,7 +143,7 @@ const postgresBlueprint = {
     default: {
       protocol: 'postgres',
       port: 5432,
-      url: 'disasterpostgres.pods.tacc.develop.tapis.io',
+      url: 'postgres.pods.tacc.tapis.io',
     },
   },
   resources: {
@@ -162,8 +162,8 @@ const apiBlueprint = {
   description: 'upstreamapi connected to postgres pod',
   command: ['/bin/bash', '-c', 'alembic upgrade heads && uvicorn app.main:app --reload --host 0.0.0.0'],
   environment_variables: {
-    DATABASE_URL: 'postgresql+psycopg://fastapi_traefik:fastapi_traefik@disasterpostgres.pods.tacc.develop.tapis.io:443/fastapi_traefik',
-    VITE_UPSTREAM_API_URL: 'https://upstream.pods.tacc.develop.tapis.io',
+    DATABASE_URL: 'postgresql+psycopg://fastapi_traefik:fastapi_traefik@disasterpostgres.pods.tacc.tapis.io:443/fastapi_traefik',
+    VITE_UPSTREAM_API_URL: 'https://upstream.pods.tacc.tapis.io',
     POSTGRES_PASSWORD: 'fastapi_traefik',
     TAS_USER: 'tasclient_dsso',
     TAS_SECRET: '2TjvnY22spKet8cdZwxYZjunLmQCKFRkN9vEtWNnv2JV5vZnCUDxKCxsQyFJJxXG',
@@ -174,8 +174,8 @@ const apiBlueprint = {
     ENV: 'production',
     CKAN_URL: 'https://ckan.tacc.utexas.edu',
     CKAN_TIMEOUT: '30',
-    UI_BASE_URL: 'https://upstream.pods.tacc.develop.tapis.io',
-    API_BASE_URL: 'https://upstreamapi.pods.tacc.develop.tapis.io',
+    UI_BASE_URL: 'https://upstream.pods.tacc.tapis.io',
+    API_BASE_URL: 'https://upstreamapi.pods.tacc.tapis.io',
   },
   status_requested: 'ON',
   volume_mounts: {},
@@ -184,7 +184,7 @@ const apiBlueprint = {
     default: {
       protocol: 'http',
       port: 8000,
-      url: 'upstreamapi.pods.tacc.develop.tapis.io',
+      url: 'upstreamapi.pods.tacc.tapis.io',
     },
   },
   resources: {
@@ -202,10 +202,10 @@ const uiBlueprint = {
   pod_template: '',
   description: 'Upstream ui frontend',
   environment_variables: {
-    VITE_UPSTREAM_API_URL: 'https://upstreamapi.pods.tacc.develop.tapis.io',
+    VITE_UPSTREAM_API_URL: 'https://upstreamapi.pods.tacc.tapis.io',
     VITE_CKAN_URL: 'https://ckan.tacc.utexas.edu',
-    VITE_TAPIS_BASE_URL: 'https://tacc.develop.tapis.io',
-    VITE_TAPIS_PODS_BASE_URL: 'https://tacc.develop.tapis.io',
+    VITE_TAPIS_BASE_URL: 'https://tacc.tapis.io',
+    VITE_TAPIS_PODS_BASE_URL: 'https://tacc.tapis.io',
   },
   status_requested: 'ON',
   volume_mounts: {},
@@ -214,7 +214,7 @@ const uiBlueprint = {
     default: {
       protocol: 'http',
       port: 80,
-      url: 'upstream.pods.tacc.develop.tapis.io',
+      url: 'upstream.pods.tacc.tapis.io',
     },
   },
   resources: {
@@ -441,13 +441,13 @@ const Admin = () => {
           let val = String(v);
           const apiPort = template.networking?.default?.port;
           val = rewriteHostInUrl(val, base);
-          val = replaceAll(val, 'disasterpostgres.pods.tacc.develop.tapis.io', `${base}postgres.pods.tacc.develop.tapis.io`);
-          val = replaceAll(val, 'disasterpostgres.pods.tacc.tapis.io', `${base}postgres.pods.tacc.develop.tapis.io`);
-          val = replaceAll(val, 'upstreamapi.pods.tacc.develop.tapis.io', `${base}api.pods.tacc.develop.tapis.io`);
-          val = replaceAll(val, 'upstreamapi.pods.tacc.tapis.io', `${base}api.pods.tacc.develop.tapis.io`);
-          val = replaceAll(val, 'upstream.pods.tacc.develop.tapis.io', `${base}.pods.tacc.develop.tapis.io`);
-          val = replaceAll(val, 'upstream.pods.tacc.tapis.io', `${base}.pods.tacc.develop.tapis.io`);
-          val = replaceAll(val, '.pods.tacc.tapis.io', '.pods.tacc.develop.tapis.io');
+          val = replaceAll(val, 'disasterpostgres.pods.tacc.tapis.io', `${base}postgres.pods.tacc.tapis.io`);
+          val = replaceAll(val, 'disasterpostgres.pods.tacc.tapis.io', `${base}postgres.pods.tacc.tapis.io`);
+          val = replaceAll(val, 'upstreamapi.pods.tacc.tapis.io', `${base}api.pods.tacc.tapis.io`);
+          val = replaceAll(val, 'upstreamapi.pods.tacc.tapis.io', `${base}api.pods.tacc.tapis.io`);
+          val = replaceAll(val, 'upstream.pods.tacc.tapis.io', `${base}.pods.tacc.tapis.io`);
+          val = replaceAll(val, 'upstream.pods.tacc.tapis.io', `${base}.pods.tacc.tapis.io`);
+          val = replaceAll(val, '.pods.tacc.tapis.io', '.pods.tacc.tapis.io');
           if (k.toUpperCase().includes('UPSTREAM_API_URL') || k.toUpperCase().includes('API_BASE_URL')) {
             val = ensurePort(val, apiPort);
             val = val.replace(/\/+$/, '');
