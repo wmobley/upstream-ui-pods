@@ -297,6 +297,18 @@ const Admin = () => {
         buildUserIdentifierVariants(perm.user).some((variant) => usernameVariantSet.has(variant)),
     );
   }, [permissions, usernameVariants]);
+  useEffect(() => {
+    const normalizedPerms = permissions.map(
+      (perm) => `${perm.user}:${perm.level?.toUpperCase() ?? 'UNKNOWN'}`
+    );
+    // eslint-disable-next-line no-console
+    console.debug('[Admin] user info', {
+      username,
+      usernameVariants,
+      permissions: normalizedPerms,
+      isCurrentUserAdmin,
+    });
+  }, [username, usernameVariants, permissions, isCurrentUserAdmin]);
   const canRestartPods = isCurrentUserAdmin;
   const addPermission = useAddPodPermission();
   const createPod = useCreatePod();
