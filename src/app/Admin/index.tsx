@@ -871,12 +871,12 @@ const Admin = () => {
                   </p>
                   <div className="mt-3">
                     <a
-                      href="https://upstream.pods.tacc.utexas.edu"
+                      href="https://upstream.pods.tacc.tapis.io/admin"
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                     >
-                      Open Pods Admin (upstream.pods.tacc.utexas.edu)
+                      Open Pods Admin
                     </a>
                   </div>
                 </div>
