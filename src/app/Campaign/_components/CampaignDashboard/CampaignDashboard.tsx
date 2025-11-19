@@ -93,6 +93,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   const topIsPublished = Boolean(raw?.['is_published'] || raw?.['isPublished'] || raw?.['published_at'] || raw?.['publishedAt']);
   const summary = _campaignObj?.['summary'] as Record<string, unknown> | undefined;
   const summaryIsPublished = Boolean(summary?.['is_published'] || summary?.['isPublished']);
+  const hasStations = Array.isArray(campaign?.stations) && campaign.stations.length > 0;
 
   // Also consider publish mutation error which may have reported "already published"
   const publishErrBody = (publishCampaign as unknown as { error?: unknown })?.error
@@ -185,29 +186,33 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
                             style={{ zIndex: 99999 }}
                           >
                           {/* Publish / Unpublish */}
-                          {isPublishedFlag ? (
-                            <button
-                              onClick={async () => {
-                                setShowActionDropdown(false);
-                                await handleUnpublish();
-                              }}
-                              className="block w-full text-left px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 hover:text-orange-900 transition-colors border-b border-gray-100"
-                            >
-                              Unpublish Campaign
-                            </button>
+                          {hasStations ? (
+                            isPublishedFlag ? (
+                              <button
+                                onClick={async () => {
+                                  setShowActionDropdown(false);
+                                  await handleUnpublish();
+                                }}
+                                className="block w-full text-left px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 hover:text-orange-900 transition-colors border-b border-gray-100"
+                              >
+                                Unpublish Campaign
+                              </button>
                             ) : (
-                              <>
-                                <button
-                                  onClick={async () => {
-                                    setShowActionDropdown(false);
-                                    await handlePublish(true);
-                                  }}
-                                  className="block w-full text-left px-4 py-3 text-sm text-green-600 hover:bg-green-50 hover:text-green-900 transition-colors border-b border-gray-100"
-                                >
-                                  Publish Campaign
-                                </button>
-                              </>
-                            )}
+                              <button
+                                onClick={async () => {
+                                  setShowActionDropdown(false);
+                                  await handlePublish(true);
+                                }}
+                                className="block w-full text-left px-4 py-3 text-sm text-green-600 hover:bg-green-50 hover:text-green-900 transition-colors border-b border-gray-100"
+                              >
+                                Publish Campaign
+                              </button>
+                            )
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 border-b border-gray-100">
+                              Add a station to enable CKAN publishing
+                            </div>
+                          )}
 
                           {/* Station actions */}
                           <button

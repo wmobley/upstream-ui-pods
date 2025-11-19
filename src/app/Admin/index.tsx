@@ -10,6 +10,7 @@ import useDeletePod from '../../hooks/pods/useDeletePod';
 import useDeleteVolume from '../../hooks/pods/useDeleteVolume';
 import useVolumesList from '../../hooks/pods/useVolumesList';
 import useRestartPod from '../../hooks/pods/useRestartPod';
+import { useAuth } from '../../contexts/AuthContext';
 import { buildPodsHeaders, clearTapisAuth, decodeJwtExp } from '../../utils/pods';
 
 const formatDate = (value?: Date | string | null) => {
@@ -227,6 +228,7 @@ const uiBlueprint = {
   },
 } as Pods.PodResponseModel & { image?: string };
 const Admin = () => {
+  const { username } = useAuth();
   const { token, basePath } = usePodsConfig();
   const podsQuery = usePodsList();
   const pods = podsQuery.data?.result ?? [];
@@ -266,6 +268,17 @@ const Admin = () => {
     () => parsePermissions(permissionsQuery.data?.result?.permissions),
     [permissionsQuery.data?.result?.permissions],
   );
+  const normalizedUsername = username?.toLowerCase() ?? null;
+  const isCurrentUserAdmin = useMemo(() => {
+    if (!normalizedUsername) return false;
+    return permissions.some(
+      (perm) =>
+        perm.level?.toUpperCase() === 'ADMIN' &&
+        typeof perm.user === 'string' &&
+        perm.user.toLowerCase() === normalizedUsername,
+    );
+  }, [permissions, normalizedUsername]);
+  const canRestartPods = isCurrentUserAdmin;
   const addPermission = useAddPodPermission();
   const createPod = useCreatePod();
   const createVolume = useCreateVolume();
@@ -678,6 +691,10 @@ const Admin = () => {
 
   const handleRestartGroup = async (base: string, podsForBase: Pods.PodResponseModel[]) => {
     if (!podsForBase.length) return;
+    if (!canRestartPods) {
+      alert('Admin permissions required to restart pods.');
+      return;
+    }
     setOpenActionsBase(null);
     const classified = classifyPodsForBase(base, podsForBase);
     if (!classified.api && !classified.ui) {
@@ -705,6 +722,10 @@ const Admin = () => {
 
   const handleRestartByType = async (type: 'ui' | 'api') => {
     const label = type === 'api' ? 'API' : 'UI';
+    if (!canRestartPods) {
+      alert('Admin permissions required to restart pods.');
+      return;
+    }
     setOpenActionsBase(null);
     const targets = Object.entries(groupedPods)
       .map(([base, podsForBase]) => {
@@ -815,40 +836,42 @@ const Admin = () => {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
             <div className="flex flex-wrap items-center gap-3">
               <h3 className="text-lg font-semibold text-gray-900">Pods</h3>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => handleRestartByType('ui')}
-                  disabled={
-                    !hasAnyUiPods ||
-                    globalRestarting.ui ||
-                    globalRestarting.api ||
-                    Boolean(restartingBase) ||
-                    Boolean(deletingBase) ||
-                    restartPod.isPending ||
-                    deletePod.isPending
-                  }
-                  className="rounded bg-blue-50 px-3 py-1 font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {globalRestarting.ui ? 'Restarting UI…' : 'Restart UI'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRestartByType('api')}
-                  disabled={
-                    !hasAnyApiPods ||
-                    globalRestarting.api ||
-                    globalRestarting.ui ||
-                    Boolean(restartingBase) ||
-                    Boolean(deletingBase) ||
-                    restartPod.isPending ||
-                    deletePod.isPending
-                  }
-                  className="rounded bg-blue-50 px-3 py-1 font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {globalRestarting.api ? 'Restarting API…' : 'Restart API'}
-                </button>
-              </div>
+              {canRestartPods && (
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleRestartByType('ui')}
+                    disabled={
+                      !hasAnyUiPods ||
+                      globalRestarting.ui ||
+                      globalRestarting.api ||
+                      Boolean(restartingBase) ||
+                      Boolean(deletingBase) ||
+                      restartPod.isPending ||
+                      deletePod.isPending
+                    }
+                    className="rounded bg-blue-50 px-3 py-1 font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {globalRestarting.ui ? 'Restarting UI…' : 'Restart UI'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRestartByType('api')}
+                    disabled={
+                      !hasAnyApiPods ||
+                      globalRestarting.api ||
+                      globalRestarting.ui ||
+                      Boolean(restartingBase) ||
+                      Boolean(deletingBase) ||
+                      restartPod.isPending ||
+                      deletePod.isPending
+                    }
+                    className="rounded bg-blue-50 px-3 py-1 font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {globalRestarting.api ? 'Restarting API…' : 'Restart API'}
+                  </button>
+                </div>
+              )}
             </div>
             <div className="text-xs text-gray-500">
               {podsQuery.isFetching ? 'Refreshing…' : podsQuery.isSuccess ? `${pods.length} pods` : ''}
@@ -961,14 +984,16 @@ const Admin = () => {
                               >
                                 {uiLink ? 'Open UI' : 'Open UI (unavailable)'}
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleRestartGroup(base, podsForBase)}
-                                disabled={disableRestart}
-                                className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
-                              >
-                                {isRestarting ? 'Restarting…' : 'Restart group'}
-                              </button>
+                              {canRestartPods && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRestartGroup(base, podsForBase)}
+                                  disabled={disableRestart}
+                                  className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
+                                >
+                                  {isRestarting ? 'Restarting…' : 'Restart group'}
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleDeleteGroup(base, podsForBase)}
