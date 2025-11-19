@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CampaignsApi, PublishRequest, PublishResponse } from '@upstream/upstream-api';
+import { CampaignsApi, PublishRequest, PublishResponse, Configuration } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 
 interface PublishCampaignRequest {
@@ -10,7 +10,16 @@ interface PublishCampaignRequest {
 
 export const usePublish = () => {
   const config = useConfiguration();
-  const campaignsApi = new CampaignsApi(config);
+  const tapisToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+  let apiConfig = config;
+  if (tapisToken) {
+    const headers: Record<string, string> = {
+      ...(config.headers as Record<string, string> | undefined),
+      'X-TAPIS-TOKEN': tapisToken,
+    };
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+  }
+  const campaignsApi = new CampaignsApi(apiConfig);
   const queryClient = useQueryClient();
 
   return useMutation<PublishResponse, Error, PublishCampaignRequest>({
@@ -114,7 +123,16 @@ export const usePublish = () => {
 
 export const useUnpublish = () => {
   const config = useConfiguration();
-  const campaignsApi = new CampaignsApi(config);
+  const tapisToken = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+  let apiConfig = config;
+  if (tapisToken) {
+    const headers: Record<string, string> = {
+      ...(config.headers as Record<string, string> | undefined),
+      'X-TAPIS-TOKEN': tapisToken,
+    };
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+  }
+  const campaignsApi = new CampaignsApi(apiConfig);
   const queryClient = useQueryClient();
 
   return useMutation<PublishResponse, Error, number>({
