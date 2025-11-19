@@ -30,6 +30,25 @@ const parsePermissions = (permissions?: string[] | null) => {
   });
 };
 
+// Normalize usernames that may include tenant/site qualifiers so permission checks remain accurate.
+const buildUserIdentifierVariants = (value?: string | null) => {
+  if (!value) return [];
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return [];
+  const variants = new Set<string>([trimmed]);
+  const delimiters = ['@', '/', '\\', '|'];
+  delimiters.forEach((delimiter) => {
+    if (trimmed.includes(delimiter)) {
+      trimmed
+        .split(delimiter)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .forEach((part) => variants.add(part));
+    }
+  });
+  return Array.from(variants);
+};
+
 const suffixes = ['postgres', 'postsgres', 'api'];
 const deriveBaseName = (podId: string) => {
   for (const suffix of suffixes) {
@@ -268,16 +287,16 @@ const Admin = () => {
     () => parsePermissions(permissionsQuery.data?.result?.permissions),
     [permissionsQuery.data?.result?.permissions],
   );
-  const normalizedUsername = username?.toLowerCase() ?? null;
+  const usernameVariants = useMemo(() => buildUserIdentifierVariants(username), [username]);
   const isCurrentUserAdmin = useMemo(() => {
-    if (!normalizedUsername) return false;
+    if (!usernameVariants.length) return false;
+    const usernameVariantSet = new Set(usernameVariants);
     return permissions.some(
       (perm) =>
         perm.level?.toUpperCase() === 'ADMIN' &&
-        typeof perm.user === 'string' &&
-        perm.user.toLowerCase() === normalizedUsername,
+        buildUserIdentifierVariants(perm.user).some((variant) => usernameVariantSet.has(variant)),
     );
-  }, [permissions, normalizedUsername]);
+  }, [permissions, usernameVariants]);
   const canRestartPods = isCurrentUserAdmin;
   const addPermission = useAddPodPermission();
   const createPod = useCreatePod();
