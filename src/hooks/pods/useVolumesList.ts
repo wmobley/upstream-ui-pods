@@ -17,16 +17,7 @@ const useVolumesList = () => {
         throw new Error('Missing Tapis access token.');
       }
 
-      let url = `${basePath}/v3/pods/volumes`;
-      try {
-        const parsed = new URL(url);
-        if (!parsed.hostname.startsWith('pods.')) {
-          parsed.hostname = `pods.${parsed.hostname}`;
-          url = parsed.toString();
-        }
-      } catch {
-        // ignore parse errors
-      }
+      const url = `${basePath}/v3/pods/volumes`;
       const headers = buildPodsHeaders(token);
 
       try {
