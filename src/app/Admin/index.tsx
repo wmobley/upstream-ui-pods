@@ -204,6 +204,8 @@ const uiBlueprint = {
   environment_variables: {
     VITE_UPSTREAM_API_URL: 'https://upstreamapi.pods.tacc.develop.tapis.io',
     VITE_CKAN_URL: 'https://ckan.tacc.utexas.edu',
+    VITE_TAPIS_BASE_URL: 'https://tacc.develop.tapis.io',
+    VITE_TAPIS_PODS_BASE_URL: 'https://tacc.develop.tapis.io',
   },
   status_requested: 'ON',
   volume_mounts: {},

@@ -40,7 +40,7 @@ export const resolvePodsBaseUrl = (): string | null => {
     runtimePodsBase ||
       envPodsBase ||
       derivedFromTapisBase ||
-      'https://tacc.tapis.io'
+      'https://tacc.develop.tapis.io'
   )
     ?.replace(/\/+$/, '') || null;
 };
