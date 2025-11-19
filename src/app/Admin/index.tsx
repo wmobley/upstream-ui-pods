@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pods } from '@tapis/tapis-typescript';
 import usePodsList from '../../hooks/pods/usePodsList';
 import usePodsConfig from '../../hooks/pods/usePodsConfig';
@@ -9,6 +9,7 @@ import useCreateVolume from '../../hooks/pods/useCreateVolume';
 import useDeletePod from '../../hooks/pods/useDeletePod';
 import useDeleteVolume from '../../hooks/pods/useDeleteVolume';
 import useVolumesList from '../../hooks/pods/useVolumesList';
+import useRestartPod from '../../hooks/pods/useRestartPod';
 import { buildPodsHeaders, clearTapisAuth, decodeJwtExp } from '../../utils/pods';
 
 const formatDate = (value?: Date | string | null) => {
@@ -239,12 +240,26 @@ const Admin = () => {
   const [pgUser, setPgUser] = useState('fastapi_traefik');
   const [pgPassword, setPgPassword] = useState('fastapi_traefik');
   const [showPods] = useState(true);
+  const [openActionsBase, setOpenActionsBase] = useState<string | null>(null);
+  const actionMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!selectedPodId && pods.length > 0) {
       setSelectedPodId(pods[0].pod_id);
     }
   }, [pods, selectedPodId]);
+
+  useEffect(() => {
+    if (!openActionsBase) return undefined;
+    const handleClickOutside = (event: MouseEvent) => {
+      const menuNode = actionMenuRefs.current[openActionsBase];
+      if (menuNode && !menuNode.contains(event.target as Node)) {
+        setOpenActionsBase(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openActionsBase]);
 
   const permissionsQuery = usePodPermissions(selectedPodId);
   const permissions = useMemo(
@@ -256,12 +271,25 @@ const Admin = () => {
   const createVolume = useCreateVolume();
   const deletePod = useDeletePod();
   const deleteVolume = useDeleteVolume();
+  const restartPod = useRestartPod();
   const [deletingBase, setDeletingBase] = useState<string | null>(null);
+  const [restartingBase, setRestartingBase] = useState<string | null>(null);
+  const [restartProgress, setRestartProgress] = useState<
+    Record<string, { podId: string | null; message: string }>
+  >({});
+  const [globalRestarting, setGlobalRestarting] = useState<{ ui: boolean; api: boolean }>({
+    ui: false,
+    api: false,
+  });
+  const DEFAULT_BUNDLE_ADMIN = { user: 'wmobley', level: 'ADMIN' } as const;
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const waitForPodAvailable = async (podId: string, attempts = 24, delayMs = 5000) => {
     if (!basePath) throw new Error('Pods base URL is not configured.');
     if (!token) throw new Error('Missing Tapis access token.');
+
+    const successStatuses = new Set(['AVAILABLE', 'ON', 'COMPLETE']);
+    const successPhases = new Set(['RUNNING', 'SUCCEEDED']);
 
     for (let i = 0; i < attempts; i += 1) {
       try {
@@ -272,9 +300,9 @@ const Admin = () => {
           const data = await res.json();
           const pod: Pods.PodResponseModel | undefined = data?.result;
           const statusContainer = pod?.status_container as { phase?: string } | undefined;
-          const phase = statusContainer?.phase;
-          const status = pod?.status;
-          if (status === 'AVAILABLE' || phase === 'Running') {
+          const phase = statusContainer?.phase?.toUpperCase();
+          const status = pod?.status?.toUpperCase();
+          if ((status && successStatuses.has(status)) || (phase && successPhases.has(phase))) {
             return;
           }
         }
@@ -361,6 +389,16 @@ const Admin = () => {
     }, {});
   }, [pods]);
 
+  const hasAnyUiPods = useMemo(
+    () => Object.entries(groupedPods).some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
+    [groupedPods],
+  );
+
+  const hasAnyApiPods = useMemo(
+    () => Object.entries(groupedPods).some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).api)),
+    [groupedPods],
+  );
+
   const findVolumeForPod = (pod: Pods.PodResponseModel) => {
     const mounts = pod.volume_mounts ? Object.keys(pod.volume_mounts) : [];
     if (!mounts.length) return null;
@@ -400,6 +438,73 @@ const Admin = () => {
     }
     return 'Usage unavailable';
   };
+
+  const updateRestartProgress = (base: string, podId: string | null, message: string) => {
+    setRestartProgress((prev) => ({
+      ...prev,
+      [base]: { podId, message },
+    }));
+  };
+
+  const restartSinglePodWithProgress = async (
+    base: string,
+    pod: Pods.PodResponseModel,
+    label: string,
+    extraDelay = 0
+  ) => {
+    updateRestartProgress(base, pod.pod_id, `Restarting ${label} pod…`);
+    await restartPod.mutateAsync(pod.pod_id);
+    updateRestartProgress(base, pod.pod_id, `Waiting for ${label} pod to become available…`);
+    await waitForPodAvailable(pod.pod_id);
+    if (extraDelay > 0) {
+      updateRestartProgress(base, pod.pod_id, `Stabilizing ${label} pod…`);
+      await waitExtra(extraDelay);
+    }
+    updateRestartProgress(base, pod.pod_id, `${label} pod ready.`);
+  };
+
+  const clearRestartProgress = (base: string) => {
+    setRestartProgress((prev) => {
+      const { [base]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const ensureDefaultAdminPermission = async (podId: string) => {
+    if (!podId) return;
+    try {
+      await addPermission.mutateAsync({
+        podId,
+        user: DEFAULT_BUNDLE_ADMIN.user,
+        level: DEFAULT_BUNDLE_ADMIN.level,
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`[Admin] Failed to assign default permission to ${podId}`, error);
+    }
+  };
+
+  function classifyPodsForBase(base: string, podsForBase: Pods.PodResponseModel[]) {
+    const baseLower = base.toLowerCase();
+    return podsForBase.reduce<{
+      postgres?: Pods.PodResponseModel;
+      api?: Pods.PodResponseModel;
+      ui?: Pods.PodResponseModel;
+    }>((acc, pod) => {
+      const idLower = pod.pod_id.toLowerCase();
+      if (idLower === baseLower) {
+        acc.ui = pod;
+      } else if (idLower === `${baseLower}api`) {
+        acc.api = pod;
+      } else if (
+        idLower === `${baseLower}postgres` ||
+        idLower === `${baseLower}postsgres`
+      ) {
+        acc.postgres = pod;
+      }
+      return acc;
+    }, {});
+  }
 
   const upstreamBlueprints = useMemo(() => ({
     postgres: postgresBlueprint,
@@ -515,6 +620,7 @@ const Admin = () => {
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.postgres, pgId, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
+      await ensureDefaultAdminPermission(pgId);
 
       // Wait for postgres pod to be up before creating API/UI
       await waitForPodAvailable(pgId);
@@ -524,10 +630,12 @@ const Admin = () => {
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.api, `${baseLower}api`, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
+      await ensureDefaultAdminPermission(`${baseLower}api`);
 
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.app, baseLower, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
+      await ensureDefaultAdminPermission(baseLower);
 
       setSelectedPodId(`${baseLower}api`);
       setBundleBase('');
@@ -539,6 +647,7 @@ const Admin = () => {
 
   const handleDeleteGroup = async (base: string, podsForBase: Pods.PodResponseModel[]) => {
     if (!podsForBase.length) return;
+    setOpenActionsBase(null);
     const confirmed = window.confirm(
       `Delete all pods for "${base}"? This will request deletion of ${podsForBase.length} pod(s).`,
     );
@@ -564,6 +673,66 @@ const Admin = () => {
       alert(message);
     } finally {
       setDeletingBase(null);
+    }
+  };
+
+  const handleRestartGroup = async (base: string, podsForBase: Pods.PodResponseModel[]) => {
+    if (!podsForBase.length) return;
+    setOpenActionsBase(null);
+    const classified = classifyPodsForBase(base, podsForBase);
+    if (!classified.api && !classified.ui) {
+      alert(`No recognizable pods found to restart for "${base}".`);
+      return;
+    }
+    setRestartingBase(base);
+    updateRestartProgress(base, null, 'Preparing restart…');
+    try {
+      if (classified.api) {
+        await restartSinglePodWithProgress(base, classified.api, 'API');
+      }
+      if (classified.ui) {
+        await restartSinglePodWithProgress(base, classified.ui, 'UI');
+      }
+      updateRestartProgress(base, null, 'Restart complete.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to restart pods';
+      alert(message);
+    } finally {
+      setRestartingBase(null);
+      setTimeout(() => clearRestartProgress(base), 3_000);
+    }
+  };
+
+  const handleRestartByType = async (type: 'ui' | 'api') => {
+    const label = type === 'api' ? 'API' : 'UI';
+    setOpenActionsBase(null);
+    const targets = Object.entries(groupedPods)
+      .map(([base, podsForBase]) => {
+        const classified = classifyPodsForBase(base, podsForBase);
+        const pod = type === 'api' ? classified.api : classified.ui;
+        return pod ? { base, pod } : null;
+      })
+      .filter((value): value is { base: string; pod: Pods.PodResponseModel } => Boolean(value));
+
+    if (!targets.length) {
+      alert(`No ${label} pods found to restart.`);
+      return;
+    }
+
+    setGlobalRestarting((prev) => ({ ...prev, [type]: true }));
+    try {
+      for (const target of targets) {
+        setRestartingBase(target.base);
+        await restartSinglePodWithProgress(target.base, target.pod, label);
+        updateRestartProgress(target.base, null, `${label} pod restart complete.`);
+        setTimeout(() => clearRestartProgress(target.base), 3_000);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : `Failed to restart ${label} pods`;
+      alert(message);
+    } finally {
+      setRestartingBase(null);
+      setGlobalRestarting((prev) => ({ ...prev, [type]: false }));
     }
   };
 
@@ -643,9 +812,43 @@ const Admin = () => {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="lg:col-span-2 rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h3 className="text-lg font-semibold text-gray-900">Pods</h3>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleRestartByType('ui')}
+                  disabled={
+                    !hasAnyUiPods ||
+                    globalRestarting.ui ||
+                    globalRestarting.api ||
+                    Boolean(restartingBase) ||
+                    Boolean(deletingBase) ||
+                    restartPod.isPending ||
+                    deletePod.isPending
+                  }
+                  className="rounded bg-blue-50 px-3 py-1 font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {globalRestarting.ui ? 'Restarting UI…' : 'Restart UI'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRestartByType('api')}
+                  disabled={
+                    !hasAnyApiPods ||
+                    globalRestarting.api ||
+                    globalRestarting.ui ||
+                    Boolean(restartingBase) ||
+                    Boolean(deletingBase) ||
+                    restartPod.isPending ||
+                    deletePod.isPending
+                  }
+                  className="rounded bg-blue-50 px-3 py-1 font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {globalRestarting.api ? 'Restarting API…' : 'Restart API'}
+                </button>
+              </div>
             </div>
             <div className="text-xs text-gray-500">
               {podsQuery.isFetching ? 'Refreshing…' : podsQuery.isSuccess ? `${pods.length} pods` : ''}
@@ -688,32 +891,95 @@ const Admin = () => {
                 {Object.entries(groupedPods).map(([base, podsForBase]) => {
                   const uiPod = podsForBase.find((p) => p.pod_id.toLowerCase() === base.toLowerCase());
                   const uiLink = uiPod ? buildLink(uiPod) : null;
+                  const classified = classifyPodsForBase(base, podsForBase);
+                  const hasRestartTargets = Boolean(classified.postgres || classified.api || classified.ui);
+                  const isDeleting = deletingBase === base;
+                  const isRestarting = restartingBase === base;
+                  const isActionsOpen = openActionsBase === base;
+                  const progress = restartProgress[base];
+                  const disableRestart =
+                    !hasRestartTargets ||
+                    isRestarting ||
+                    isDeleting ||
+                    restartPod.isPending ||
+                    deletePod.isPending ||
+                    globalRestarting.ui ||
+                    globalRestarting.api;
+                  const disableDelete =
+                    isRestarting || isDeleting || deletePod.isPending || globalRestarting.ui || globalRestarting.api;
                   return (
                     <details key={base} className="rounded border border-gray-100 bg-gray-50" open>
                       <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase text-gray-600">
                         {base || '(no base)'}
                       </summary>
-                      <div className="flex items-center justify-between px-4 py-2">
-                        {uiLink ? (
-                          <a
-                            href={uiLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-                          >
-                            Open UI
-                          </a>
-                        ) : (
-                          <span className="text-xs text-gray-500">No UI pod detected</span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGroup(base, podsForBase)}
-                          className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-                          disabled={deletePod.isPending || deletingBase === base}
+                      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2">
+                        <div className="text-xs text-gray-600">
+                          {progress?.message ||
+                            (isRestarting && 'Restarting pods…') ||
+                            (!isRestarting && isDeleting && 'Deleting pods…') ||
+                            (!isRestarting && !isDeleting && !uiLink && 'No UI pod detected')}
+                        </div>
+                        <div
+                          className="relative"
+                          ref={(el) => {
+                            actionMenuRefs.current[base] = el;
+                          }}
                         >
-                          {deletingBase === base ? 'Deleting…' : 'Delete group'}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => setOpenActionsBase((prev) => (prev === base ? null : base))}
+                            className="inline-flex items-center rounded bg-gray-900 px-3 py-1 text-xs font-semibold text-white hover:bg-gray-800 focus:outline-none"
+                            aria-haspopup="menu"
+                            aria-expanded={isActionsOpen}
+                          >
+                            Actions
+                            <svg
+                              className={`ml-2 size-3 transition-transform ${isActionsOpen ? 'rotate-180' : ''}`}
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                          {isActionsOpen && (
+                            <div className="absolute right-0 z-10 mt-2 w-48 rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (uiLink && typeof window !== 'undefined') {
+                                    window.open(uiLink, '_blank', 'noopener,noreferrer');
+                                  }
+                                  setOpenActionsBase(null);
+                                }}
+                                disabled={!uiLink}
+                                className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
+                              >
+                                {uiLink ? 'Open UI' : 'Open UI (unavailable)'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRestartGroup(base, podsForBase)}
+                                disabled={disableRestart}
+                                className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
+                              >
+                                {isRestarting ? 'Restarting…' : 'Restart group'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteGroup(base, podsForBase)}
+                                disabled={disableDelete}
+                                className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:text-red-300"
+                              >
+                                {isDeleting ? 'Deleting…' : 'Delete group'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="divide-y divide-gray-100">
                         {podsForBase.map((pod) => {
@@ -722,6 +988,8 @@ const Admin = () => {
                           const volumeInfo = pod.pod_id.toLowerCase().includes('postgres')
                             ? findVolumeForPod(pod)
                             : null;
+                          const isRestartTarget = progress?.podId === pod.pod_id;
+                          const restartMessage = isRestartTarget ? progress?.message : null;
                           const volumeUsageText =
                             volumeInfo && volumesQuery.isSuccess
                               ? formatVolumeUsage(volumeInfo.volume as Pods.VolumeResponseModel)
@@ -738,6 +1006,9 @@ const Admin = () => {
                                   <div>
                                     <p className="text-base font-semibold text-gray-900">{pod.pod_id}</p>
                                     <p className="text-xs text-gray-600">{pod.description || 'Upstream UI frontend'}</p>
+                                    {restartMessage && (
+                                      <p className="text-xs font-semibold text-blue-600">{restartMessage}</p>
+                                    )}
                                   </div>
                                   <div className="text-right text-xs text-gray-600 space-y-1">
                                     <div>

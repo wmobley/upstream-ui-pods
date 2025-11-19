@@ -1,9 +1,8 @@
+import { useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../../../../contexts/AuthContext';
 
-import { FaUser } from 'react-icons/fa';
-import { FaUserCircle } from 'react-icons/fa';
-import { FaRegUserCircle } from 'react-icons/fa';
+import { FaChevronDown, FaUser, FaUserCircle, FaRegUserCircle } from 'react-icons/fa';
 
 interface RightProps {
   toggleMenu: () => void;
@@ -11,31 +10,76 @@ interface RightProps {
 
 const Right: React.FC<RightProps> = ({ toggleMenu }) => {
   const history = useHistory();
-  const { isAuthenticated, isTapisAuth, username, logout } = useAuth();
+  const { isAuthenticated, username, logout } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const displayName = username || 'User';
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    setIsMenuOpen(false);
+    logout();
+    window.location.href = '/login';
+  };
+
+  const handleAdminNavigation = () => {
+    setIsMenuOpen(false);
+    history.push('/admin');
+  };
+  const handleCampaignNavigation = () => {
+    setIsMenuOpen(false);
+    history.push('/');
+  };
 
   return (
     <div className="flex items-center gap-4">
       {isAuthenticated ? (
         <div className="sm:flex sm:gap-4">
-          <div className="flex items-center gap-4 text-primary-600">
-            {isTapisAuth ? (
-              // Tapis authentication - show username, no logout (managed by Tapis)
-              <div className="px-5 py-2.5 text-sm font-medium text-white flex items-center">
-                <FaUser className="text-gray-100 text-lg mr-3" />
-                <span>{username || 'User'}</span>
+          <div className="relative flex items-center gap-4 text-primary-600" ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              className="px-5 py-2.5 text-sm font-medium text-white transition header-button flex items-center gap-2"
+            >
+              <FaUser className="text-gray-100 text-lg" />
+              <span className="text-left">{displayName}</span>
+              <FaChevronDown
+                className={`text-gray-100 text-xs transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {isMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 z-20">
+                <button
+                  onClick={handleCampaignNavigation}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Campaigns
+                </button>
+                <button
+                  onClick={handleAdminNavigation}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Admin
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
               </div>
-            ) : (
-              // JWT authentication - show logout button
-              <button
-                onClick={() => {
-                  logout();
-                  window.location.href = '/login';
-                }}
-                className="px-5 py-2.5 text-sm font-medium text-white transition header-button flex items-center"
-              >
-                <FaUser className="text-gray-100 text-lg mr-3" />
-                <span>Logout</span>
-              </button>
             )}
           </div>
         </div>
