@@ -5,7 +5,7 @@ authors:
   given-names: William
 - family-names: Osorio
   given-names: Maximiliano
--family-names: Krendelev
+- family-names: Krendelev
   given-names: Vlad
 orcid: https://orcid.org/0000-0003-1783-0599
 title:wmobley/upstream-ui-pods: Upstream UI with TAPIS pods Integration
