@@ -1,4 +1,5 @@
 # Upstream Viz  
+[![DOI](https://zenodo.org/badge/1076822803.svg)](https://doi.org/10.5281/zenodo.17664816)
 
 A modern visualization platform for environmental sensor data. This application provides powerful tools for analyzing, visualizing, and exploring time-series data from environmental monitoring campaigns.
 
