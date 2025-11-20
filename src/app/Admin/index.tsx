@@ -257,6 +257,7 @@ const Admin = () => {
   const [selectedPodId, setSelectedPodId] = useState<string | null>(null);
   const [newUser, setNewUser] = useState('');
   const [newLevel, setNewLevel] = useState('ADMIN');
+  const [updatingGroupPermissions, setUpdatingGroupPermissions] = useState(false);
   const [bundleBase, setBundleBase] = useState('');
   const [pgUser, setPgUser] = useState('fastapi_traefik');
   const [pgPassword, setPgPassword] = useState('fastapi_traefik');
@@ -297,18 +298,6 @@ const Admin = () => {
         buildUserIdentifierVariants(perm.user).some((variant) => usernameVariantSet.has(variant)),
     );
   }, [permissions, usernameVariants]);
-  useEffect(() => {
-    const normalizedPerms = permissions.map(
-      (perm) => `${perm.user}:${perm.level?.toUpperCase() ?? 'UNKNOWN'}`
-    );
-    // eslint-disable-next-line no-console
-    console.debug('[Admin] user info', {
-      username,
-      usernameVariants,
-      permissions: normalizedPerms,
-      isCurrentUserAdmin,
-    });
-  }, [username, usernameVariants, permissions, isCurrentUserAdmin]);
   const canRestartPods = isCurrentUserAdmin;
   const addPermission = useAddPodPermission();
   const createPod = useCreatePod();
@@ -325,7 +314,7 @@ const Admin = () => {
     ui: false,
     api: false,
   });
-  const DEFAULT_BUNDLE_ADMIN = { user: 'wmobley', level: 'ADMIN' } as const;
+  const DEFAULT_BUNDLE_PERMISSIONS = [{ user: 'wmobley', level: 'ADMIN' }] as const;
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const waitForPodAvailable = async (podId: string, attempts = 24, delayMs = 5000) => {
@@ -432,6 +421,11 @@ const Admin = () => {
       return acc;
     }, {});
   }, [pods]);
+  const selectedBase = useMemo(() => (selectedPodId ? deriveBaseName(selectedPodId) : null), [selectedPodId]);
+  const podsForSelectedBase = useMemo(
+    () => (selectedBase && groupedPods[selectedBase] ? groupedPods[selectedBase] : []),
+    [groupedPods, selectedBase],
+  );
 
   const hasAnyUiPods = useMemo(
     () => Object.entries(groupedPods).some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
@@ -514,17 +508,34 @@ const Admin = () => {
     });
   };
 
-  const ensureDefaultAdminPermission = async (podId: string) => {
+  const ensureDefaultGroupPermissions = async (podId: string) => {
     if (!podId) return;
-    try {
+    for (const perm of DEFAULT_BUNDLE_PERMISSIONS) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await addPermission.mutateAsync({
+          podId,
+          user: perm.user,
+          level: perm.level,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`[Admin] Failed to assign default permission ${perm.user}:${perm.level} to ${podId}`, error);
+      }
+    }
+  };
+
+  const applyPermissionAcrossGroup = async (podsForBase: Pods.PodResponseModel[], user: string, level: string) => {
+    if (!podsForBase.length) {
+      throw new Error('No pods found for this group.');
+    }
+    for (const pod of podsForBase) {
+      // eslint-disable-next-line no-await-in-loop
       await addPermission.mutateAsync({
-        podId,
-        user: DEFAULT_BUNDLE_ADMIN.user,
-        level: DEFAULT_BUNDLE_ADMIN.level,
+        podId: pod.pod_id,
+        user,
+        level,
       });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(`[Admin] Failed to assign default permission to ${podId}`, error);
     }
   };
 
@@ -664,7 +675,7 @@ const Admin = () => {
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.postgres, pgId, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
-      await ensureDefaultAdminPermission(pgId);
+      await ensureDefaultGroupPermissions(pgId);
 
       // Wait for postgres pod to be up before creating API/UI
       await waitForPodAvailable(pgId);
@@ -674,12 +685,12 @@ const Admin = () => {
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.api, `${baseLower}api`, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
-      await ensureDefaultAdminPermission(`${baseLower}api`);
+      await ensureDefaultGroupPermissions(`${baseLower}api`);
 
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.app, baseLower, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
-      await ensureDefaultAdminPermission(baseLower);
+      await ensureDefaultGroupPermissions(baseLower);
 
       setSelectedPodId(`${baseLower}api`);
       setBundleBase('');
@@ -785,6 +796,34 @@ const Admin = () => {
     } finally {
       setRestartingBase(null);
       setGlobalRestarting((prev) => ({ ...prev, [type]: false }));
+    }
+  };
+
+  const handleAddGroupPermission = async () => {
+    if (!selectedPodId) return;
+    if (!selectedBase) {
+      alert('Select a pod to manage permissions.');
+      return;
+    }
+    const trimmedUser = newUser.trim();
+    if (!trimmedUser) {
+      alert('Enter a username to add.');
+      return;
+    }
+    const podsForBase = podsForSelectedBase;
+    if (!podsForBase.length) {
+      alert(`No pods found for group "${selectedBase}".`);
+      return;
+    }
+    setUpdatingGroupPermissions(true);
+    try {
+      await applyPermissionAcrossGroup(podsForBase, trimmedUser, newLevel);
+      setNewUser('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update permissions for this group';
+      alert(message);
+    } finally {
+      setUpdatingGroupPermissions(false);
     }
   };
 
@@ -949,6 +988,7 @@ const Admin = () => {
                   const hasRestartTargets = Boolean(classified.postgres || classified.api || classified.ui);
                   const isDeleting = deletingBase === base;
                   const isRestarting = restartingBase === base;
+                  const isSelectedGroup = selectedBase === base;
                   const isActionsOpen = openActionsBase === base;
                   const progress = restartProgress[base];
                   const disableRestart =
@@ -962,8 +1002,16 @@ const Admin = () => {
                   const disableDelete =
                     isRestarting || isDeleting || deletePod.isPending || globalRestarting.ui || globalRestarting.api;
                   return (
-                    <details key={base} className="rounded border border-gray-100 bg-gray-50" open>
-                      <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase text-gray-600">
+                    <details
+                      key={base}
+                      className={`rounded border ${isSelectedGroup ? 'border-blue-300 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}
+                      open
+                    >
+                      <summary
+                        className={`cursor-pointer px-3 py-2 text-xs font-semibold uppercase ${
+                          isSelectedGroup ? 'text-blue-700' : 'text-gray-600'
+                        }`}
+                      >
                         {base || '(no base)'}
                       </summary>
                       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2">
@@ -1039,7 +1087,7 @@ const Admin = () => {
                       </div>
                       <div className="divide-y divide-gray-100">
                         {podsForBase.map((pod) => {
-                          const isSelected = pod.pod_id === selectedPodId;
+                          const isSelected = isSelectedGroup || pod.pod_id === selectedPodId;
                           const link = buildLink(pod);
                           const volumeInfo = pod.pod_id.toLowerCase().includes('postgres')
                             ? findVolumeForPod(pod)
@@ -1118,8 +1166,15 @@ const Admin = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Permissions</h3>
               <p className="text-sm text-gray-600">
-                {selectedPodId ? `Access list for ${selectedPodId}` : 'Select a pod to view permissions.'}
+                {selectedPodId
+                  ? `Access list for ${selectedBase ?? selectedPodId} group`
+                  : 'Select a pod to view permissions.'}
               </p>
+              {selectedPodId && podsForSelectedBase.length > 0 && (
+                <p className="text-xs text-gray-500">
+                  Applies to: {podsForSelectedBase.map((pod) => pod.pod_id).join(', ')}
+                </p>
+              )}
             </div>
             {selectedPodId && (
               <button
@@ -1168,12 +1223,17 @@ const Admin = () => {
                 ))}
               </div>
             ) : (
-              <div className="p-4 text-sm text-gray-700">No permissions returned for this pod.</div>
+              <div className="p-4 text-sm text-gray-700">No permissions returned for this group.</div>
             ))}
 
           {selectedPodId && (
             <div className="border-t border-gray-200 px-4 py-3 space-y-3">
-              <h4 className="text-sm font-semibold text-gray-900">Add user permission</h4>
+              <h4 className="text-sm font-semibold text-gray-900">Add user permission to group</h4>
+              {podsForSelectedBase.length > 0 && (
+                <p className="text-xs text-gray-500">
+                  This change is applied to: {podsForSelectedBase.map((pod) => pod.pod_id).join(', ')}
+                </p>
+              )}
               <div className="flex flex-col gap-2">
                 <input
                   type="text"
@@ -1181,13 +1241,13 @@ const Admin = () => {
                   onChange={(e) => setNewUser(e.target.value)}
                   placeholder="Username"
                   className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-                  disabled={addPermission.isPending}
+                  disabled={addPermission.isPending || updatingGroupPermissions}
                 />
                 <select
                   value={newLevel}
                   onChange={(e) => setNewLevel(e.target.value)}
                   className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-blue-500"
-                  disabled={addPermission.isPending}
+                  disabled={addPermission.isPending || updatingGroupPermissions}
                 >
                   <option value="READ">READ</option>
                   <option value="USER">USER</option>
@@ -1195,25 +1255,16 @@ const Admin = () => {
                 </select>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!selectedPodId) return;
-                    addPermission.mutate(
-                      {
-                        podId: selectedPodId,
-                        user: newUser.trim(),
-                        level: newLevel,
-                      },
-                      {
-                        onSuccess: () => {
-                          setNewUser('');
-                        },
-                      },
-                    );
-                  }}
+                  onClick={handleAddGroupPermission}
                   className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                  disabled={addPermission.isPending || !newUser.trim()}
+                  disabled={
+                    addPermission.isPending ||
+                    updatingGroupPermissions ||
+                    !newUser.trim() ||
+                    podsForSelectedBase.length === 0
+                  }
                 >
-                  {addPermission.isPending ? 'Saving…' : 'Add user'}
+                  {updatingGroupPermissions ? 'Applying to group…' : 'Add user to group'}
                 </button>
                 {addPermission.isError && (
                   <div className="text-xs text-red-600">

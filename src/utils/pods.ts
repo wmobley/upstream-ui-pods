@@ -189,7 +189,13 @@ export const normalizePodsApiError = async (error: unknown, fallbackMessage: str
     try {
       const text = await response.text();
       if (text) {
-        return new Error(text);
+        const message = text.trim();
+        if (message.includes('Invalid Tapis token')) {
+          const invalidError = new Error(message);
+          (invalidError as Error & { tapisInvalidToken?: boolean }).tapisInvalidToken = true;
+          return invalidError;
+        }
+        return new Error(message);
       }
     } catch {
       // ignore and fall through
