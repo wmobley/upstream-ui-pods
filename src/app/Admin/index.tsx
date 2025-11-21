@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pods } from '@tapis/tapis-typescript';
 import usePodsList from '../../hooks/pods/usePodsList';
 import usePodsConfig from '../../hooks/pods/usePodsConfig';
+import usePodPermissions from '../../hooks/pods/usePodPermissions';
 import useAddPodPermission from '../../hooks/pods/useAddPodPermission';
 import useCreatePod from '../../hooks/pods/useCreatePod';
 import useCreateVolume from '../../hooks/pods/useCreateVolume';
@@ -20,6 +21,35 @@ const formatDate = (value?: Date | string | null) => {
     return String(value);
   }
   return date.toLocaleString();
+};
+
+const buildUserIdentifierVariants = (value?: string | null) => {
+  if (!value) return [];
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return [];
+  const variants = new Set<string>([trimmed]);
+  ['@', '/', '\\', '|'].forEach((delimiter) => {
+    if (trimmed.includes(delimiter)) {
+      trimmed
+        .split(delimiter)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .forEach((part) => variants.add(part));
+    }
+  });
+  return Array.from(variants);
+};
+
+const parsePermissions = (permissions?: string[] | null) => {
+  if (!permissions) return [];
+  return permissions.map((perm) => {
+    const [user, level] = perm.split(':');
+    return {
+      raw: perm,
+      user: user || perm,
+      level: (level || 'UNKNOWN').toUpperCase(),
+    };
+  });
 };
 
 
@@ -257,7 +287,22 @@ const Admin = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openActionsBase]);
 
-  const isCurrentUserAdmin = (currentUserRole || '').toUpperCase() === 'ADMIN';
+  const permissionsQuery = usePodPermissions(selectedPodId);
+  const podPermissions = useMemo(
+    () => parsePermissions(permissionsQuery.data?.result?.permissions),
+    [permissionsQuery.data?.result?.permissions],
+  );
+  const usernameVariants = useMemo(() => buildUserIdentifierVariants(username), [username]);
+  const hasPodAdminRole = useMemo(() => {
+    if (!usernameVariants.length) return false;
+    const variantSet = new Set(usernameVariants);
+    return podPermissions.some(
+      (perm) =>
+        perm.level === 'ADMIN' &&
+        buildUserIdentifierVariants(perm.user).some((variant) => variantSet.has(variant)),
+    );
+  }, [podPermissions, usernameVariants]);
+  const isCurrentUserAdmin = (currentUserRole || '').toUpperCase() === 'ADMIN' || hasPodAdminRole;
   const canRestartPods = isCurrentUserAdmin;
   const userRolesQuery = useUserRoles({ enabled: isCurrentUserAdmin });
   const saveUserRole = useSaveUserRole();
@@ -1115,7 +1160,7 @@ const Admin = () => {
 
           {!isCurrentUserAdmin && (
             <div className="p-4 text-sm text-yellow-800 bg-yellow-50 border-b border-yellow-100">
-              Admin role required to view or edit application roles.
+              Admin role required to view or edit application roles. (Admin access is granted via Pods permissions or the Upstream role table.)
             </div>
           )}
 
