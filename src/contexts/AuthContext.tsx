@@ -23,6 +23,7 @@ interface AuthContextType {
   logout: () => void;
   isTapisAuth: boolean;
   username: string | null;
+  role: string | null;
 }
 
 interface AuthProviderProps {
@@ -37,8 +38,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<Error | null>(null);
   const [isTapisAuth, setIsTapisAuth] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const config = useConfiguration();
   const authApi = new AuthApi(config);
+
+  const applyJwtDetails = (token: string) => {
+    try {
+      const [, payloadBase64] = token.split('.');
+      if (!payloadBase64) return;
+      const normalized = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(normalized.length + (4 - (normalized.length % 4)) % 4, '=');
+      const payload = JSON.parse(atob(padded)) as { username?: string; role?: string };
+      if (payload.username) {
+        setUsername(payload.username);
+      }
+      if (payload.role) {
+        setRole(payload.role);
+      }
+    } catch (tokenError) {
+      console.warn('[Auth] Failed to decode JWT payload', tokenError);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -59,6 +79,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (token) {
         setIsAuthenticated(true);
         setIsTapisAuth(false);
+        applyJwtDetails(token);
+      } else {
+        setUsername(null);
+        setRole(null);
       }
       setIsLoading(false);
     };
@@ -85,6 +109,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       localStorage.setItem('access_token', response.accessToken);
+      setRole(response.role ?? null);
+      applyJwtDetails(response.accessToken);
 
       if (response.tapisAccessToken || response.tapisRefreshToken || response.tapisExpiresAt) {
         storeTapisTokens({
@@ -109,7 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (hasTapisUser) {
         setUsername(tapisUser?.username ?? email);
       } else {
-        setUsername(email);
+        setUsername((prev) => prev ?? response.username ?? email);
       }
     } catch (err) {
       let errorMessage = 'Invalid username or password';
@@ -141,6 +167,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(false);
     setIsTapisAuth(false);
     setUsername(null);
+     setRole(null);
   };
 
   return (
@@ -153,6 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         isTapisAuth,
         username,
+        role,
       }}
     >
       {children}

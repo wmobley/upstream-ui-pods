@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pods } from '@tapis/tapis-typescript';
 import usePodsList from '../../hooks/pods/usePodsList';
 import usePodsConfig from '../../hooks/pods/usePodsConfig';
-import usePodPermissions from '../../hooks/pods/usePodPermissions';
 import useAddPodPermission from '../../hooks/pods/useAddPodPermission';
 import useCreatePod from '../../hooks/pods/useCreatePod';
 import useCreateVolume from '../../hooks/pods/useCreateVolume';
@@ -12,6 +11,7 @@ import useVolumesList from '../../hooks/pods/useVolumesList';
 import useRestartPod from '../../hooks/pods/useRestartPod';
 import { useAuth } from '../../contexts/AuthContext';
 import { buildPodsHeaders, clearTapisAuth, decodeJwtExp } from '../../utils/pods';
+import { useUserRoles, useSaveUserRole, UserRoleValue } from '../../hooks/api/useUserRoles';
 
 const formatDate = (value?: Date | string | null) => {
   if (!value) return '—';
@@ -22,32 +22,6 @@ const formatDate = (value?: Date | string | null) => {
   return date.toLocaleString();
 };
 
-const parsePermissions = (permissions?: string[] | null) => {
-  if (!permissions) return [];
-  return permissions.map((p) => {
-    const [user, level] = p.split(':');
-    return { user: user || p, level: level || 'UNKNOWN', raw: p };
-  });
-};
-
-// Normalize usernames that may include tenant/site qualifiers so permission checks remain accurate.
-const buildUserIdentifierVariants = (value?: string | null) => {
-  if (!value) return [];
-  const trimmed = value.trim().toLowerCase();
-  if (!trimmed) return [];
-  const variants = new Set<string>([trimmed]);
-  const delimiters = ['@', '/', '\\', '|'];
-  delimiters.forEach((delimiter) => {
-    if (trimmed.includes(delimiter)) {
-      trimmed
-        .split(delimiter)
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .forEach((part) => variants.add(part));
-    }
-  });
-  return Array.from(variants);
-};
 
 const suffixes = ['postgres', 'postsgres', 'api'];
 const deriveBaseName = (podId: string) => {
@@ -247,7 +221,7 @@ const uiBlueprint = {
   },
 } as Pods.PodResponseModel & { image?: string };
 const Admin = () => {
-  const { username } = useAuth();
+  const { username, role: currentUserRole } = useAuth();
   const { token, basePath } = usePodsConfig();
   const podsQuery = usePodsList();
   const pods = podsQuery.data?.result ?? [];
@@ -256,8 +230,8 @@ const Admin = () => {
 
   const [selectedPodId, setSelectedPodId] = useState<string | null>(null);
   const [newUser, setNewUser] = useState('');
-  const [newLevel, setNewLevel] = useState('ADMIN');
-  const [updatingGroupPermissions, setUpdatingGroupPermissions] = useState(false);
+  const [newLevel, setNewLevel] = useState<UserRoleValue>('ADMIN');
+  const [savingUserRole, setSavingUserRole] = useState(false);
   const [bundleBase, setBundleBase] = useState('');
   const [pgUser, setPgUser] = useState('fastapi_traefik');
   const [pgPassword, setPgPassword] = useState('fastapi_traefik');
@@ -283,28 +257,18 @@ const Admin = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openActionsBase]);
 
-  const permissionsQuery = usePodPermissions(selectedPodId);
-  const permissions = useMemo(
-    () => parsePermissions(permissionsQuery.data?.result?.permissions),
-    [permissionsQuery.data?.result?.permissions],
-  );
-  const usernameVariants = useMemo(() => buildUserIdentifierVariants(username), [username]);
-  const isCurrentUserAdmin = useMemo(() => {
-    if (!usernameVariants.length) return false;
-    const usernameVariantSet = new Set(usernameVariants);
-    return permissions.some(
-      (perm) =>
-        perm.level?.toUpperCase() === 'ADMIN' &&
-        buildUserIdentifierVariants(perm.user).some((variant) => usernameVariantSet.has(variant)),
-    );
-  }, [permissions, usernameVariants]);
+  const isCurrentUserAdmin = (currentUserRole || '').toUpperCase() === 'ADMIN';
   const canRestartPods = isCurrentUserAdmin;
-  const addPermission = useAddPodPermission();
+  const userRolesQuery = useUserRoles({ enabled: isCurrentUserAdmin });
+  const saveUserRole = useSaveUserRole();
+  const userRoles = userRolesQuery.data ?? [];
+  const normalizedUsername = (username || '').trim().toLowerCase();
   const createPod = useCreatePod();
   const createVolume = useCreateVolume();
   const deletePod = useDeletePod();
   const deleteVolume = useDeleteVolume();
   const restartPod = useRestartPod();
+  const addPermission = useAddPodPermission();
   const [deletingBase, setDeletingBase] = useState<string | null>(null);
   const [restartingBase, setRestartingBase] = useState<string | null>(null);
   const [restartProgress, setRestartProgress] = useState<
@@ -522,20 +486,6 @@ const Admin = () => {
         // eslint-disable-next-line no-console
         console.error(`[Admin] Failed to assign default permission ${perm.user}:${perm.level} to ${podId}`, error);
       }
-    }
-  };
-
-  const applyPermissionAcrossGroup = async (podsForBase: Pods.PodResponseModel[], user: string, level: string) => {
-    if (!podsForBase.length) {
-      throw new Error('No pods found for this group.');
-    }
-    for (const pod of podsForBase) {
-      // eslint-disable-next-line no-await-in-loop
-      await addPermission.mutateAsync({
-        podId: pod.pod_id,
-        user,
-        level,
-      });
     }
   };
 
@@ -799,31 +749,25 @@ const Admin = () => {
     }
   };
 
-  const handleAddGroupPermission = async () => {
-    if (!selectedPodId) return;
-    if (!selectedBase) {
-      alert('Select a pod to manage permissions.');
+  const handleSaveUserRole = async () => {
+    if (!isCurrentUserAdmin) {
+      alert('Admin permissions required to manage application roles.');
       return;
     }
-    const trimmedUser = newUser.trim();
+    const trimmedUser = newUser.trim().toLowerCase();
     if (!trimmedUser) {
-      alert('Enter a username to add.');
+      alert('Enter a username to update.');
       return;
     }
-    const podsForBase = podsForSelectedBase;
-    if (!podsForBase.length) {
-      alert(`No pods found for group "${selectedBase}".`);
-      return;
-    }
-    setUpdatingGroupPermissions(true);
+    setSavingUserRole(true);
     try {
-      await applyPermissionAcrossGroup(podsForBase, trimmedUser, newLevel);
+      await saveUserRole.mutateAsync({ username: trimmedUser, role: newLevel });
       setNewUser('');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update permissions for this group';
+      const message = error instanceof Error ? error.message : 'Failed to update application role';
       alert(message);
     } finally {
-      setUpdatingGroupPermissions(false);
+      setSavingUserRole(false);
     }
   };
 
@@ -831,7 +775,7 @@ const Admin = () => {
     <div className="mx-auto max-w-6xl p-6 sm:p-10 space-y-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold text-gray-900">Admin</h1>
-        <p className="text-sm text-gray-700">Pods you can access, with permissions for the selected pod.</p>
+        <p className="text-sm text-gray-700">Pods you can access, plus application-level roles for the Upstream API.</p>
       </div>
 
       {!token && (
@@ -1162,78 +1106,54 @@ const Admin = () => {
         </section>
 
         <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Permissions</h3>
-              <p className="text-sm text-gray-600">
-                {selectedPodId
-                  ? `Access list for ${selectedBase ?? selectedPodId} group`
-                  : 'Select a pod to view permissions.'}
-              </p>
-              {selectedPodId && podsForSelectedBase.length > 0 && (
-                <p className="text-xs text-gray-500">
-                  Applies to: {podsForSelectedBase.map((pod) => pod.pod_id).join(', ')}
-                </p>
-              )}
-            </div>
-            {selectedPodId && (
-              <button
-                type="button"
-                className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-                onClick={() => {
-                  const pod = pods.find((p) => p.pod_id === selectedPodId);
-                  const link = pod ? buildLink(pod) : null;
-                  if (link) window.open(link, '_blank', 'noopener');
-                }}
-              >
-                Open UI
-              </button>
-            )}
+          <div className="border-b border-gray-200 px-4 py-3">
+            <h3 className="text-lg font-semibold text-gray-900">Application roles</h3>
+            <p className="text-sm text-gray-600">
+              Assign Upstream API roles. These roles replace the legacy Pods permission list.
+            </p>
           </div>
 
-          {!selectedPodId && (
-            <div className="p-4 text-sm text-gray-700">Choose a pod from the list.</div>
-          )}
-
-          {selectedPodId && permissionsQuery.isLoading && (
-            <div className="p-4 text-sm text-gray-700">Loading permissions…</div>
-          )}
-
-          {selectedPodId && permissionsQuery.isError && (
-            <div className="p-4 text-sm text-red-600">
-              {(permissionsQuery.error as Error)?.message || 'Unable to load permissions'}
+          {!isCurrentUserAdmin && (
+            <div className="p-4 text-sm text-yellow-800 bg-yellow-50 border-b border-yellow-100">
+              Admin role required to view or edit application roles.
             </div>
           )}
 
-          {selectedPodId &&
-            !permissionsQuery.isLoading &&
-            !permissionsQuery.isError &&
-            (permissions.length > 0 ? (
+          {isCurrentUserAdmin && userRolesQuery.isLoading && (
+            <div className="p-4 text-sm text-gray-700">Loading roles…</div>
+          )}
+
+          {isCurrentUserAdmin && userRolesQuery.isError && (
+            <div className="p-4 text-sm text-red-600">
+              {(userRolesQuery.error as Error)?.message || 'Unable to load user roles'}
+            </div>
+          )}
+
+          {isCurrentUserAdmin && !userRolesQuery.isLoading && !userRolesQuery.isError && (
+            userRoles.length > 0 ? (
               <div className="divide-y divide-gray-100">
-                {permissions.map((perm) => (
-                  <div key={perm.raw} className="flex items-center justify-between px-4 py-3">
+                {userRoles.map((entry) => (
+                  <div key={entry.username} className="flex items-center justify-between px-4 py-3">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{perm.user}</p>
-                      <p className="text-xs text-gray-600 break-all">Raw: {perm.raw}</p>
+                      <p className="text-sm font-semibold text-gray-900">{entry.username}</p>
+                      {entry.username === normalizedUsername && (
+                        <p className="text-xs text-gray-500">Signed in</p>
+                      )}
                     </div>
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 uppercase tracking-wide">
-                      {perm.level}
+                      {entry.role}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-4 text-sm text-gray-700">No permissions returned for this group.</div>
-            ))}
+              <div className="p-4 text-sm text-gray-700">No application roles have been configured yet.</div>
+            )
+          )}
 
-          {selectedPodId && (
+          {isCurrentUserAdmin && (
             <div className="border-t border-gray-200 px-4 py-3 space-y-3">
-              <h4 className="text-sm font-semibold text-gray-900">Add user permission to group</h4>
-              {podsForSelectedBase.length > 0 && (
-                <p className="text-xs text-gray-500">
-                  This change is applied to: {podsForSelectedBase.map((pod) => pod.pod_id).join(', ')}
-                </p>
-              )}
+              <h4 className="text-sm font-semibold text-gray-900">Assign or update a role</h4>
               <div className="flex flex-col gap-2">
                 <input
                   type="text"
@@ -1241,13 +1161,13 @@ const Admin = () => {
                   onChange={(e) => setNewUser(e.target.value)}
                   placeholder="Username"
                   className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-                  disabled={addPermission.isPending || updatingGroupPermissions}
+                  disabled={savingUserRole || saveUserRole.isPending}
                 />
                 <select
                   value={newLevel}
-                  onChange={(e) => setNewLevel(e.target.value)}
+                  onChange={(e) => setNewLevel(e.target.value as UserRoleValue)}
                   className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-blue-500"
-                  disabled={addPermission.isPending || updatingGroupPermissions}
+                  disabled={savingUserRole || saveUserRole.isPending}
                 >
                   <option value="READ">READ</option>
                   <option value="USER">USER</option>
@@ -1255,24 +1175,19 @@ const Admin = () => {
                 </select>
                 <button
                   type="button"
-                  onClick={handleAddGroupPermission}
+                  onClick={handleSaveUserRole}
                   className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                  disabled={
-                    addPermission.isPending ||
-                    updatingGroupPermissions ||
-                    !newUser.trim() ||
-                    podsForSelectedBase.length === 0
-                  }
+                  disabled={savingUserRole || saveUserRole.isPending || !newUser.trim()}
                 >
-                  {updatingGroupPermissions ? 'Applying to group…' : 'Add user to group'}
+                  {savingUserRole || saveUserRole.isPending ? 'Saving…' : 'Save role'}
                 </button>
-                {addPermission.isError && (
+                {saveUserRole.isError && (
                   <div className="text-xs text-red-600">
-                    {(addPermission.error as Error)?.message || 'Failed to add permission'}
+                    {(saveUserRole.error as Error)?.message || 'Failed to update role'}
                   </div>
                 )}
-                {addPermission.isSuccess && (
-                  <div className="text-xs text-green-700">Permission added.</div>
+                {saveUserRole.isSuccess && (
+                  <div className="text-xs text-green-700">Role updated.</div>
                 )}
               </div>
             </div>

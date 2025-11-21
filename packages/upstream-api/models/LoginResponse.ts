@@ -49,6 +49,12 @@ export interface LoginResponse {
      * @memberof LoginResponse
      */
     tapisExpiresAt?: number | null;
+    /**
+     * Application role assigned to the authenticated user.
+     * @type {string}
+     * @memberof LoginResponse
+     */
+    role?: string | null;
 }
 
 /**
@@ -75,6 +81,7 @@ export function LoginResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         'tapisAccessToken': json['tapis_access_token'] ?? undefined,
         'tapisRefreshToken': json['tapis_refresh_token'] ?? undefined,
         'tapisExpiresAt': json['tapis_expires_at'] ?? undefined,
+        'role': json['role'] ?? undefined,
     };
 }
 
@@ -94,5 +101,6 @@ export function LoginResponseToJSONTyped(value?: LoginResponse | null, ignoreDis
         'tapis_access_token': value['tapisAccessToken'] ?? undefined,
         'tapis_refresh_token': value['tapisRefreshToken'] ?? undefined,
         'tapis_expires_at': value['tapisExpiresAt'] ?? undefined,
+        'role': value['role'] ?? undefined,
     };
 }
