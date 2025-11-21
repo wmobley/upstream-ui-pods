@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pods } from '@tapis/tapis-typescript';
 import usePodsList from '../../hooks/pods/usePodsList';
 import usePodsConfig from '../../hooks/pods/usePodsConfig';
@@ -377,7 +377,7 @@ const Admin = () => {
     return () => clearTimeout(timer);
   }, [token]);
 
-  const groupedPods = useMemo(() => {
+  const groupedPods = useMemo<Record<string, Pods.PodResponseModel[]>>(() => {
     return pods.reduce<Record<string, Pods.PodResponseModel[]>>((acc, pod) => {
       const base = deriveBaseName(pod.pod_id);
       if (!acc[base]) acc[base] = [];
@@ -385,20 +385,20 @@ const Admin = () => {
       return acc;
     }, {});
   }, [pods]);
-  const selectedBase = useMemo(() => (selectedPodId ? deriveBaseName(selectedPodId) : null), [selectedPodId]);
-  const podsForSelectedBase = useMemo(
-    () => (selectedBase && groupedPods[selectedBase] ? groupedPods[selectedBase] : []),
-    [groupedPods, selectedBase],
+  const groupedPodEntries = useMemo<[string, Pods.PodResponseModel[]][]>(
+    () => Object.entries(groupedPods) as [string, Pods.PodResponseModel[]][],
+    [groupedPods],
   );
+  const selectedBase = useMemo(() => (selectedPodId ? deriveBaseName(selectedPodId) : null), [selectedPodId]);
 
   const hasAnyUiPods = useMemo(
-    () => Object.entries(groupedPods).some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
-    [groupedPods],
+    () => groupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
+    [groupedPodEntries],
   );
 
   const hasAnyApiPods = useMemo(
-    () => Object.entries(groupedPods).some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).api)),
-    [groupedPods],
+    () => groupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).api)),
+    [groupedPodEntries],
   );
 
   const findVolumeForPod = (pod: Pods.PodResponseModel) => {
@@ -719,7 +719,7 @@ const Admin = () => {
       return;
     }
     setOpenActionsBase(null);
-    const targets = Object.entries(groupedPods)
+    const targets = groupedPodEntries
       .map(([base, podsForBase]) => {
         const classified = classifyPodsForBase(base, podsForBase);
         const pod = type === 'api' ? classified.api : classified.ui;
@@ -925,7 +925,7 @@ const Admin = () => {
 
             {showPods && (
               <div className="space-y-2">
-                {Object.entries(groupedPods).map(([base, podsForBase]) => {
+                {groupedPodEntries.map(([base, podsForBase]) => {
                   const uiPod = podsForBase.find((p) => p.pod_id.toLowerCase() === base.toLowerCase());
                   const uiLink = uiPod ? buildLink(uiPod) : null;
                   const classified = classifyPodsForBase(base, podsForBase);

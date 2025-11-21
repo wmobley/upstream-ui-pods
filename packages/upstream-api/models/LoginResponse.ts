@@ -55,6 +55,12 @@ export interface LoginResponse {
      * @memberof LoginResponse
      */
     role?: string | null;
+    /**
+     * Username returned from the API.
+     * @type {string}
+     * @memberof LoginResponse
+     */
+    username?: string | null;
 }
 
 /**
@@ -82,6 +88,7 @@ export function LoginResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         'tapisRefreshToken': json['tapis_refresh_token'] ?? undefined,
         'tapisExpiresAt': json['tapis_expires_at'] ?? undefined,
         'role': json['role'] ?? undefined,
+        'username': json['username'] ?? undefined,
     };
 }
 
@@ -102,5 +109,6 @@ export function LoginResponseToJSONTyped(value?: LoginResponse | null, ignoreDis
         'tapis_refresh_token': value['tapisRefreshToken'] ?? undefined,
         'tapis_expires_at': value['tapisExpiresAt'] ?? undefined,
         'role': value['role'] ?? undefined,
+        'username': value['username'] ?? undefined,
     };
 }
