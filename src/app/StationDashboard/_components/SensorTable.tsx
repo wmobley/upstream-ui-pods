@@ -15,6 +15,7 @@ import { useDeleteBySensor } from '../../../hooks/measurements/useDeleteBySensor
 import { useDeleteSensor } from '../../../hooks/sensor/useDeleteSensor';
 import ConfirmDialog from '../../common/ConfirmDialog/ConfirmDialog';
 import { useHistory } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface SensorTableProps {
   campaignId: string;
@@ -75,6 +76,9 @@ export const SensorTable: React.FC<SensorTableProps> = ({
   const deleteMeasurementsMutation = useDeleteBySensor();
   const deleteSensorMutation = useDeleteSensor();
   const history = useHistory();
+  const { role } = useAuth();
+  const roleUpper = (role || '').toUpperCase();
+  const canManageSensors = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
 
   /** Dropdown state for each sensor */
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
@@ -139,6 +143,10 @@ export const SensorTable: React.FC<SensorTableProps> = ({
   };
 
   const handleDeleteClick = (sensorId: string, sensorName: string, deleteType: 'sensor' | 'measurements') => {
+    if (!canManageSensors) {
+      alert('Write permissions required to delete sensors or measurements.');
+      return;
+    }
     setDeleteDialog({
       isOpen: true,
       sensorId,
@@ -148,6 +156,11 @@ export const SensorTable: React.FC<SensorTableProps> = ({
   };
 
   const handleDeleteConfirm = () => {
+    if (!canManageSensors) {
+      alert('Write permissions required to delete sensors or measurements.');
+      setDeleteDialog({ isOpen: false, sensorId: '', sensorName: '', deleteType: 'measurements' });
+      return;
+    }
     if (deleteDialog.deleteType === 'sensor') {
       deleteSensorMutation.mutate({
         campaignId,
@@ -263,8 +276,8 @@ export const SensorTable: React.FC<SensorTableProps> = ({
                         handleDeleteClick(item.id.toString(), item.variablename || 'Unknown', 'sensor');
                         setOpenDropdowns(new Set()); // Close dropdown
                       }}
-                      className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                      disabled={deleteSensorMutation.isPending}
+                      className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={deleteSensorMutation.isPending || !canManageSensors}
                     >
                       Delete Sensor
                     </button>
@@ -273,8 +286,8 @@ export const SensorTable: React.FC<SensorTableProps> = ({
                         handleDeleteClick(item.id.toString(), item.variablename || 'Unknown', 'measurements');
                         setOpenDropdowns(new Set()); // Close dropdown
                       }}
-                      className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                      disabled={deleteMeasurementsMutation.isPending}
+                      className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={deleteMeasurementsMutation.isPending || !canManageSensors}
                     >
                       Delete Measurements
                     </button>

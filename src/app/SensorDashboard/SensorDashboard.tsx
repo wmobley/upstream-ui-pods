@@ -8,6 +8,7 @@ import StatsSection from './_components/StatsSection';
 import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import {useDetail as stationInfo} from '../../hooks/station/useDetail';
 import { renderChm } from '../../utils/helpers';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SensorDashboardProps {
   campaignId: string;
@@ -23,13 +24,19 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
   const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
   const { campaign } = campaignInfo(campaignId);
   const { station } = stationInfo(campaignId, stationId );
-  // Since we removed allocations, allow all authenticated users to manage sensors
-  const canDeleteData = true; // Previously: useIsOwner(campaignId)
+  const { role } = useAuth();
+  const roleUpper = (role || '').toUpperCase();
+  const canManageData = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
+  const canDeleteData = canManageData;
   const publishSensor = usePublish();
   const unpublishSensor = useUnpublish();
   const [publishOverride, setPublishOverride] = React.useState<boolean | null>(null);
 
   const handlePublishSensor = async (cascade?: boolean) => {
+    if (!canManageData) {
+      alert('Write permissions required to publish sensors.');
+      return;
+    }
     try {
       await publishSensor.mutateAsync({
         campaignId: parseInt(campaignId),
@@ -67,6 +74,10 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
   };
 
   const handleUnpublishSensor = async () => {
+    if (!canManageData) {
+      alert('Write permissions required to unpublish sensors.');
+      return;
+    }
     try {
       await unpublishSensor.mutateAsync({
         campaignId: parseInt(campaignId),
@@ -119,7 +130,7 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
                 isPublished ? (
                   <button
                     onClick={handleUnpublishSensor}
-                    disabled={unpublishSensor.isPending}
+                    disabled={unpublishSensor.isPending || !canManageData}
                     className="flex items-center gap-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
                     title="Unpublish this sensor"
                   >
@@ -132,6 +143,7 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
                     onUnpublish={handleUnpublishSensor}
                     entityType="sensor"
                     showCascadeOption={true}
+                    disabled={!canManageData}
                   />
                 )
               )}

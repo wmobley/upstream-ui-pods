@@ -4,6 +4,7 @@ import { CampaignsIn } from '@upstream/upstream-api';
 import { useCreate } from '../../../../hooks/campaign/useCreate';
 import { useQueryClient } from '@tanstack/react-query';
 import useOrganizations from '../../../../hooks/ckan/useOrganizations';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 interface CreateCampaignFormProps {
   onCancel?: () => void;
@@ -13,6 +14,9 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
   const history = useHistory();
   const createCampaign = useCreate();
   const queryClient = useQueryClient();
+  const { role } = useAuth();
+  const roleUpper = (role || '').toUpperCase();
+  const canCreate = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
   const {
     data: organizations,
     isLoading: isOrgLoading,
@@ -88,6 +92,25 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
       history.goBack();
     }
   };
+
+  if (!canCreate) {
+    return (
+      <div className="max-w-xl mx-auto rounded-lg bg-yellow-50 border border-yellow-200 p-6 text-sm text-yellow-900 space-y-3">
+        <h2 className="text-lg font-semibold text-yellow-900">Write access required</h2>
+        <p>
+          Your account does not have permission to create campaigns. Request a role upgrade from an administrator
+          if you need to publish new campaigns.
+        </p>
+        <button
+          type="button"
+          onClick={() => history.goBack()}
+          className="inline-flex items-center rounded bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-700"
+        >
+          Go back
+        </button>
+      </div>
+    );
+  }
 
   return (
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">

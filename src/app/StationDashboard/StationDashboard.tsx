@@ -10,6 +10,7 @@ import StatsSection from './_components/StatsSection';
 import { SensorTable } from './_components/SensorTable';
 import UploadDataModal from './_components/UploadDataModal';
 import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -23,8 +24,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const history = useHistory();
   const { station, isLoading, error } = useDetail(campaignId, stationId);
   const { campaign } = campaignInfo(campaignId);
-  // Since we removed allocations, allow all authenticated users to manage stations
-  const canDeleteData = true; // Previously: useIsOwner(campaignId)
+  const { role } = useAuth();
+  const roleUpper = (role || '').toUpperCase();
+  const canManageData = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
+  const canDeleteData = canManageData;
   const deleteSensors = useDeleteSensors(campaignId, stationId);
   const deleteStation = useDeleteStation();
   const publishStation = usePublish();
@@ -38,6 +41,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const [publishOverride, setPublishOverride] = useState<boolean | null>(null);
 
   const handleDeleteSensors = async () => {
+    if (!canManageData) {
+      alert('Write permissions required to delete sensors.');
+      return;
+    }
     try {
       await deleteSensors.mutateAsync();
       setShowDeleteSensorsDialog(false);
@@ -47,6 +54,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   };
 
   const handleDeleteStation = async () => {
+    if (!canManageData) {
+      alert('Write permissions required to delete stations.');
+      return;
+    }
     try {
       await deleteStation.mutateAsync({
         campaignId,
@@ -61,6 +72,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   };
 
   const handlePublishStation = async (cascade?: boolean) => {
+    if (!canManageData) {
+      alert('Write permissions required to publish stations.');
+      return;
+    }
     if (!campaign || !station) {
       console.error('Campaign or station details missing; cannot publish to CKAN.');
       return;
@@ -89,6 +104,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   };
 
   const handleUnpublishStation = async () => {
+    if (!canManageData) {
+      alert('Write permissions required to unpublish stations.');
+      return;
+    }
     if (!campaign || !station) {
       console.error('Campaign or station details missing; cannot unpublish CKAN dataset.');
       return;
@@ -165,10 +184,15 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-[99999]" style={{ zIndex: 99999 }}>
                     <button
                       onClick={() => {
+                        if (!canManageData) {
+                          alert('Write permissions required to add data.');
+                          return;
+                        }
                         setShowActionDropdown(false);
                         setIsUploadModalOpen(true);
                       }}
-                      className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 transition-colors border-b border-gray-100"
+                      disabled={!canManageData}
+                      className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 transition-colors border-b border-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
