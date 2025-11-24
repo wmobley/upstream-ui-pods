@@ -302,7 +302,14 @@ const Admin = () => {
         buildUserIdentifierVariants(perm.user).some((variant) => variantSet.has(variant)),
     );
   }, [podPermissions, usernameVariants]);
-  const isCurrentUserAdmin = (currentUserRole || '').toUpperCase() === 'ADMIN' || hasPodAdminRole;
+  const roleUpper = (currentUserRole || '').toUpperCase();
+  const isApplicationAdmin = roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
+  const viewerRoles = new Set(['READ', 'USER', 'ADMIN', 'APPROVEDADMIN']);
+  const hasApplicationAccess = viewerRoles.has(roleUpper);
+  const isCurrentUserAdmin = isApplicationAdmin || hasPodAdminRole;
+  const writableRoles = new Set(['USER', 'ADMIN', 'APPROVEDADMIN']);
+  const canManagePods = writableRoles.has(roleUpper) || hasPodAdminRole;
+  const canViewAdminPage = hasApplicationAccess || hasPodAdminRole;
   const canRestartPods = isCurrentUserAdmin;
   const userRolesQuery = useUserRoles({ enabled: isCurrentUserAdmin });
   const saveUserRole = useSaveUserRole();
@@ -314,6 +321,7 @@ const Admin = () => {
   const deleteVolume = useDeleteVolume();
   const restartPod = useRestartPod();
   const addPermission = useAddPodPermission();
+  const bundleControlsDisabled = !canManagePods || createPod.isPending || createVolume.isPending;
   const [deletingBase, setDeletingBase] = useState<string | null>(null);
   const [restartingBase, setRestartingBase] = useState<string | null>(null);
   const [restartProgress, setRestartProgress] = useState<
@@ -653,6 +661,10 @@ const Admin = () => {
   };
 
   const handleCreateBundle = async () => {
+    if (!canManagePods) {
+      alert('Write permissions are required to create pods.');
+      return;
+    }
     const base = bundleBase.trim();
     if (!base) {
       alert('Please enter a base name.');
@@ -696,6 +708,10 @@ const Admin = () => {
   };
 
   const handleDeleteGroup = async (base: string, podsForBase: Pods.PodResponseModel[]) => {
+    if (!canManagePods) {
+      alert('Write permissions are required to delete pods.');
+      return;
+    }
     if (!podsForBase.length) return;
     setOpenActionsBase(null);
     const confirmed = window.confirm(
@@ -816,6 +832,17 @@ const Admin = () => {
     }
   };
 
+  if (!canViewAdminPage) {
+    return (
+      <div className="mx-auto max-w-4xl p-6 space-y-4">
+        <h1 className="text-2xl font-semibold text-gray-900">Admin</h1>
+        <div className="rounded border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
+          Your account does not have an Upstream API role. Contact an administrator to be granted access.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl p-6 sm:p-10 space-y-6">
       <div className="space-y-2">
@@ -852,7 +879,7 @@ const Admin = () => {
               value={bundleBase}
               onChange={(e) => setBundleBase(e.target.value)}
               className="flex-1 min-w-[200px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-              disabled={createPod.isPending || createVolume.isPending}
+              disabled={bundleControlsDisabled}
             />
             <input
               type="text"
@@ -860,7 +887,7 @@ const Admin = () => {
               value={pgUser}
               onChange={(e) => setPgUser(e.target.value)}
               className="min-w-[180px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-              disabled={createPod.isPending || createVolume.isPending}
+              disabled={bundleControlsDisabled}
             />
             <input
               type="password"
@@ -868,13 +895,13 @@ const Admin = () => {
               value={pgPassword}
               onChange={(e) => setPgPassword(e.target.value)}
               className="min-w-[180px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-              disabled={createPod.isPending || createVolume.isPending}
+              disabled={bundleControlsDisabled}
             />
             <button
               type="button"
               onClick={handleCreateBundle}
               className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-              disabled={createPod.isPending || createVolume.isPending || !bundleBase.trim()}
+              disabled={bundleControlsDisabled || !bundleBase.trim()}
             >
               {createPod.isPending || createVolume.isPending ? 'Creating…' : 'Create bundle'}
             </button>
@@ -888,6 +915,11 @@ const Admin = () => {
             <div className="text-xs text-green-700">Bundle creation requested.</div>
           )}
         </section>
+        {!canManagePods && (
+          <p className="text-xs text-gray-500">
+            Application write access is required to create new pods. Contact an administrator to request access.
+          </p>
+        )}
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -987,9 +1019,15 @@ const Admin = () => {
                     restartPod.isPending ||
                     deletePod.isPending ||
                     globalRestarting.ui ||
-                    globalRestarting.api;
+                    globalRestarting.api ||
+                    !canManagePods;
                   const disableDelete =
-                    isRestarting || isDeleting || deletePod.isPending || globalRestarting.ui || globalRestarting.api;
+                    isRestarting ||
+                    isDeleting ||
+                    deletePod.isPending ||
+                    globalRestarting.ui ||
+                    globalRestarting.api ||
+                    !canManagePods;
                   return (
                     <details
                       key={base}
@@ -1018,8 +1056,17 @@ const Admin = () => {
                         >
                           <button
                             type="button"
-                            onClick={() => setOpenActionsBase((prev) => (prev === base ? null : base))}
-                            className="inline-flex items-center rounded bg-gray-900 px-3 py-1 text-xs font-semibold text-white hover:bg-gray-800 focus:outline-none"
+                            onClick={() => {
+                              if (!canManagePods) {
+                                alert('Write permissions are required to manage pods.');
+                                return;
+                              }
+                              setOpenActionsBase((prev) => (prev === base ? null : base));
+                            }}
+                            disabled={!canManagePods}
+                            className={`inline-flex items-center rounded px-3 py-1 text-xs font-semibold text-white focus:outline-none ${
+                              canManagePods ? 'bg-gray-900 hover:bg-gray-800' : 'bg-gray-400 cursor-not-allowed opacity-70'
+                            }`}
                             aria-haspopup="menu"
                             aria-expanded={isActionsOpen}
                           >
@@ -1216,6 +1263,7 @@ const Admin = () => {
                 >
                   <option value="READ">READ</option>
                   <option value="USER">USER</option>
+                  <option value="APPROVEDADMIN">APPROVEDADMIN</option>
                   <option value="ADMIN">ADMIN</option>
                 </select>
                 <button

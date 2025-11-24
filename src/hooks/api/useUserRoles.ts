@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Configuration } from '@upstream/upstream-api';
 import useConfiguration from './useConfiguration';
 
-export type UserRoleValue = 'READ' | 'USER' | 'ADMIN';
+export type UserRoleValue = 'READ' | 'USER' | 'ADMIN' | 'APPROVEDADMIN';
 
 export interface UserRoleRecord {
   username: string;
