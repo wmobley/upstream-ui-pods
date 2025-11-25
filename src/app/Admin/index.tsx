@@ -303,7 +303,7 @@ const Admin = () => {
   }, [podPermissions, usernameVariants]);
   const roleUpper = (currentUserRole || '').toUpperCase();
   const isApplicationAdmin = roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
-  const viewerRoles = new Set(['READ', 'USER', 'ADMIN', 'APPROVEDADMIN']);
+  const viewerRoles = new Set(['NONE', 'READ', 'USER', 'ADMIN', 'APPROVEDADMIN']);
   const hasApplicationAccess = viewerRoles.has(roleUpper);
   const isCurrentUserAdmin = isApplicationAdmin || hasPodAdminRole;
   const writableRoles = new Set(['USER', 'ADMIN', 'APPROVEDADMIN']);
