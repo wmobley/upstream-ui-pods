@@ -271,18 +271,8 @@ const Admin = () => {
   const actionMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    if (!visibleGroupedPodEntries.length) {
-      if (selectedPodId) setSelectedPodId(null);
-      return;
-    }
-    const currentBaseHasSelection = visibleGroupedPodEntries.some(([, podsForBase]) =>
-      podsForBase.some((pod) => pod.pod_id === selectedPodId),
-    );
-    if (!currentBaseHasSelection) {
-      const firstPod = visibleGroupedPodEntries[0]?.[1]?.[0];
-      setSelectedPodId(firstPod ? firstPod.pod_id : null);
-    }
-  }, [visibleGroupedPodEntries, selectedPodId]);
+    // placeholder, actual logic is after visibleGroupedPodEntries declaration
+  }, []);
 
   useEffect(() => {
     if (!openActionsBase) return undefined;
@@ -474,7 +464,7 @@ const Admin = () => {
     if (!token || !basePath) {
       return groupedPodEntries;
     }
-    return groupedPodEntries.filter((entry, idx) => {
+    return groupedPodEntries.filter(([, podsForBase], idx) => {
       const query = basePermissionQueries[idx];
       if (!query || query.isLoading || query.isError) {
         return false;
@@ -502,6 +492,20 @@ const Admin = () => {
     () => visibleGroupedPodEntries.reduce((count, [, podsForBase]) => count + podsForBase.length, 0),
     [visibleGroupedPodEntries],
   );
+
+  useEffect(() => {
+    if (!visibleGroupedPodEntries.length) {
+      if (selectedPodId) setSelectedPodId(null);
+      return;
+    }
+    const currentBaseHasSelection = visibleGroupedPodEntries.some(([, podsForBase]) =>
+      podsForBase.some((pod) => pod.pod_id === selectedPodId),
+    );
+    if (!currentBaseHasSelection) {
+      const firstPod = visibleGroupedPodEntries[0]?.[1]?.[0];
+      setSelectedPodId(firstPod ? firstPod.pod_id : null);
+    }
+  }, [visibleGroupedPodEntries, selectedPodId]);
 
   const findVolumeForPod = (pod: Pods.PodResponseModel) => {
     const mounts = pod.volume_mounts ? Object.keys(pod.volume_mounts) : [];
