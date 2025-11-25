@@ -253,7 +253,14 @@ const uiBlueprint = {
 } as Pods.PodResponseModel & { image?: string };
 const Admin = () => {
   const { username, role: currentUserRole } = useAuth();
-  const { token, basePath } = usePodsConfig();
+  const { token: tapisTokenFromSession, basePath } = usePodsConfig();
+  const token = tapisTokenFromSession || (() => {
+    try {
+      return sessionStorage.getItem('Tapis-Access-Token');
+    } catch {
+      return null;
+    }
+  })();
   const podsQuery = usePodsList();
   const pods = podsQuery.data?.result ?? [];
   const volumesQuery = useVolumesList();
