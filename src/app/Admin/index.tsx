@@ -464,7 +464,7 @@ const Admin = () => {
     if (!token || !basePath) {
       return groupedPodEntries;
     }
-    return groupedPodEntries.filter(([, podsForBase], idx) => {
+    return groupedPodEntries.filter((_, idx) => {
       const query = basePermissionQueries[idx];
       if (!query || query.isLoading || query.isError) {
         return false;
