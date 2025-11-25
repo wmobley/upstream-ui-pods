@@ -10,12 +10,16 @@ import FilterToolbar, {
   CustomFilterConfig,
 } from '../../../common/FilterToolbar/FilterToolbar';
 import FilteringVariablesButton from '../CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const CampaignList: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [sensorVariables, setSensorVariables] = useState<string[]>([]);
+  const { role } = useAuth();
+  const roleUpper = (role || '').toUpperCase();
+  const canCreate = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
 
   const filters = useMemo(
     () => ({
@@ -83,12 +87,23 @@ const CampaignList: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
             Explore campaigns
           </h2>
+          {canCreate ? (
           <Link
             to="/campaigns/new"
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           >
             Create New Campaign
           </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="px-4 py-2 rounded-md bg-gray-300 text-gray-600 cursor-not-allowed"
+              title="Write access required to create campaigns"
+            >
+              Create New Campaign
+            </button>
+          )}
         </div>
 
         <FilterToolbar title="Campaign Filters" filters={filterConfigs} />
