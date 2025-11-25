@@ -258,13 +258,17 @@ const Admin = () => {
     tapisTokenFromSession ||
     (() => {
       try {
-        return sessionStorage.getItem('Tapis-Access-Token');
+        const stored = sessionStorage.getItem('Tapis-Access-Token');
+        if (stored) return stored;
+      } catch {
+        // ignore
+      }
+      try {
+        return JSON.parse(String(localStorage.getItem('tapis-token') || 'null'))?.access_token ?? null;
       } catch {
         return null;
       }
     })();
-  console.debug('[Admin] resolved pod token?', !!token, token ? `${token.slice(0, 6)}…` : token);
-  console.debug('[Admin] basePath', basePath);
   const podsQuery = usePodsList();
   const pods = podsQuery.data?.result ?? [];
   const volumesQuery = useVolumesList();
