@@ -714,10 +714,6 @@ const Admin = () => {
   };
 
   const handleCreateBundle = async () => {
-    if (!canManagePods) {
-      alert('Write permissions are required to create pods.');
-      return;
-    }
     const base = bundleBase.trim();
     if (!base) {
       alert('Please enter a base name.');
@@ -969,11 +965,6 @@ const Admin = () => {
             <div className="text-xs text-green-700">Bundle creation requested.</div>
           )}
         </section>
-        {!canManagePods && (
-          <p className="text-xs text-gray-500">
-            Application write access is required to create new pods. Contact an administrator to request access.
-          </p>
-        )}
         </>
       )}
 
