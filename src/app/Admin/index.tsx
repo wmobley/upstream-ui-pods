@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { Pods } from '@tapis/tapis-typescript';
 import usePodsList from '../../hooks/pods/usePodsList';
 import usePodsConfig from '../../hooks/pods/usePodsConfig';
@@ -270,10 +271,18 @@ const Admin = () => {
   const actionMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    if (!selectedPodId && pods.length > 0) {
-      setSelectedPodId(pods[0].pod_id);
+    if (!visibleGroupedPodEntries.length) {
+      if (selectedPodId) setSelectedPodId(null);
+      return;
     }
-  }, [pods, selectedPodId]);
+    const currentBaseHasSelection = visibleGroupedPodEntries.some(([, podsForBase]) =>
+      podsForBase.some((pod) => pod.pod_id === selectedPodId),
+    );
+    if (!currentBaseHasSelection) {
+      const firstPod = visibleGroupedPodEntries[0]?.[1]?.[0];
+      setSelectedPodId(firstPod ? firstPod.pod_id : null);
+    }
+  }, [visibleGroupedPodEntries, selectedPodId]);
 
   useEffect(() => {
     if (!openActionsBase) return undefined;
@@ -321,7 +330,7 @@ const Admin = () => {
   const deleteVolume = useDeleteVolume();
   const restartPod = useRestartPod();
   const addPermission = useAddPodPermission();
-  const bundleControlsDisabled = !canManagePods || createPod.isPending || createVolume.isPending;
+  const bundleControlsDisabled = createPod.isPending || createVolume.isPending;
   const [deletingBase, setDeletingBase] = useState<string | null>(null);
   const [restartingBase, setRestartingBase] = useState<string | null>(null);
   const [restartProgress, setRestartProgress] = useState<
@@ -444,14 +453,54 @@ const Admin = () => {
   );
   const selectedBase = useMemo(() => (selectedPodId ? deriveBaseName(selectedPodId) : null), [selectedPodId]);
 
+  const basePermissionQueries = useQueries({
+    queries: groupedPodEntries.map(([base, podsForBase]) => ({
+      queryKey: ['pods', 'permissions', 'base', base],
+      enabled: Boolean(token && basePath && podsForBase.length),
+      queryFn: async () => {
+        if (!basePath) throw new Error('Pods base URL is not configured.');
+        if (!token) throw new Error('Missing Tapis access token.');
+        const configuration = new Pods.Configuration({
+          basePath,
+          headers: buildPodsHeaders(token),
+        });
+        const api = new Pods.PermissionsApi(configuration);
+        return api.getPodPermissions({ podId: podsForBase[0].pod_id });
+      },
+    })),
+  });
+
+  const visibleGroupedPodEntries = useMemo<[string, Pods.PodResponseModel[]][]>(() => {
+    if (!token || !basePath) {
+      return groupedPodEntries;
+    }
+    return groupedPodEntries.filter((entry, idx) => {
+      const query = basePermissionQueries[idx];
+      if (!query || query.isLoading || query.isError) {
+        return false;
+      }
+      const permissions = parsePermissions(query.data?.result?.permissions);
+      const variantSet = new Set(usernameVariants);
+      return permissions.some(
+        (perm) =>
+          perm.level === 'ADMIN' &&
+          buildUserIdentifierVariants(perm.user).some((variant) => variantSet.has(variant)),
+      );
+    });
+  }, [groupedPodEntries, basePermissionQueries, token, basePath, usernameVariants]);
+
   const hasAnyUiPods = useMemo(
-    () => groupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
-    [groupedPodEntries],
+    () => visibleGroupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
+    [visibleGroupedPodEntries],
   );
 
   const hasAnyApiPods = useMemo(
-    () => groupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).api)),
-    [groupedPodEntries],
+    () => visibleGroupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).api)),
+    [visibleGroupedPodEntries],
+  );
+  const visiblePodsCount = useMemo(
+    () => visibleGroupedPodEntries.reduce((count, [, podsForBase]) => count + podsForBase.length, 0),
+    [visibleGroupedPodEntries],
   );
 
   const findVolumeForPod = (pod: Pods.PodResponseModel) => {
@@ -780,7 +829,7 @@ const Admin = () => {
       return;
     }
     setOpenActionsBase(null);
-    const targets = groupedPodEntries
+  const targets = visibleGroupedPodEntries
       .map(([base, podsForBase]) => {
         const classified = classifyPodsForBase(base, podsForBase);
         const pod = type === 'api' ? classified.api : classified.ui;
@@ -967,7 +1016,11 @@ const Admin = () => {
               )}
             </div>
             <div className="text-xs text-gray-500">
-              {podsQuery.isFetching ? 'Refreshing…' : podsQuery.isSuccess ? `${pods.length} pods` : ''}
+              {podsQuery.isFetching
+                ? 'Refreshing…'
+                : podsQuery.isSuccess
+                  ? `${visiblePodsCount} pod${visiblePodsCount === 1 ? '' : 's'}`
+                  : ''}
             </div>
           </div>
 
@@ -998,13 +1051,13 @@ const Admin = () => {
                 </div>
               </div>
             )}
-            {!podsQuery.isLoading && !podsQuery.isError && pods.length === 0 && (
-              <div className="p-4 text-sm text-gray-700">No pods returned for this user.</div>
+            {!podsQuery.isLoading && !podsQuery.isError && visiblePodsCount === 0 && (
+              <div className="p-4 text-sm text-gray-700">No pods where you have admin access.</div>
             )}
 
             {showPods && (
               <div className="space-y-2">
-                {groupedPodEntries.map(([base, podsForBase]) => {
+                {visibleGroupedPodEntries.map(([base, podsForBase]) => {
                   const uiPod = podsForBase.find((p) => p.pod_id.toLowerCase() === base.toLowerCase());
                   const uiLink = uiPod ? buildLink(uiPod) : null;
                   const classified = classifyPodsForBase(base, podsForBase);
