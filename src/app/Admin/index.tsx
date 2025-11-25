@@ -254,13 +254,17 @@ const uiBlueprint = {
 const Admin = () => {
   const { username, role: currentUserRole } = useAuth();
   const { token: tapisTokenFromSession, basePath } = usePodsConfig();
-  const token = tapisTokenFromSession || (() => {
-    try {
-      return sessionStorage.getItem('Tapis-Access-Token');
-    } catch {
-      return null;
-    }
-  })();
+  const token =
+    tapisTokenFromSession ||
+    (() => {
+      try {
+        return sessionStorage.getItem('Tapis-Access-Token');
+      } catch {
+        return null;
+      }
+    })();
+  console.debug('[Admin] resolved pod token?', !!token, token ? `${token.slice(0, 6)}…` : token);
+  console.debug('[Admin] basePath', basePath);
   const podsQuery = usePodsList();
   const pods = podsQuery.data?.result ?? [];
   const volumesQuery = useVolumesList();
@@ -724,8 +728,8 @@ const Admin = () => {
   };
 
   const handleCreateBundle = async () => {
-    if (!token) {
-      alert('A Tapis access token is required to create pods. Log in via Tapis or provide a token.');
+  if (!token) {
+    alert('A Tapis access token is required to create pods. Log in via Tapis or provide a token.');
       return;
     }
     if (!basePath) {
