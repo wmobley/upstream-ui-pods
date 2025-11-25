@@ -461,6 +461,9 @@ const Admin = () => {
   });
 
   const visibleGroupedPodEntries = useMemo<[string, Pods.PodResponseModel[]][]>(() => {
+    if (isApplicationAdmin) {
+      return groupedPodEntries;
+    }
     if (!token || !basePath) {
       return groupedPodEntries;
     }
@@ -714,6 +717,14 @@ const Admin = () => {
   };
 
   const handleCreateBundle = async () => {
+    if (!token) {
+      alert('A Tapis access token is required to create pods. Log in via Tapis or provide a token.');
+      return;
+    }
+    if (!basePath) {
+      alert('Pods base URL is not configured.');
+      return;
+    }
     const base = bundleBase.trim();
     if (!base) {
       alert('Please enter a base name.');
