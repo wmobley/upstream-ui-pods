@@ -732,11 +732,20 @@ const Admin = () => {
   };
 
   const handleCreateBundle = async () => {
-  if (!token) {
-    alert('A Tapis access token is required to create pods. Log in via Tapis or provide a token.');
+    console.debug('[Admin] handleCreateBundle invoked', {
+      hasToken: Boolean(token),
+      basePath,
+      bundleBase,
+      userRole: currentUserRole,
+      username,
+    });
+    if (!token) {
+      console.error('[Admin] Unable to create bundle: missing Tapis token');
+      alert('A Tapis access token is required to create pods. Log in via Tapis or provide a token.');
       return;
     }
     if (!basePath) {
+      console.error('[Admin] Unable to create bundle: pods base URL not configured');
       alert('Pods base URL is not configured.');
       return;
     }
@@ -752,11 +761,13 @@ const Admin = () => {
         volume_id: volumeId,
         description: `Volume for ${baseLower}`,
       });
+      console.debug('[Admin] Created volume request', { volumeId });
 
       const pgId = `${baseLower}postgres`;
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.postgres, pgId, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
+      console.debug('[Admin] Requested postgres pod', { pgId });
       await ensureDefaultGroupPermissions(pgId);
 
       // Wait for postgres pod to be up before creating API/UI
@@ -767,17 +778,20 @@ const Admin = () => {
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.api, `${baseLower}api`, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
+      console.debug('[Admin] Requested api pod', { apiId: `${baseLower}api` });
       await ensureDefaultGroupPermissions(`${baseLower}api`);
 
       await createPod.mutateAsync(
         buildNewPodFromTemplate(upstreamBlueprints.app, baseLower, baseLower, volumeId, { user: pgUser, password: pgPassword })
       );
+      console.debug('[Admin] Requested ui pod', { uiId: baseLower });
       await ensureDefaultGroupPermissions(baseLower);
 
       setSelectedPodId(`${baseLower}api`);
       setBundleBase('');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create bundle';
+      console.error('[Admin] Failed to create bundle', error);
       alert(message);
     }
   };
