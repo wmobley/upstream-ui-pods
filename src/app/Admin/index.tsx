@@ -741,12 +741,10 @@ const Admin = () => {
     });
     if (!token) {
       console.error('[Admin] Unable to create bundle: missing Tapis token');
-      alert('A Tapis access token is required to create pods. Log in via Tapis or provide a token.');
       return;
     }
     if (!basePath) {
       console.error('[Admin] Unable to create bundle: pods base URL not configured');
-      alert('Pods base URL is not configured.');
       return;
     }
     const base = bundleBase.trim();
