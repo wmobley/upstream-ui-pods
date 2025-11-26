@@ -254,21 +254,35 @@ const uiBlueprint = {
 const Admin = () => {
   const { username, role: currentUserRole } = useAuth();
   const { token: tapisTokenFromSession, basePath } = usePodsConfig();
-  const token =
-    tapisTokenFromSession ||
-    (() => {
-      try {
-        const stored = sessionStorage.getItem('Tapis-Access-Token');
-        if (stored) return stored;
-      } catch {
-        // ignore
+  const fallbackToken = (() => {
+    try {
+      const stored = sessionStorage.getItem('Tapis-Access-Token');
+      if (stored) return stored;
+    } catch {
+      // ignore
+    }
+    try {
+      const cookieValue = localStorage.getItem('tapis-token');
+      if (cookieValue) {
+        const parsed = JSON.parse(cookieValue);
+        if (parsed?.access_token) return parsed.access_token;
       }
-      try {
-        return JSON.parse(String(localStorage.getItem('tapis-token') || 'null'))?.access_token ?? null;
-      } catch {
-        return null;
-      }
-    })();
+    } catch {
+      // ignore parse errors
+    }
+    return null;
+  })();
+  const token = tapisTokenFromSession || fallbackToken;
+
+  useEffect(() => {
+    console.debug('[Admin] init', {
+      username,
+      currentUserRole,
+      basePath,
+      hasSessionToken: Boolean(tapisTokenFromSession),
+      hasFallbackToken: Boolean(fallbackToken),
+    });
+  }, [username, currentUserRole, basePath, tapisTokenFromSession, fallbackToken]);
   const podsQuery = usePodsList();
   const pods = podsQuery.data?.result ?? [];
   const volumesQuery = useVolumesList();
