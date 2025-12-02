@@ -108,6 +108,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('No access token received');
       }
 
+      // Treat a response that lacks both an Upstream role and a Tapis access token
+      // as a failed login even if an access token was returned. This prevents bad
+      // credentials from being treated as a successful session.
+      const normalizedRole = (response.role || '').trim().toUpperCase();
+      const hasUpstreamRole = Boolean(normalizedRole && normalizedRole !== 'NONE');
+      const hasTapisAccessToken = Boolean(response.tapisAccessToken);
+
+      if (!hasUpstreamRole && !hasTapisAccessToken) {
+        throw new Error('Invalid username or password');
+      }
+
       localStorage.setItem('access_token', response.accessToken);
       setRole(response.role ?? null);
       applyJwtDetails(response.accessToken);
