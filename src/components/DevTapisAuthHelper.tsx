@@ -37,7 +37,8 @@ const DevTapisAuthHelper: React.FC = () => {
 
   const updateCurrentUser = () => {
     if (isTapisAuthenticated()) {
-      setCurrentUser(getTapisUser());
+      const user = getTapisUser();
+      setCurrentUser(user ? (user as Record<string, unknown>) : null);
     } else {
       setCurrentUser(null);
     }
@@ -157,9 +158,9 @@ const DevTapisAuthHelper: React.FC = () => {
               fontSize: '13px',
             }}>
               <strong>✓ Tapis Authenticated</strong>
-              <div>Username: {currentUser.username}</div>
-              <div>Tenant: {currentUser.tenant}</div>
-              <div>Site: {currentUser.site}</div>
+              <div>Username: {String((currentUser as { username?: unknown })?.username ?? '')}</div>
+              <div>Tenant: {String((currentUser as { tenant?: unknown })?.tenant ?? '')}</div>
+              <div>Site: {String((currentUser as { site?: unknown })?.site ?? '')}</div>
             </div>
           ) : (
             <div style={{
