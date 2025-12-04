@@ -78,68 +78,10 @@ const buildLink = (pod: Pods.PodResponseModel) => {
   return baseUrl;
 };
 
-const baseDomainFromHost = (host: string) => host.split('.').slice(1).join('.');
-const replaceHostPrefix = (host: string, newPrefix: string) => {
-  const domain = baseDomainFromHost(host);
-  if (!domain) return host;
-  return `${newPrefix}.${domain}`;
-};
-
-const replaceAll = (value: string, search: string, replace: string) =>
-  value.split(search).join(replace);
-
-const ensurePort = (value: string, port?: number) => {
-  try {
-    const url = new URL(value);
-    // Remove accidental double slashes before modifying
-    url.pathname = url.pathname.replace(/\/\/+$/, '/');
-    if (!port || [80, 443].includes(port)) {
-      return url.toString().replace(/\/$/, '');
-    }
-    if (!url.port) {
-      url.port = String(port);
-      return url.toString().replace(/\/$/, '');
-    }
-  } catch {
-    // ignore bad URLs
-  }
-  return value.replace(/\/$/, '');
-};
-
-const rewriteHostInUrl = (value: string, base: string) => {
-  try {
-    const url = new URL(value);
-    const isProdApi = url.hostname.includes('upstreamapi.pods.tacc.tapis.io');
-    const isDevApi = url.hostname.includes('upstreamapi.pods.tacc.tapis.io');
-    const isProdUi = url.hostname.includes('upstream.pods.tacc.tapis.io');
-    const isDevUi = url.hostname.includes('upstream.pods.tacc.tapis.io');
-    const isProdPg = url.hostname.includes('disasterpostgres.pods.tacc.tapis.io');
-    const isDevPg = url.hostname.includes('disasterpostgres.pods.tacc.tapis.io');
-
-    if (isProdApi || isDevApi) {
-      url.hostname = `${base}api.pods.tacc.tapis.io`;
-    } else if (isProdUi || isDevUi) {
-      url.hostname = `${base}.pods.tacc.tapis.io`;
-    } else if (isProdPg || isDevPg) {
-      url.hostname = `${base}postgres.pods.tacc.tapis.io`;
-    }
-    return url.toString();
-  } catch {
-    return value;
-  }
-};
-
 const sanitizeId = (base: string, suffix: string, fallbackPrefix = 'v') => {
   const cleanedBase = base.toLowerCase().replace(/[^a-z0-9]/g, '');
   const safeBase = cleanedBase && /^[a-z]/.test(cleanedBase) ? cleanedBase : `${fallbackPrefix}${cleanedBase}`;
   return `${safeBase}${suffix}`;
-};
-
-const rewriteCreds = (value: string, user: string, password: string) => {
-  let val = value;
-  val = replaceAll(val, 'fastapi_traefik:fastapi_traefik', `${user}:${password}`);
-  val = replaceAll(val, 'fastapi_traefik', `${user}`); // fallback; may also hit db name, acceptable
-  return val;
 };
 
 const Admin = () => {
