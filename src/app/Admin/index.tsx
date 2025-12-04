@@ -118,7 +118,7 @@ const Admin = () => {
     });
   }, [username, currentUserRole, basePath, tapisTokenFromSession, fallbackToken]);
   const podsQuery = usePodsList();
-  const pods = podsQuery.data?.result ?? [];
+  const pods = useMemo(() => podsQuery.data?.result ?? [], [podsQuery.data?.result]);
   const volumesQuery = useVolumesList();
   const volumes = volumesQuery.data?.result ?? [];
 
@@ -232,7 +232,6 @@ const Admin = () => {
     if (!token) throw new Error('Missing Tapis access token.');
     for (let i = 0; i < attempts; i += 1) {
       const remaining: string[] = [];
-      // eslint-disable-next-line no-await-in-loop
       await Promise.all(
         podIds.map(async (podId) => {
           try {
@@ -342,7 +341,7 @@ const Admin = () => {
           buildUserIdentifierVariants(perm.user).some((variant) => variantSet.has(variant)),
       );
     });
-  }, [groupedPodEntries, basePermissionQueries, token, basePath, usernameVariants]);
+  }, [groupedPodEntries, basePermissionQueries, token, basePath, usernameVariants, isApplicationAdmin]);
 
   const hasAnyUiPods = useMemo(
     () => visibleGroupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
@@ -438,8 +437,9 @@ const Admin = () => {
 
   const clearRestartProgress = (base: string) => {
     setRestartProgress((prev) => {
-      const { [base]: _, ...rest } = prev;
-      return rest;
+      const next = { ...prev };
+      delete next[base];
+      return next;
     });
   };
 

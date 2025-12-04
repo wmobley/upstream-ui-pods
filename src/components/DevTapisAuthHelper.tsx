@@ -22,7 +22,7 @@ const DevTapisAuthHelper: React.FC = () => {
   const [username, setUsername] = useState('testuser');
   const [tenant, setTenant] = useState('tacc');
   const [site, setSite] = useState('tacc');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<Record<string, unknown> | null>(null);
   const [accessTokenInput, setAccessTokenInput] = useState('');
   const [hasStoredToken, setHasStoredToken] = useState(false);
 

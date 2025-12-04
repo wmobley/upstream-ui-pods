@@ -27,7 +27,6 @@ const useVolumesList = () => {
           throw new Error(text || `Failed to load volumes (${res.status})`);
         }
         const json = await res.json();
-        // eslint-disable-next-line no-console
         console.debug('[Pods] volumes response', json);
         return json;
       } catch (error) {

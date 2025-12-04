@@ -36,7 +36,7 @@ if (typeof window !== 'undefined') {
           if (init?.body) {
             try {
               bodyPreview = typeof init.body === 'string' ? init.body : JSON.stringify(init.body);
-            } catch (e) {
+            } catch {
               bodyPreview = String(init.body);
             }
           }
@@ -55,7 +55,6 @@ if (typeof window !== 'undefined') {
     };
   } catch (e) {
     // ignore if fetch cannot be wrapped
-    // eslint-disable-next-line no-console
     console.warn('[DEBUG][CKAN] Could not install fetch wrapper', e);
   }
 }

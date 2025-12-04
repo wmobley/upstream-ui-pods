@@ -101,7 +101,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Debug: show the raw login response for troubleshooting tapis tokens
       // (Do not enable in production logs with real tokens.)
-      // eslint-disable-next-line no-console
       console.debug('[Auth] login response:', response);
 
       if (!response.accessToken) {

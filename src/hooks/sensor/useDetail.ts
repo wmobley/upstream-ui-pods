@@ -32,7 +32,6 @@ export const useDetail = (
         throw new Error(`Failed to fetch sensor: ${resp.status} ${text}`);
       }
       const raw = await resp.json();
-      // eslint-disable-next-line no-console
       console.debug('useSensorDetail: raw sensor response', raw);
 
       const rawRec = raw as Record<string, unknown>;
@@ -41,7 +40,6 @@ export const useDetail = (
         isPublished: (typeof rawRec['isPublished'] === 'boolean') ? rawRec['isPublished'] : (typeof rawRec['is_published'] === 'boolean' ? rawRec['is_published'] : false),
         publishedAt: rawRec['published_at'] ? new Date(String(rawRec['published_at'])) : (rawRec['publishedAt'] as Date | undefined) ?? undefined,
       } as unknown as GetSensorResponse;
-      // eslint-disable-next-line no-console
       console.debug('useSensorDetail: mapped sensor', mapped);
 
       return mapped;

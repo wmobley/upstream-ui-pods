@@ -354,6 +354,7 @@ const MainChart: React.FC<MainChartProps> = ({
       getSensorColor,
       selectedSensorId,
       setTooltipAggregation,
+      handleTooltipPosition,
     ],
   );
 

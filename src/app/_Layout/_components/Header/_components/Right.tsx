@@ -105,10 +105,11 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
         </div>
       )}
 
-      {false &&
       <button
         className="block rounded bg-secondary-100 p-2.5 text-secondary-600 transition hover:text-secondary-600/75 md:hidden"
         onClick={toggleMenu}
+        type="button"
+        aria-label="Toggle menu"
       >
         <span className="sr-only">Toggle menu</span>
         <svg
@@ -126,7 +127,6 @@ const Right: React.FC<RightProps> = ({ toggleMenu }) => {
           />
         </svg>
       </button>
-      }
     </div>
   );
 };

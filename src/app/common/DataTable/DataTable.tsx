@@ -52,8 +52,8 @@ const DataCell = ({
       </td>
     );
   }
-  // @ts-ignore
-  let cur : string = item[column]
+  // @ts-expect-error Column access relies on dynamic keys from columns
+  const cur: string = item[column];
   return (
     <td className="px-6 py-4 whitespace-nowrap">
       {getRowLink ? (
@@ -63,7 +63,7 @@ const DataCell = ({
                       : cur
         } </Link>
       ) : (
-        // @ts-ignore
+        // @ts-expect-error Column access relies on dynamic keys from columns
         item[column]
       )}
     </td>

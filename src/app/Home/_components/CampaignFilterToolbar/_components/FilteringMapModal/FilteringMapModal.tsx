@@ -23,9 +23,9 @@ const FilteringMapModal: React.FC<FilteringModalProps> = ({
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const handleCreate = (e: PM.CreateEventHandler) => {
-    // @ts-expect-error
+    // @ts-expect-error Leaflet Geoman event typing does not expose shape on the handler
     if (e.shape === 'Rectangle') {
-      // @ts-expect-error
+      // @ts-expect-error Leaflet Geoman layer typing is not aligned with Leaflet bounds API
       const bounds = e.layer.getBounds();
       setBounds(bounds);
     }

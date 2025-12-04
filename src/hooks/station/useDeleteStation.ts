@@ -57,7 +57,7 @@ export const useDeleteStation = () => {
           if (errorBody) {
             errorMessage = errorBody;
           }
-        } catch (e) {
+        } catch {
           console.log('Could not parse error response body');
         }
 

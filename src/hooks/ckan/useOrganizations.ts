@@ -27,13 +27,14 @@ export const useOrganizations = () => {
       try {
         const tapisTokenFromSession = typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
         if (tapisTokenFromSession) {
-          (headers as Record<string, string>)['X-TAPIS-TOKEN'] = tapisTokenFromSession;
+          const headerMap = headers as Record<string, string>;
+          headerMap['X-TAPIS-TOKEN'] = tapisTokenFromSession;
           // Prevent sending Authorization alongside X-TAPIS-TOKEN to avoid
           // confusing the backend auth resolution.
-          delete (headers as Record<string, string>)['Authorization'];
-          delete (headers as Record<string, string>)['authorization'];
+          delete headerMap['Authorization'];
+          delete headerMap['authorization'];
         }
-      } catch (e) {
+      } catch {
         // sessionStorage may be unavailable; ignore and continue.
       }
 
@@ -44,28 +45,28 @@ export const useOrganizations = () => {
   // (X-TAPIS-TOKEN vs Authorization). Remove this once the issue is resolved.
   // Note: token values will be printed in console; avoid sharing them.
   //
-  // Example output to look for: headers['X-TAPIS-TOKEN'] should be present
-  // and headers['Authorization'] should be undefined when running inside a
-  // Tapis pod.
-  //
-  console.debug('[CKAN] Final request headers:', headers);
+      // Example output to look for: headers['X-TAPIS-TOKEN'] should be present
+      // and headers['Authorization'] should be undefined when running inside a
+      // Tapis pod.
+      //
+      console.debug('[CKAN] Final request headers:', headers);
       // Also log the tapis token if present (from headers or sessionStorage)
       try {
+        const headerMap = headers as Record<string, string>;
         const tapisTokenFromHeaders =
-          (headers as Record<string, any>)['X-TAPIS-TOKEN'] ||
-          (headers as Record<string, any>)['X-Tapis-Token'] ||
-          (headers as Record<string, any>)['x-tapis-token'];
+          headerMap['X-TAPIS-TOKEN'] ||
+          headerMap['X-Tapis-Token'] ||
+          headerMap['x-tapis-token'];
         const tapisTokenFromSession =
           typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
         const tapisToken = tapisTokenFromHeaders || tapisTokenFromSession;
         console.debug('[CKAN] Tapis token (headers/sessionStorage):', tapisToken);
-      } catch (e) {
-        console.debug('[CKAN] Unable to read tapis token for debug', e);
+      } catch (err) {
+        console.debug('[CKAN] Unable to read tapis token for debug', err);
       }
 
         if (config.accessToken) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const token = await (config.accessToken as any)();
+          const token = await config.accessToken();
           // Only attach an Authorization header if a Tapis token header is
           // NOT already present. This prevents the local JWT from overwriting
           // or conflicting with the X-TAPIS-TOKEN header when running inside

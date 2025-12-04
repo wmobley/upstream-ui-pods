@@ -109,11 +109,9 @@ export const storeTapisTokens = (tokens: TapisTokenPayload): void => {
       sessionStorage.setItem(TAPIS_ACCESS_TOKEN_KEY, tokens.accessToken);
       // Mask the token when logging to avoid accidentally exposing full value
       const masked = `${tokens.accessToken.slice(0, 6)}...${tokens.accessToken.slice(-6)}`;
-      // eslint-disable-next-line no-console
       console.debug('[TapisAuth] stored access token in sessionStorage (masked):', masked);
     } catch (e) {
       // sessionStorage may be unavailable in some contexts (SSR, private mode)
-      // eslint-disable-next-line no-console
       console.warn('[TapisAuth] Unable to store tapis access token in sessionStorage', e);
     }
       try {
@@ -138,7 +136,6 @@ export const storeTapisTokens = (tokens: TapisTokenPayload): void => {
         }
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.warn('[TapisAuth] Unable to decode Tapis access token', error);
     }
   }

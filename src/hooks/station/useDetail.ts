@@ -34,7 +34,6 @@ export const useDetail = (campaignId: string, stationId: string) => {
           throw new Error(`Failed to fetch station: ${resp.status} ${text}`);
         }
         const raw = await resp.json();
-        // eslint-disable-next-line no-console
         console.debug('useStationDetail: raw station response', raw);
 
         const rawRec = raw as Record<string, unknown>;
@@ -44,7 +43,6 @@ export const useDetail = (campaignId: string, stationId: string) => {
           isPublished: (typeof rawRec['isPublished'] === 'boolean') ? rawRec['isPublished'] : (typeof rawRec['is_published'] === 'boolean' ? rawRec['is_published'] : false),
           publishedAt: rawRec['published_at'] ? new Date(String(rawRec['published_at'])) : (rawRec['publishedAt'] as Date | undefined) ?? undefined,
         } as unknown as GetStationResponse;
-        // eslint-disable-next-line no-console
         console.debug('useStationDetail: mapped station', mapped);
 
         return mapped;
@@ -61,8 +59,8 @@ export const useDetail = (campaignId: string, stationId: string) => {
               statusText: err.response.statusText,
               body: text,
             });
-          } catch {
-            console.error('Stations API error (could not read body)', err);
+          } catch (readErr) {
+            console.error('Stations API error (could not read body)', readErr);
           }
         } else {
           console.error('Stations API error', err_);

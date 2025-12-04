@@ -12,9 +12,9 @@ const DrawLayer = ({ onCreate, onChange, bounds }: DrawLayerProps) => {
   return (
     <FeatureGroup>
       <GeomanControls
-        // @ts-expect-error
+        // @ts-expect-error Leaflet Geoman types lack React bindings for onCreate
         onCreate={(e) => onCreate(e)}
-        // @ts-expect-error
+        // @ts-expect-error Leaflet Geoman types lack React bindings for onChange
         onChange={(e) => onChange(e)}
         options={{
           drawRectangle: bounds === null ? true : false,

@@ -52,7 +52,6 @@ export const useDetail = (campaignId: string) => {
         isPublished: rawRec['is_published'] ?? rawRec['isPublished'],
         publishedAt: rawRec['published_at'] ? new Date(String(rawRec['published_at'])) : (rawRec['publishedAt'] as Date | undefined) ?? undefined,
       } as unknown as GetCampaignResponse;
-      // eslint-disable-next-line no-console
       console.debug('useDetail: mapped campaign', mapped);
 
       return mapped;
