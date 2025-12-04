@@ -7,6 +7,7 @@ import {
   storeTapisTokens,
   clearTapisTokens,
 } from '../utils/tapisAuth';
+import type { TapisUser } from '../utils/tapisAuth';
 
 /**
  * Development helper component for testing Tapis authentication.
@@ -22,7 +23,7 @@ const DevTapisAuthHelper: React.FC = () => {
   const [username, setUsername] = useState('testuser');
   const [tenant, setTenant] = useState('tacc');
   const [site, setSite] = useState('tacc');
-  const [currentUser, setCurrentUser] = useState<Record<string, unknown> | null>(null);
+  const [currentUser, setCurrentUser] = useState<TapisUser | null>(null);
   const [accessTokenInput, setAccessTokenInput] = useState('');
   const [hasStoredToken, setHasStoredToken] = useState(false);
 
@@ -38,7 +39,7 @@ const DevTapisAuthHelper: React.FC = () => {
   const updateCurrentUser = () => {
     if (isTapisAuthenticated()) {
       const user = getTapisUser();
-      setCurrentUser(user ? (user as Record<string, unknown>) : null);
+      setCurrentUser(user ?? null);
     } else {
       setCurrentUser(null);
     }
@@ -158,9 +159,9 @@ const DevTapisAuthHelper: React.FC = () => {
               fontSize: '13px',
             }}>
               <strong>✓ Tapis Authenticated</strong>
-              <div>Username: {String((currentUser as { username?: unknown })?.username ?? '')}</div>
-              <div>Tenant: {String((currentUser as { tenant?: unknown })?.tenant ?? '')}</div>
-              <div>Site: {String((currentUser as { site?: unknown })?.site ?? '')}</div>
+              <div>Username: {currentUser.username}</div>
+              <div>Tenant: {currentUser.tenant}</div>
+              <div>Site: {currentUser.site}</div>
             </div>
           ) : (
             <div style={{
