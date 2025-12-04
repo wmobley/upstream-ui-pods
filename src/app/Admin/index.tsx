@@ -4,9 +4,6 @@ import { Pods } from '@tapis/tapis-typescript';
 import usePodsList from '../../hooks/pods/usePodsList';
 import usePodsConfig from '../../hooks/pods/usePodsConfig';
 import usePodPermissions from '../../hooks/pods/usePodPermissions';
-import useAddPodPermission from '../../hooks/pods/useAddPodPermission';
-import useCreatePod from '../../hooks/pods/useCreatePod';
-import useCreateVolume from '../../hooks/pods/useCreateVolume';
 import useDeletePod from '../../hooks/pods/useDeletePod';
 import useDeleteVolume from '../../hooks/pods/useDeleteVolume';
 import useVolumesList from '../../hooks/pods/useVolumesList';
@@ -14,6 +11,7 @@ import useRestartPod from '../../hooks/pods/useRestartPod';
 import { useAuth } from '../../contexts/AuthContext';
 import { buildPodsHeaders, clearTapisAuth, decodeJwtExp } from '../../utils/pods';
 import { useUserRoles, useSaveUserRole, UserRoleValue } from '../../hooks/api/useUserRoles';
+import useConfiguration from '../../hooks/api/useConfiguration';
 
 const formatDate = (value?: Date | string | null) => {
   if (!value) return '—';
@@ -144,115 +142,9 @@ const rewriteCreds = (value: string, user: string, password: string) => {
   return val;
 };
 
-const postgresBlueprint = {
-  pod_id: 'disasterpostgres',
-  image: 'postgis/postgis:17-3.5',
-  pod_template: 'postgres:17postgis3.5@2025-10-13-20:41:16',
-  description: 'postgres for upstream-docker',
-  command: ['docker-entrypoint.sh'],
-  arguments: ['-c', 'ssl=on', '-c', 'ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem', '-c', 'ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key'],
-  environment_variables: {
-    POSTGRES_USER: 'fastapi_traefik',
-    POSTGRES_PASSWORD: 'fastapi_traefik',
-    POSTGRES_DB: 'fastapi_traefik',
-  },
-  status_requested: 'ON',
-  volume_mounts: {
-    disastervolume: {
-      type: 'tapisvolume' as const,
-      mount_path: '/var/lib/postgresql/data',
-      sub_path: '',
-    },
-  },
-  time_to_stop_default: -1,
-  networking: {
-    default: {
-      protocol: 'postgres',
-      port: 5432,
-      url: 'postgres.pods.tacc.tapis.io',
-    },
-  },
-  resources: {
-    cpu_request: 250,
-    cpu_limit: 2000,
-    mem_request: 256,
-    mem_limit: 3072,
-    gpus: 0,
-  },
-} as Pods.PodResponseModel & { image?: string };
-
-const apiBlueprint = {
-  pod_id: 'upstreamapi',
-  image: 'ghcr.io/wmobley/upstream-docker-pods:main',
-  pod_template: '',
-  description: 'upstreamapi connected to postgres pod',
-  command: ['/bin/bash', '-c', 'alembic upgrade heads && uvicorn app.main:app --reload --host 0.0.0.0'],
-  environment_variables: {
-    DATABASE_URL: 'postgresql+psycopg://fastapi_traefik:fastapi_traefik@disasterpostgres.pods.tacc.tapis.io:443/fastapi_traefik',
-    VITE_UPSTREAM_API_URL: 'https://upstream.pods.tacc.tapis.io',
-    POSTGRES_PASSWORD: 'fastapi_traefik',
-    TAS_USER: 'tasclient_dsso',
-    TAS_SECRET: '2TjvnY22spKet8cdZwxYZjunLmQCKFRkN9vEtWNnv2JV5vZnCUDxKCxsQyFJJxXG',
-    JWT_SECRET: 'iHaveADogHerNameIsAcacia',
-    ALG: 'HS256',
-    TAS_URL: 'https://tas-dev.tacc.utexas.edu/api-test',
-    ENVIRONMENT: 'production',
-    ENV: 'production',
-    CKAN_URL: 'https://ckan.tacc.utexas.edu',
-    CKAN_TIMEOUT: '30',
-    UI_BASE_URL: 'https://upstream.pods.tacc.tapis.io',
-    API_BASE_URL: 'https://upstreamapi.pods.tacc.tapis.io',
-  },
-  status_requested: 'ON',
-  volume_mounts: {},
-  time_to_stop_default: -1,
-  networking: {
-    default: {
-      protocol: 'http',
-      port: 8000,
-      url: 'upstreamapi.pods.tacc.tapis.io',
-    },
-  },
-  resources: {
-    cpu_request: 250,
-    cpu_limit: 2000,
-    mem_request: 256,
-    mem_limit: 3072,
-    gpus: 0,
-  },
-} as Pods.PodResponseModel & { image?: string };
-
-const uiBlueprint = {
-  pod_id: 'upstream',
-  image: 'ghcr.io/wmobley/upstream-ui-pods:main',
-  pod_template: '',
-  description: 'Upstream ui frontend',
-  environment_variables: {
-    VITE_UPSTREAM_API_URL: 'https://upstreamapi.pods.tacc.tapis.io',
-    VITE_CKAN_URL: 'https://ckan.tacc.utexas.edu',
-    VITE_TAPIS_BASE_URL: 'https://tacc.tapis.io',
-    VITE_TAPIS_PODS_BASE_URL: 'https://tacc.tapis.io',
-  },
-  status_requested: 'ON',
-  volume_mounts: {},
-  time_to_stop_default: -1,
-  networking: {
-    default: {
-      protocol: 'http',
-      port: 80,
-      url: 'upstream.pods.tacc.tapis.io',
-    },
-  },
-  resources: {
-    cpu_request: 250,
-    cpu_limit: 2000,
-    mem_request: 256,
-    mem_limit: 3072,
-    gpus: 0,
-  },
-} as Pods.PodResponseModel & { image?: string };
 const Admin = () => {
   const { username, role: currentUserRole } = useAuth();
+  const apiConfig = useConfiguration();
   const { token: tapisTokenFromSession, basePath } = usePodsConfig();
   const fallbackToken = (() => {
     try {
@@ -343,23 +235,22 @@ const Admin = () => {
   const saveUserRole = useSaveUserRole();
   const userRoles = userRolesQuery.data ?? [];
   const normalizedUsername = (username || '').trim().toLowerCase();
-  const createPod = useCreatePod();
-  const createVolume = useCreateVolume();
   const deletePod = useDeletePod();
   const deleteVolume = useDeleteVolume();
   const restartPod = useRestartPod();
-  const addPermission = useAddPodPermission();
-  const bundleControlsDisabled = createPod.isPending || createVolume.isPending;
   const [deletingBase, setDeletingBase] = useState<string | null>(null);
   const [restartingBase, setRestartingBase] = useState<string | null>(null);
   const [restartProgress, setRestartProgress] = useState<
     Record<string, { podId: string | null; message: string }>
   >({});
+  const [bundleCreating, setBundleCreating] = useState(false);
+  const [bundleError, setBundleError] = useState<string | null>(null);
+  const [bundleSuccess, setBundleSuccess] = useState(false);
+  const bundleControlsDisabled = bundleCreating;
   const [globalRestarting, setGlobalRestarting] = useState<{ ui: boolean; api: boolean }>({
     ui: false,
     api: false,
   });
-  const DEFAULT_BUNDLE_PERMISSIONS = [{ user: 'wmobley', level: 'ADMIN' }] as const;
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const waitForPodAvailable = async (podId: string, attempts = 24, delayMs = 5000) => {
@@ -610,23 +501,6 @@ const Admin = () => {
     });
   };
 
-  const ensureDefaultGroupPermissions = async (podId: string) => {
-    if (!podId) return;
-    for (const perm of DEFAULT_BUNDLE_PERMISSIONS) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        await addPermission.mutateAsync({
-          podId,
-          user: perm.user,
-          level: perm.level,
-        });
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(`[Admin] Failed to assign default permission ${perm.user}:${perm.level} to ${podId}`, error);
-      }
-    }
-  };
-
   function classifyPodsForBase(base: string, podsForBase: Pods.PodResponseModel[]) {
     const baseLower = base.toLowerCase();
     return podsForBase.reduce<{
@@ -649,102 +523,6 @@ const Admin = () => {
     }, {});
   }
 
-  const upstreamBlueprints = useMemo(() => ({
-    postgres: postgresBlueprint,
-    api: apiBlueprint,
-    app: uiBlueprint,
-  }), []);
-
-  const buildNewPodFromTemplate = (
-    template: Pods.PodResponseModel & { image?: string },
-    podId: string,
-    base: string,
-    volumeId: string,
-    creds: { user: string; password: string }
-  ): Pods.NewPod => {
-    const newVolumeId = volumeId;
-
-    const networking = template.networking
-      ? Object.entries(template.networking).reduce<Record<string, Pods.Networking>>((acc, [key, net]) => {
-          const cloned = { ...net };
-          if (cloned.url) {
-            cloned.url = replaceHostPrefix(cloned.url, podId);
-          }
-          acc[key] = cloned;
-          return acc;
-        }, {})
-      : undefined;
-
-    const volumeMounts = template.volume_mounts
-      ? Object.entries(template.volume_mounts).reduce<Record<string, Pods.VolumeMount>>((acc, [key, vm]) => {
-          const cloned = { ...vm };
-          const newKey = replaceAll(key, deriveBaseName(key), `${base}volume`);
-          acc[newKey] = cloned;
-          return acc;
-        }, {})
-      : undefined;
-
-    const env = template.environment_variables
-      ? Object.entries(template.environment_variables as Record<string, string>).reduce<Record<string, string>>((acc, [k, v]) => {
-          let val = String(v);
-          const apiPort = template.networking?.default?.port;
-          val = rewriteHostInUrl(val, base);
-          val = replaceAll(val, 'disasterpostgres.pods.tacc.tapis.io', `${base}postgres.pods.tacc.tapis.io`);
-          val = replaceAll(val, 'disasterpostgres.pods.tacc.tapis.io', `${base}postgres.pods.tacc.tapis.io`);
-          val = replaceAll(val, 'upstreamapi.pods.tacc.tapis.io', `${base}api.pods.tacc.tapis.io`);
-          val = replaceAll(val, 'upstreamapi.pods.tacc.tapis.io', `${base}api.pods.tacc.tapis.io`);
-          val = replaceAll(val, 'upstream.pods.tacc.tapis.io', `${base}.pods.tacc.tapis.io`);
-          val = replaceAll(val, 'upstream.pods.tacc.tapis.io', `${base}.pods.tacc.tapis.io`);
-          val = replaceAll(val, '.pods.tacc.tapis.io', '.pods.tacc.tapis.io');
-          if (k.toUpperCase().includes('UPSTREAM_API_URL') || k.toUpperCase().includes('API_BASE_URL')) {
-            val = ensurePort(val, apiPort);
-            val = val.replace(/\/+$/, '');
-          }
-          val = replaceAll(val, 'disasterpostgres', `${base}postgres`);
-          val = replaceAll(val, 'upstreamapi', `${base}api`);
-          val = replaceAll(val, 'upstream', `${base}`);
-          val = replaceAll(val, 'disastervolume', newVolumeId);
-          val = rewriteCreds(val, creds.user, creds.password);
-
-          if (k === 'POSTGRES_USER') {
-            acc[k] = creds.user;
-            return acc;
-          }
-          if (k === 'POSTGRES_PASSWORD') {
-            acc[k] = creds.password;
-            return acc;
-          }
-          acc[k] = val;
-          return acc;
-        }, {})
-      : undefined;
-
-    const payload: Record<string, unknown> = {
-      pod_id: podId,
-      pod_template: template.pod_template || '',
-      description: template.description,
-      environment_variables: env,
-      data_requests: template.data_requests,
-      roles_required: template.roles_required,
-      status_requested: 'ON',
-      volume_mounts: volumeMounts,
-      time_to_stop_default: template.time_to_stop_default,
-      time_to_stop_instance: template.time_to_stop_instance,
-      networking,
-      resources: template.resources,
-      command: template.command,
-      arguments: template.arguments,
-    };
-
-    // Remove pod_template for custom images and forward the image when present.
-    delete payload.pod_template;
-    if ((template as { image?: string }).image) {
-      payload.image = (template as { image?: string }).image;
-    }
-
-    return payload as unknown as Pods.NewPod;
-  };
-
   const handleCreateBundle = async () => {
     console.debug('[Admin] handleCreateBundle invoked', {
       hasToken: Boolean(token),
@@ -753,59 +531,52 @@ const Admin = () => {
       userRole: currentUserRole,
       username,
     });
-    if (!token) {
-      console.error('[Admin] Unable to create bundle: missing Tapis token');
-      return;
-    }
-    if (!basePath) {
-      console.error('[Admin] Unable to create bundle: pods base URL not configured');
-      return;
-    }
     const base = bundleBase.trim();
     if (!base) {
       alert('Please enter a base name.');
       return;
     }
-    const baseLower = base.toLowerCase();
-    const volumeId = sanitizeId(baseLower, 'volume');
+    setBundleError(null);
+    setBundleSuccess(false);
+    setBundleCreating(true);
     try {
-      await createVolume.mutateAsync({
-        volume_id: volumeId,
-        description: `Volume for ${baseLower}`,
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      };
+      if (apiConfig.headers) {
+        Object.entries(apiConfig.headers as Record<string, string>).forEach(([k, v]) => {
+          if (v) headers[k] = v;
+        });
+      }
+      if (apiConfig.accessToken && !headers.Authorization && !headers.authorization) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const tokenVal = await (apiConfig.accessToken as any)();
+        if (tokenVal) headers.Authorization = tokenVal;
+      }
+
+      const response = await fetch(`${apiConfig.basePath}/api/v1/pods/bundle`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          base,
+          pg_user: pgUser,
+          pg_password: pgPassword,
+        }),
       });
-      console.debug('[Admin] Created volume request', { volumeId });
-
-      const pgId = `${baseLower}postgres`;
-      await createPod.mutateAsync(
-        buildNewPodFromTemplate(upstreamBlueprints.postgres, pgId, baseLower, volumeId, { user: pgUser, password: pgPassword })
-      );
-      console.debug('[Admin] Requested postgres pod', { pgId });
-      await ensureDefaultGroupPermissions(pgId);
-
-      // Wait for postgres pod to be up before creating API/UI
-      await waitForPodAvailable(pgId);
-      // Give the database a bit more time to finish init before API starts
-      await waitExtra(60_000);
-
-      await createPod.mutateAsync(
-        buildNewPodFromTemplate(upstreamBlueprints.api, `${baseLower}api`, baseLower, volumeId, { user: pgUser, password: pgPassword })
-      );
-      console.debug('[Admin] Requested api pod', { apiId: `${baseLower}api` });
-      await ensureDefaultGroupPermissions(`${baseLower}api`);
-
-      await createPod.mutateAsync(
-        buildNewPodFromTemplate(upstreamBlueprints.app, baseLower, baseLower, volumeId, { user: pgUser, password: pgPassword })
-      );
-      console.debug('[Admin] Requested ui pod', { uiId: baseLower });
-      await ensureDefaultGroupPermissions(baseLower);
-
-      setSelectedPodId(`${baseLower}api`);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Failed to create bundle (${response.status})`);
+      }
+      setBundleSuccess(true);
+      setSelectedPodId(`${sanitizeId(base, '')}api`);
       setBundleBase('');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create bundle';
       console.error('[Admin] Failed to create bundle', error);
-      alert(message);
+      setBundleError(message);
     }
+    setBundleCreating(false);
   };
 
   const handleDeleteGroup = async (base: string, podsForBase: Pods.PodResponseModel[]) => {
@@ -974,6 +745,9 @@ const Admin = () => {
             Enter your upstream system name (e.g., <code className="mx-1 rounded bg-gray-100 px-1">sniffer</code>) to create
             snifferpostgres, snifferapi, sniffer, and a <code className="mx-1 rounded bg-gray-100 px-1">sniffervolume</code>.
           </p>
+          <p className="text-xs text-gray-600">
+            The Postgres username and password become the database user, the database name, and the credentials the API uses to connect.
+          </p>
           <div className="flex flex-wrap gap-2">
             <input
               type="text"
@@ -1005,15 +779,15 @@ const Admin = () => {
               className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
               disabled={bundleControlsDisabled || !bundleBase.trim()}
             >
-              {createPod.isPending || createVolume.isPending ? 'Creating…' : 'Create bundle'}
+              {bundleCreating ? 'Creating…' : 'Create bundle'}
             </button>
           </div>
-          {(createPod.isError || createVolume.isError) && (
+          {bundleError && (
             <div className="text-xs text-red-600">
-              {(createPod.error as Error)?.message || (createVolume.error as Error)?.message || 'Failed to create bundle'}
+              {bundleError}
             </div>
           )}
-          {(createPod.isSuccess || createVolume.isSuccess) && (
+          {bundleSuccess && (
             <div className="text-xs text-green-700">Bundle creation requested.</div>
           )}
         </section>
