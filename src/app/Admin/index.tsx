@@ -496,6 +496,16 @@ const Admin = () => {
         const tokenVal = await (apiConfig.accessToken as any)();
         if (tokenVal) headers.Authorization = tokenVal;
       }
+      // Forward Tapis token when available so the bundle is created under the user's Pods account.
+      try {
+        const tapisTokenFromSession =
+          typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+        if (tapisTokenFromSession) {
+          headers['X-TAPIS-TOKEN'] = tapisTokenFromSession;
+        }
+      } catch {
+        // ignore
+      }
 
       const response = await fetch(`${apiConfig.basePath}/api/v1/pods/bundle`, {
         method: 'POST',
