@@ -5,7 +5,7 @@ import { line, curveCatmullRom, area } from 'd3-shape';
 import { AggregatedMeasurement } from '@upstream/upstream-api';
 import { getDataSegments } from '../utils/chartUtils';
 import { AdditionalSensor } from '../LineConfidenceChart';
-import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContext';
+import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
 
 interface ChartDimensions {
   innerWidth: number;

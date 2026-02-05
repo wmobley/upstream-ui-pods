@@ -3,7 +3,7 @@ import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
 import { AdditionalSensor } from '../LineConfidenceChart';
 import { useChartBrush } from '../hooks/useChartBrush';
-import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContext';
+import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
 
 // Types
 interface TooltipData {
