@@ -62,7 +62,15 @@ const deriveBaseName = (podId: string) => {
   return podId;
 };
 
-const buildLink = (pod: Pods.PodResponseModel) => {
+const UI_IMAGE = 'ghcr.io/wmobley/upstream-ui-pods:main';
+const API_IMAGE = 'ghcr.io/wmobley/upstream-docker-pods:main';
+const POSTGIS_IMAGE = 'postgis/postgis:17-3.5';
+const normalizeImage = (image?: string | null) => (image || '').trim().toLowerCase();
+const isUiImage = (pod: Pods.PodResponseModel) => normalizeImage(pod.image) === UI_IMAGE;
+const isApiImage = (pod: Pods.PodResponseModel) => normalizeImage(pod.image) === API_IMAGE;
+const isPostgisImage = (pod: Pods.PodResponseModel) => normalizeImage(pod.image) === POSTGIS_IMAGE;
+
+const buildBaseUrlFromPod = (pod: Pods.PodResponseModel) => {
   const entries = pod.networking ? Object.values(pod.networking) : [];
   const first = entries[0];
   if (!first) return null;
@@ -71,7 +79,12 @@ const buildLink = (pod: Pods.PodResponseModel) => {
   const shouldShowPort = first.port && ![80, 443].includes(first.port);
   const port = shouldShowPort ? `:${first.port}` : '';
   if (!host) return null;
-  const baseUrl = `${protocol}://${host}${port}`;
+  return `${protocol}://${host}${port}`;
+};
+
+const buildLink = (pod: Pods.PodResponseModel) => {
+  const baseUrl = buildBaseUrlFromPod(pod);
+  if (!baseUrl) return null;
   if (pod.pod_id.toLowerCase().endsWith('api')) {
     return `${baseUrl.replace(/\/$/, '')}/docs`;
   }
@@ -173,9 +186,6 @@ const Admin = () => {
   const canManagePods = writableRoles.has(roleUpper) || hasPodAdminRole;
   const canViewAdminPage = hasApplicationAccess || hasPodAdminRole;
   const canRestartPods = isCurrentUserAdmin;
-  const userRolesQuery = useUserRoles({ enabled: isCurrentUserAdmin });
-  const saveUserRole = useSaveUserRole();
-  const userRoles = userRolesQuery.data ?? [];
   const normalizedUsername = (username || '').trim().toLowerCase();
   const deletePod = useDeletePod();
   const deleteVolume = useDeleteVolume();
@@ -291,10 +301,22 @@ const Admin = () => {
   }, [token]);
 
   const groupedPods = useMemo<Record<string, Pods.PodResponseModel[]>>(() => {
-    return pods.reduce<Record<string, Pods.PodResponseModel[]>>((acc, pod) => {
+    const grouped = pods.reduce<Record<string, Pods.PodResponseModel[]>>((acc, pod) => {
       const base = deriveBaseName(pod.pod_id);
       if (!acc[base]) acc[base] = [];
       acc[base].push(pod);
+      return acc;
+    }, {});
+    return Object.entries(grouped).reduce<Record<string, Pods.PodResponseModel[]>>((acc, [base, podsForBase]) => {
+      const hasUi = podsForBase.some(isUiImage);
+      const hasApi = podsForBase.some(isApiImage);
+      const allowPostgis = hasUi && hasApi;
+      const filtered = podsForBase.filter(
+        (pod) => isUiImage(pod) || isApiImage(pod) || (allowPostgis && isPostgisImage(pod)),
+      );
+      if (filtered.length) {
+        acc[base] = filtered;
+      }
       return acc;
     }, {});
   }, [pods]);
@@ -342,6 +364,23 @@ const Admin = () => {
       );
     });
   }, [groupedPodEntries, basePermissionQueries, token, basePath, usernameVariants, isApplicationAdmin]);
+
+  const selectedGroupEntry = useMemo(() => {
+    if (!selectedBase) return null;
+    return visibleGroupedPodEntries.find(([base]) => base === selectedBase) ?? null;
+  }, [selectedBase, visibleGroupedPodEntries]);
+  const selectedRolesBasePath = useMemo(() => {
+    if (!selectedGroupEntry) return null;
+    const [base, podsForBase] = selectedGroupEntry;
+    const classified = classifyPodsForBase(base, podsForBase);
+    return classified.api ? buildBaseUrlFromPod(classified.api) : null;
+  }, [selectedGroupEntry]);
+  const userRolesQuery = useUserRoles({
+    enabled: isCurrentUserAdmin && Boolean(selectedRolesBasePath),
+    basePath: selectedRolesBasePath,
+  });
+  const saveUserRole = useSaveUserRole({ basePath: selectedRolesBasePath });
+  const userRoles = userRolesQuery.data ?? [];
 
   const hasAnyUiPods = useMemo(
     () => visibleGroupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
@@ -637,6 +676,10 @@ const Admin = () => {
   const handleSaveUserRole = async () => {
     if (!isCurrentUserAdmin) {
       alert('Admin permissions required to manage application roles.');
+      return;
+    }
+    if (!selectedRolesBasePath) {
+      alert('Select a pod group with an API pod to manage application roles.');
       return;
     }
     const trimmedUser = newUser.trim().toLowerCase();
@@ -1029,8 +1072,11 @@ const Admin = () => {
           <div className="border-b border-gray-200 px-4 py-3">
             <h3 className="text-lg font-semibold text-gray-900">Application roles</h3>
             <p className="text-sm text-gray-600">
-              Assign Upstream API roles. These roles replace the legacy Pods permission list.
+              Assign Upstream API roles for the selected pod group. These roles replace the legacy Pods permission list.
             </p>
+            {selectedBase && (
+              <p className="text-xs text-gray-500">Scope: {selectedBase}</p>
+            )}
           </div>
 
           {!isCurrentUserAdmin && (
@@ -1039,17 +1085,23 @@ const Admin = () => {
             </div>
           )}
 
-          {isCurrentUserAdmin && userRolesQuery.isLoading && (
+          {isCurrentUserAdmin && !selectedRolesBasePath && (
+            <div className="p-4 text-sm text-yellow-800 bg-yellow-50 border-b border-yellow-100">
+              Select a pod group with an API pod to view or edit application roles.
+            </div>
+          )}
+
+          {isCurrentUserAdmin && selectedRolesBasePath && userRolesQuery.isLoading && (
             <div className="p-4 text-sm text-gray-700">Loading roles…</div>
           )}
 
-          {isCurrentUserAdmin && userRolesQuery.isError && (
+          {isCurrentUserAdmin && selectedRolesBasePath && userRolesQuery.isError && (
             <div className="p-4 text-sm text-red-600">
               {(userRolesQuery.error as Error)?.message || 'Unable to load user roles'}
             </div>
           )}
 
-          {isCurrentUserAdmin && !userRolesQuery.isLoading && !userRolesQuery.isError && (
+          {isCurrentUserAdmin && selectedRolesBasePath && !userRolesQuery.isLoading && !userRolesQuery.isError && (
             userRoles.length > 0 ? (
               <div className="divide-y divide-gray-100">
                 {userRoles.map((entry) => (
@@ -1071,7 +1123,7 @@ const Admin = () => {
             )
           )}
 
-          {isCurrentUserAdmin && (
+          {isCurrentUserAdmin && selectedRolesBasePath && (
             <div className="border-t border-gray-200 px-4 py-3 space-y-3">
               <h4 className="text-sm font-semibold text-gray-900">Assign or update a role</h4>
               <div className="flex flex-col gap-2">

@@ -3,6 +3,20 @@ import { getTapisHeaders, clearTapisHeaders } from './tapisAuth';
 
 const clean = (value?: string | null) => value?.trim() || null;
 
+const normalizeUrl = (value?: string | null): string | null => {
+  const cleaned = clean(value);
+  if (!cleaned) return null;
+  try {
+    const parsed = new URL(cleaned);
+    if (parsed.hostname.includes('..')) {
+      return null;
+    }
+    return cleaned;
+  } catch {
+    return null;
+  }
+};
+
 const getRuntimeConfigValue = (key: keyof NonNullable<Window['__UPSTREAM_CONFIG__']>): string | null => {
   if (typeof window === 'undefined') {
     return null;
@@ -26,10 +40,10 @@ const derivePodsUrlFromTapisBase = (tapisBaseUrl: string | null): string | null 
 };
 
 export const resolvePodsBaseUrl = (): string | null => {
-  const runtimePodsBase = getRuntimeConfigValue('VITE_TAPIS_PODS_BASE_URL');
-  const envPodsBase = clean(import.meta.env.VITE_TAPIS_PODS_BASE_URL);
-  const runtimeTapisBase = getRuntimeConfigValue('VITE_TAPIS_BASE_URL');
-  const envTapisBase = clean(import.meta.env.VITE_TAPIS_BASE_URL);
+  const runtimePodsBase = normalizeUrl(getRuntimeConfigValue('VITE_TAPIS_PODS_BASE_URL'));
+  const envPodsBase = normalizeUrl(import.meta.env.VITE_TAPIS_PODS_BASE_URL);
+  const runtimeTapisBase = normalizeUrl(getRuntimeConfigValue('VITE_TAPIS_BASE_URL'));
+  const envTapisBase = normalizeUrl(import.meta.env.VITE_TAPIS_BASE_URL);
 
   const derivedFromTapisBase =
     derivePodsUrlFromTapisBase(runtimeTapisBase) || derivePodsUrlFromTapisBase(envTapisBase);

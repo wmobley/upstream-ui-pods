@@ -11,6 +11,7 @@ export interface UserRoleRecord {
 
 interface UseUserRolesOptions {
   enabled?: boolean;
+  basePath?: string | null;
 }
 
 const ROLE_ENDPOINT = '/api/v1/user-roles';
@@ -48,12 +49,16 @@ const handleError = async (response: Response) => {
 
 export const useUserRoles = (options?: UseUserRolesOptions) => {
   const config = useConfiguration();
+  const resolvedBasePath = options?.basePath ?? config.basePath;
   return useQuery<UserRoleRecord[], Error>({
-    queryKey: ['user-roles'],
-    enabled: options?.enabled ?? true,
+    queryKey: ['user-roles', resolvedBasePath],
+    enabled: (options?.enabled ?? true) && Boolean(resolvedBasePath),
     queryFn: async () => {
       const headers = await buildHeaders(config);
-      const response = await fetch(`${config.basePath}${ROLE_ENDPOINT}`, {
+      if (!resolvedBasePath) {
+        throw new Error('Upstream API base path is not configured.');
+      }
+      const response = await fetch(`${resolvedBasePath}${ROLE_ENDPOINT}`, {
         method: 'GET',
         headers,
       });
@@ -65,14 +70,18 @@ export const useUserRoles = (options?: UseUserRolesOptions) => {
   });
 };
 
-export const useSaveUserRole = () => {
+export const useSaveUserRole = (options?: { basePath?: string | null }) => {
   const config = useConfiguration();
   const queryClient = useQueryClient();
+  const resolvedBasePath = options?.basePath ?? config.basePath;
   return useMutation<UserRoleRecord, Error, { username: string; role: UserRoleValue }>({
     mutationFn: async ({ username, role }) => {
       const headers = await buildHeaders(config);
+      if (!resolvedBasePath) {
+        throw new Error('Upstream API base path is not configured.');
+      }
       const response = await fetch(
-        `${config.basePath}${ROLE_ENDPOINT}/${encodeURIComponent(username)}`,
+        `${resolvedBasePath}${ROLE_ENDPOINT}/${encodeURIComponent(username)}`,
         {
           method: 'PUT',
           headers,
@@ -85,7 +94,7 @@ export const useSaveUserRole = () => {
       return response.json() as Promise<UserRoleRecord>;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-roles', resolvedBasePath] });
     },
   });
 };
