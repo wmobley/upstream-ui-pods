@@ -79,6 +79,9 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold mb-6">Create New Station</h2>
+      <div className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+        <p>Required fields are marked. You can save drafts and complete later.</p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Station Name */}
@@ -93,9 +96,12 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
             onChange={(e) => handleInputChange('name', e.target.value)}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               errors.name ? 'border-red-500' : 'border-gray-300'
-            }`}
+              }`}
             placeholder="Enter station name"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Use a clear, searchable title (e.g., “2026 Q1 Incident Logs”).
+          </p>
           {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
         </div>
 
@@ -112,6 +118,9 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter station description"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Summarize scope and source (who, when, where).
+          </p>
         </div>
 
         {/* Contact Name */}
@@ -161,6 +170,9 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
               errors.startDate ? 'border-red-500' : 'border-gray-300'
             }`}
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Set the date range to match the data contents, not the upload date.
+          </p>
           {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>}
         </div>
 

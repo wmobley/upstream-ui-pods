@@ -115,6 +115,10 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
   return (
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold mb-6">Create New Campaign</h2>
+        <div className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+          <p>Register IOP campaigns for downstream processing and reporting.</p>
+          <p>Required fields are marked. You can save drafts and complete later.</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Campaign Name */}
@@ -132,6 +136,9 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
               }`}
               placeholder="Enter campaign name"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              Use a clear, searchable title (e.g., “2026 Q1 Incident Logs”).
+            </p>
             {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
           </div>
 
@@ -212,6 +219,9 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter campaign description"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              Summarize scope and source (who, when, where).
+            </p>
           </div>
 
           {/* Start Date */}
@@ -226,6 +236,9 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
               onChange={(e) => handleInputChange('startDate', e.target.value ? new Date(e.target.value) : null)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              Set the date range to match the data contents, not the upload date.
+            </p>
           </div>
 
           {/* End Date */}
