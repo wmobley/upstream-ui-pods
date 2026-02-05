@@ -4,7 +4,7 @@ import {
 } from '@upstream/upstream-api';
 import { useList } from '../../../../../hooks/sensor/useList';
 import Modal from '../../../../common/Modal/Modal';
-import { useLineConfidence } from '../context/LineConfidenceContext';
+import { useLineConfidence } from '../context/LineConfidenceContextState';
 import React, { useMemo, useState } from 'react';
 import QueryWrapper from '../../../../common/QueryWrapper/QueryWrapper';
 

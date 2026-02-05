@@ -8,7 +8,7 @@ import StatsSection from './_components/StatsSection';
 import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import {useDetail as stationInfo} from '../../hooks/station/useDetail';
 import { renderChm } from '../../utils/helpers';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContextState';
 
 interface SensorDashboardProps {
   campaignId: string;

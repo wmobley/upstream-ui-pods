@@ -10,7 +10,7 @@ import StatsSection from './_components/StatsSection';
 import { SensorTable } from './_components/SensorTable';
 import UploadDataModal from './_components/UploadDataModal';
 import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContextState';
 
 interface StationDashboardProps {
   campaignId: string;

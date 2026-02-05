@@ -1,42 +1,14 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { useDetail } from '../../../../../hooks/sensor/useDetail';
 import { useList } from '../../../../../hooks/measurements/useList';
 import { useListConfidenceValues } from '../../../../../hooks/measurements/useListConfidenceValues';
 import {
-  GetSensorResponse,
-  AggregatedMeasurement,
-  ListMeasurementsResponsePagination,
-} from '@upstream/upstream-api';
-
-export type AggregationInterval = 'minute' | 'hour' | 'day' | 'week' | 'month';
-
-export const AGGREGATION_INTERVALS: AggregationInterval[] = [
-  'minute',
-  'hour',
-  'day',
-  'week',
-  'month',
-];
-
-interface SensorInfo {
-  id: string;
-  campaignId: string;
-  stationId: string;
-}
-
-interface SensorData {
-  info: SensorInfo;
-  aggregatedData: AggregatedMeasurement[] | null;
-  aggregatedLoading: boolean;
-  aggregatedError: Error | null;
-  allPoints: ListMeasurementsResponsePagination | null;
-}
+  AggregationInterval,
+  LineConfidenceContext,
+  SensorData,
+  SensorInfo,
+  useLineConfidence,
+} from './LineConfidenceContextState';
 
 // Custom hook to fetch sensor data
 const useSensorData = (
@@ -73,49 +45,6 @@ const useSensorData = (
     allPoints: sensorAllPoints,
   };
 };
-
-interface LineConfidenceContextProps {
-  data: GetSensorResponse | undefined;
-  isLoading: boolean;
-  error: Error | null;
-  selectedTimeRange: [number, number] | null;
-  setSelectedTimeRange: React.Dispatch<
-    React.SetStateAction<[number, number] | null>
-  >;
-  aggregationInterval: AggregationInterval | null;
-  setAggregationInterval: React.Dispatch<
-    React.SetStateAction<AggregationInterval | null>
-  >;
-  handleAggregationIntervalChange: (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => void;
-  aggregatedData: AggregatedMeasurement[] | null;
-  aggregatedLoading: boolean;
-  aggregatedError: Error | null;
-  allPoints: ListMeasurementsResponsePagination | null;
-  additionalSensors: SensorData[];
-  addSensor: (campaignId: string, stationId: string, sensorId: string) => void;
-  removeSensor: (sensorId: string) => void;
-  renderDataPoints: boolean;
-  setRenderDataPoints: React.Dispatch<React.SetStateAction<boolean>>;
-  addingSensor: boolean;
-  campaignId: string;
-  stationId: string;
-  sensorId: string;
-  addSensorModalOpen: boolean;
-  setAddSensorModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  maxValueChart: number | undefined;
-  setMaxValueChart: React.Dispatch<React.SetStateAction<number | undefined>>;
-  minValueChart: number | undefined;
-  setMinValueChart: React.Dispatch<React.SetStateAction<number | undefined>>;
-  sampleSize: number;
-  setSampleSize: React.Dispatch<React.SetStateAction<number>>;
-  sampleSizeLoading: boolean;
-}
-
-const LineConfidenceContext = createContext<
-  LineConfidenceContextProps | undefined
->(undefined);
 
 interface LineConfidenceProviderProps {
   children: ReactNode;
@@ -196,7 +125,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
         setMinValueChart(undefined);
       }
     }
-  }, [data]);
+  }, [data, aggregationInterval]);
 
   const handleAggregationIntervalChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
@@ -304,13 +233,11 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
 
   // Clean up removed sensors from the data array
   useEffect(() => {
-    if (additionalSensorsData.length > 0) {
-      setAdditionalSensorsData((prev) =>
-        prev.filter((sensorData) =>
-          additionalSensorInfos.some((info) => info.id === sensorData.info.id),
-        ),
-      );
-    }
+    setAdditionalSensorsData((prev) =>
+      prev.filter((sensorData) =>
+        additionalSensorInfos.some((info) => info.id === sensorData.info.id),
+      ),
+    );
   }, [additionalSensorInfos]);
 
   // Function to remove a sensor
@@ -368,14 +295,4 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
       {children}
     </LineConfidenceContext.Provider>
   );
-};
-
-export const useLineConfidence = (): LineConfidenceContextProps => {
-  const context = useContext(LineConfidenceContext);
-  if (context === undefined) {
-    throw new Error(
-      'useLineConfidence must be used within a LineConfidenceProvider',
-    );
-  }
-  return context;
 };

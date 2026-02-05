@@ -42,7 +42,6 @@ export const useDetail = (campaignId: string) => {
 
       const raw = await resp.json();
   // Debug: print raw server response so browser console shows snake_case fields
-  // eslint-disable-next-line no-console
   console.debug('useDetail: raw campaign response', raw);
 
       // Map server snake_case fields to camelCase used in client models

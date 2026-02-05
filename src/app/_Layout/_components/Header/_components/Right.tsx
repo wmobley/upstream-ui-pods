@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { useAuth } from '../../../../../contexts/AuthContext';
+import { useAuth } from '../../../../../contexts/AuthContextState';
 
 import { FaChevronDown, FaUser, FaUserCircle, FaRegUserCircle } from 'react-icons/fa';
 

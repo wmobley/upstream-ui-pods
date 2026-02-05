@@ -15,7 +15,7 @@ import { useDeleteBySensor } from '../../../hooks/measurements/useDeleteBySensor
 import { useDeleteSensor } from '../../../hooks/sensor/useDeleteSensor';
 import ConfirmDialog from '../../common/ConfirmDialog/ConfirmDialog';
 import { useHistory } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from '../../../contexts/AuthContextState';
 
 interface SensorTableProps {
   campaignId: string;

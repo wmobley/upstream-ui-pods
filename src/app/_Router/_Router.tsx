@@ -3,7 +3,7 @@ import { Route, Switch } from 'react-router-dom';
 import Home from '../Home';
 import Campaign from '../Campaign';
 import Login from '../Login/Login';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContextState';
 import { Loading } from '../common/Loading';
 import ConfidenceMethodExplanation from '../Sensor/viz/ConfidenceMethodExplanation';
 import Admin from '../Admin';

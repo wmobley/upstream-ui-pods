@@ -2,7 +2,7 @@ import LineConfidenceChart from '../../../../LineConfidenceChart';
 import type { AdditionalSensor } from '../../../../LineConfidenceChart/LineConfidenceChart';
 import { formatNumber } from '../../../../common/NumberFormatter/NumberFortatterUtils';
 import QueryWrapper from '../../../../common/QueryWrapper';
-import { useLineConfidence } from '../context/LineConfidenceContext';
+import { useLineConfidence } from '../context/LineConfidenceContextState';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 
 export const Chart = () => {

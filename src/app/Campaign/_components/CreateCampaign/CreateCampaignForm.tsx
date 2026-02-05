@@ -4,7 +4,7 @@ import { CampaignsIn } from '@upstream/upstream-api';
 import { useCreate } from '../../../../hooks/campaign/useCreate';
 import { useQueryClient } from '@tanstack/react-query';
 import useOrganizations from '../../../../hooks/ckan/useOrganizations';
-import { useAuth } from '../../../../contexts/AuthContext';
+import { useAuth } from '../../../../contexts/AuthContextState';
 
 interface CreateCampaignFormProps {
   onCancel?: () => void;

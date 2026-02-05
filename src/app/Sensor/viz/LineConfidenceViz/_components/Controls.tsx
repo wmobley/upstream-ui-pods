@@ -1,4 +1,4 @@
-import { useLineConfidence } from '../context/LineConfidenceContext';
+import { useLineConfidence } from '../context/LineConfidenceContextState';
 import { Link } from 'react-router-dom';
 import { AddSensorButton } from './AddSensorButton';
 import { useState } from 'react';

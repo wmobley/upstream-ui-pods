@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLineConfidence } from '../context/LineConfidenceContext';
+import { useLineConfidence } from '../context/LineConfidenceContextState';
 
 interface AddSensorButtonProps {
   className?: string;

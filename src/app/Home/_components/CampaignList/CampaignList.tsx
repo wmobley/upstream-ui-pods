@@ -10,7 +10,7 @@ import FilterToolbar, {
   CustomFilterConfig,
 } from '../../../common/FilterToolbar/FilterToolbar';
 import FilteringVariablesButton from '../CampaignFilterToolbar/_components/FilteringVariables/FilteringVariablesButton/FilteringVariablesButton';
-import { useAuth } from '../../../../contexts/AuthContext';
+import { useAuth } from '../../../../contexts/AuthContextState';
 
 const CampaignList: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();

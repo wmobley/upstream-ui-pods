@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from 'react';
+import React, { useEffect, useState, ReactNode } from 'react';
 import { AuthApi } from '@upstream/upstream-api';
 import useConfiguration from '../hooks/api/useConfiguration';
 import {
@@ -14,23 +8,11 @@ import {
   storeTapisTokens,
   clearTapisTokens,
 } from '../utils/tapisAuth';
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: Error | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  isTapisAuth: boolean;
-  username: string | null;
-  role: string | null;
-}
+import { AuthContext } from './AuthContextState';
 
 interface AuthProviderProps {
   children: ReactNode;
 }
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -196,12 +178,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
