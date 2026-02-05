@@ -322,6 +322,15 @@ const Admin = () => {
       const filtered = podsForBase.filter(
         (pod) => isUiImage(pod) || isApiImage(pod) || (allowPostgis && isPostgisImage(pod)),
       );
+      if (podsForBase.length && filtered.length === 0) {
+        console.debug('[Admin] filtered out pods for base', {
+          base,
+          pods: podsForBase.map((pod) => ({
+            pod_id: pod.pod_id,
+            image: getPodImage(pod),
+          })),
+        });
+      }
       if (filtered.length) {
         acc[base] = filtered;
       }
@@ -360,18 +369,58 @@ const Admin = () => {
     }
     return groupedPodEntries.filter((_, idx) => {
       const query = basePermissionQueries[idx];
+      if (!query) {
+        console.debug('[Admin] permission query missing for index', { idx });
+      }
       if (!query || query.isLoading || query.isError) {
+        if (query?.isError) {
+          console.debug('[Admin] permission query error', {
+            idx,
+            error: (query.error as Error | undefined)?.message,
+          });
+        }
         return false;
       }
       const permissions = parsePermissions(query.data?.result?.permissions);
       const variantSet = new Set(usernameVariants);
-      return permissions.some(
+      const allowed = permissions.some(
         (perm) =>
           perm.level === 'ADMIN' &&
           buildUserIdentifierVariants(perm.user).some((variant) => variantSet.has(variant)),
       );
+      if (!allowed) {
+        console.debug('[Admin] permission filter blocked base', {
+          idx,
+          permissions,
+          usernameVariants,
+        });
+      }
+      return allowed;
     });
   }, [groupedPodEntries, basePermissionQueries, token, basePath, usernameVariants, isApplicationAdmin]);
+
+  useEffect(() => {
+    console.debug('[Admin] pods summary', {
+      podsCount: pods.length,
+      groupedCount: groupedPodEntries.length,
+      visibleGroups: visibleGroupedPodEntries.length,
+      visiblePods: visibleGroupedPodEntries.reduce((count, [, podsForBase]) => count + podsForBase.length, 0),
+      podsQueryStatus: {
+        isLoading: podsQuery.isLoading,
+        isFetching: podsQuery.isFetching,
+        isError: podsQuery.isError,
+        error: (podsQuery.error as Error | undefined)?.message,
+      },
+    });
+  }, [
+    pods.length,
+    groupedPodEntries.length,
+    visibleGroupedPodEntries,
+    podsQuery.isLoading,
+    podsQuery.isFetching,
+    podsQuery.isError,
+    podsQuery.error,
+  ]);
 
   const selectedGroupEntry = useMemo(() => {
     if (!selectedBase) return null;
