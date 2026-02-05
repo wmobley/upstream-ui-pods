@@ -320,7 +320,11 @@ const Admin = () => {
       const hasApi = podsForBase.some(isApiImage);
       const allowPostgis = hasUi && hasApi;
       const filtered = podsForBase.filter(
-        (pod) => isUiImage(pod) || isApiImage(pod) || (allowPostgis && isPostgisImage(pod)),
+        (pod) =>
+          !getPodImage(pod) ||
+          isUiImage(pod) ||
+          isApiImage(pod) ||
+          (allowPostgis && isPostgisImage(pod)),
       );
       if (podsForBase.length && filtered.length === 0) {
         console.debug('[Admin] filtered out pods for base', {

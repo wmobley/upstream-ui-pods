@@ -24,7 +24,29 @@ const usePodsList = () => {
       const api = new Pods.PodsApi(configuration);
 
       try {
-        return await api.getPods();
+        const response = await api.getPods();
+        const rawResult = response?.result as unknown;
+        const normalized =
+          Array.isArray(rawResult)
+            ? rawResult
+            : Array.isArray((rawResult as { items?: unknown }).items)
+              ? (rawResult as { items: unknown[] }).items
+              : Array.isArray((rawResult as { pods?: unknown }).pods)
+                ? (rawResult as { pods: unknown[] }).pods
+                : Array.isArray((rawResult as { result?: unknown }).result)
+                  ? (rawResult as { result: unknown[] }).result
+                  : [];
+
+        if (!normalized.length && rawResult) {
+          console.debug('[Pods] Unexpected pods list shape', {
+            resultKeys: typeof rawResult === 'object' && rawResult ? Object.keys(rawResult as object) : rawResult,
+          });
+        }
+
+        return {
+          ...response,
+          result: normalized as Pods.PodResponseModel[],
+        };
       } catch (error) {
         throw await normalizePodsApiError(error, 'Unable to load pods');
       }
