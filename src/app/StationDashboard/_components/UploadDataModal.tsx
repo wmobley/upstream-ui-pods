@@ -28,6 +28,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   const [sensorHeaders, setSensorHeaders] = useState<string[]>([]);
   const [sensorAliases, setSensorAliases] = useState<string[]>([]);
   const [measurementHeaders, setMeasurementHeaders] = useState<string[]>([]);
+  const [measurementPreviewRows, setMeasurementPreviewRows] = useState<string[][]>([]);
   const [progress, setProgress] = useState<UploadProgress>({
     totalChunks: 0,
     currentChunk: 0,
@@ -68,9 +69,17 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   };
 
   const readMeasurementHeader = async (file: File) => {
-    const text = await file.slice(0, 65536).text();
+    const text = await file.slice(0, 262144).text();
+    const lines = text.split(/\r?\n/).filter((line) => line.length > 0);
     const headers = parseCsvHeader(text);
+    const previewRows: string[][] = [];
+
+    for (let i = 1; i < Math.min(lines.length, 3); i += 1) {
+      previewRows.push(lines[i].split(',').map(normalizeCsvValue));
+    }
+
     setMeasurementHeaders(headers);
+    setMeasurementPreviewRows(previewRows);
   };
 
   const handleSensorFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,6 +136,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
       setSensorHeaders([]);
       setSensorAliases([]);
       setMeasurementHeaders([]);
+      setMeasurementPreviewRows([]);
     } catch (error) {
       console.error('Error uploading files:', error);
       setProgress((prev) => ({
@@ -165,6 +175,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
     setSensorHeaders([]);
     setSensorAliases([]);
     setMeasurementHeaders([]);
+    setMeasurementPreviewRows([]);
     onClose();
   };
 
@@ -193,6 +204,13 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   const unmatchedMeasurementColumns = measurementHeaders.filter(
     (column) => !expectedMeasurementColumns.has(column),
   );
+
+  const measurementHeaderStatus = (header: string) => {
+    if (expectedMeasurementColumns.has(header)) {
+      return 'pass';
+    }
+    return 'fail';
+  };
 
   const sensorCsvTypeInvalid = !!sensorFile && !isCsvFile(sensorFile);
   const measurementCsvTypeInvalid = !!measurementFile && !isCsvFile(measurementFile);
@@ -349,6 +367,60 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
             </div>
           </div>
         </div>
+
+        {measurementHeaders.length > 0 && (
+          <div className="rounded-md border border-gray-200 bg-white p-3">
+            <p className="text-sm font-medium text-gray-700">
+              Measurement CSV preview
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Headers are green when they match required or alias columns, red
+              when unmatched.
+            </p>
+            <div className="mt-3 max-h-56 overflow-x-auto overflow-y-auto">
+              <table className="min-w-full border-collapse text-xs">
+                <thead>
+                  <tr>
+                    {measurementHeaders.map((header) => (
+                      <th
+                        key={header}
+                        className={`border px-2 py-1 text-left font-medium ${
+                          measurementHeaderStatus(header) === 'pass'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {measurementPreviewRows.length === 0 ? (
+                    <tr>
+                      <td
+                        className="border px-2 py-2 text-gray-500"
+                        colSpan={measurementHeaders.length}
+                      >
+                        No data rows detected.
+                      </td>
+                    </tr>
+                  ) : (
+                    measurementPreviewRows.map((row, rowIndex) => (
+                      <tr key={`${rowIndex}`}>
+                        {measurementHeaders.map((_, colIndex) => (
+                          <td key={`${rowIndex}-${colIndex}`} className="border px-2 py-1 text-gray-600">
+                            {row[colIndex] ?? ''}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {validationErrors.length > 0 && (
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
