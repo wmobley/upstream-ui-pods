@@ -83,7 +83,7 @@ const buildBaseUrlFromPod = (pod: Pods.PodResponseModel) => {
   const first = entries[0];
   if (!first) return null;
   const host = first.url || '';
-  const protocol = first.protocol || 'http';
+  const protocol = 'https';
   const shouldShowPort = first.port && ![80, 443].includes(first.port);
   const port = shouldShowPort ? `:${first.port}` : '';
   if (!host) return null;
