@@ -5,6 +5,9 @@ import { useCreate } from '../../../../hooks/campaign/useCreate';
 import { useQueryClient } from '@tanstack/react-query';
 import useOrganizations from '../../../../hooks/ckan/useOrganizations';
 import { useAuth } from '../../../../contexts/AuthContextState';
+import { useMetadataSchemaList } from '../../../../hooks/metadataSchema/useMetadataSchemaList';
+import MetadataFields from '../../../../components/MetadataFields/MetadataFields';
+import { normalizeMetadata } from '../../../../utils/metadata';
 
 interface CreateCampaignFormProps {
   onCancel?: () => void;
@@ -22,6 +25,11 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
     isLoading: isOrgLoading,
     error: orgError,
   } = useOrganizations();
+  const { data: metadataSchemaResponse, isLoading: metadataSchemaLoading } = useMetadataSchemaList({
+    scope: 'campaign',
+    activeOnly: true,
+  });
+  const metadataSchema = metadataSchemaResponse?.items ?? [];
 
   const [formData, setFormData] = useState<CampaignsIn>({
     name: '',
@@ -32,8 +40,10 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
     endDate: null,
     allocation: '',
   });
+  const [metadataValues, setMetadataValues] = useState<Record<string, any>>({});
 
   const [errors, setErrors] = useState<Partial<Record<keyof CampaignsIn, string>>>({});
+  const [metadataErrors, setMetadataErrors] = useState<Record<string, string>>({});
 
   const hasOrganizations = useMemo(() => (organizations?.length ?? 0) > 0, [organizations]);
 
@@ -42,6 +52,16 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+  const handleMetadataChange = (key: string, value: any) => {
+    setMetadataValues(prev => ({ ...prev, [key]: value }));
+    if (metadataErrors[key]) {
+      setMetadataErrors(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
     }
   };
 
@@ -64,7 +84,9 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const { errors: metaErrors } = normalizeMetadata(metadataSchema, metadataValues);
+    setMetadataErrors(metaErrors);
+    return Object.keys(newErrors).length === 0 && Object.keys(metaErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +97,12 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
     }
 
     try {
-      const response = await createCampaign.mutateAsync(formData);
+      const { metadata, errors: metaErrors } = normalizeMetadata(metadataSchema, metadataValues);
+      if (Object.keys(metaErrors).length) {
+        setMetadataErrors(metaErrors);
+        return;
+      }
+      const response = await createCampaign.mutateAsync({ ...formData, metadata });
       // Wait for cache invalidation to complete before navigating
       await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       // Navigate to the new campaign
@@ -257,6 +284,21 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
             />
             {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
           </div>
+
+          {/* Metadata Fields */}
+          {metadataSchemaLoading ? (
+            <div className="text-sm text-gray-500">Loading metadata fields…</div>
+          ) : metadataSchema.length ? (
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+              <h3 className="text-sm font-semibold text-gray-800 mb-3">Metadata</h3>
+              <MetadataFields
+                schema={metadataSchema}
+                values={metadataValues}
+                errors={metadataErrors}
+                onChange={handleMetadataChange}
+              />
+            </div>
+          ) : null}
 
 
           {/* Form Actions */}

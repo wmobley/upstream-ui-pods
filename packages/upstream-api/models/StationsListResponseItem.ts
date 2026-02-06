@@ -81,6 +81,12 @@ export interface StationsListResponseItem {
      * @memberof StationsListResponseItem
      */
     sensors?: Array<SensorSummaryForStations>;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof StationsListResponseItem
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -112,6 +118,7 @@ export function StationsListResponseItemFromJSONTyped(json: any, ignoreDiscrimin
         'startDate': (new Date(json['start_date'])),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
         'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorSummaryForStationsFromJSON)),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -135,6 +142,6 @@ export function StationsListResponseItemToJSONTyped(value?: StationsListResponse
         'start_date': ((value['startDate']).toISOString()),
         'geometry': value['geometry'],
         'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorSummaryForStationsToJSON)),
+        'metadata': value['metadata'],
     };
 }
-

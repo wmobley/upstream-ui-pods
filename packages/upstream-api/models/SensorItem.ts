@@ -75,6 +75,12 @@ export interface SensorItem {
      * @memberof SensorItem
      */
     statistics?: SensorStatistics | null;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof SensorItem
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -103,6 +109,7 @@ export function SensorItemFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'units': json['units'] == null ? undefined : json['units'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
         'statistics': json['statistics'] == null ? undefined : SensorStatisticsFromJSON(json['statistics']),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -125,6 +132,6 @@ export function SensorItemToJSONTyped(value?: SensorItem | null, ignoreDiscrimin
         'units': value['units'],
         'variablename': value['variablename'],
         'statistics': SensorStatisticsToJSON(value['statistics']),
+        'metadata': value['metadata'],
     };
 }
-

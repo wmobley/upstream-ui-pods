@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContextState';
 import { buildPodsHeaders, clearTapisAuth, decodeJwtExp } from '../../utils/pods';
 import { useUserRoles, useSaveUserRole, UserRoleValue } from '../../hooks/api/useUserRoles';
 import useConfiguration from '../../hooks/api/useConfiguration';
+import MetadataSchemaAdmin from './_components/MetadataSchemaAdmin';
 
 const formatDate = (value?: Date | string | null) => {
   if (!value) return '—';
@@ -270,6 +271,7 @@ const Admin = () => {
     }
     throw new Error('Pods deletion timed out; volume may still be attached.');
   };
+
 
   const waitForVolumeDeleted = async (volumeId: string, attempts = 12, delayMs = 5000) => {
     if (!basePath) throw new Error('Pods base URL is not configured.');
@@ -772,21 +774,27 @@ const Admin = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6 sm:p-10 space-y-6">
-      <div className="space-y-2">
+    <div id="admin-page" className="mx-auto max-w-6xl p-6 sm:p-10 space-y-6">
+      <div id="admin-header" className="space-y-2">
         <h1 className="text-3xl font-semibold text-gray-900">Admin</h1>
         <p className="text-sm text-gray-700">Pods you can access, plus application-level roles for the Upstream API.</p>
       </div>
 
       {!token && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+        <div
+          id="admin-token-warning"
+          className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-900"
+        >
           Login via Tapis (or provide a Tapis token) to load your pods.
         </div>
       )}
 
       {!podsQuery.isError && (
         <>
-        <section className="rounded-lg border border-gray-200 bg-white shadow-sm p-4 space-y-3">
+        <section
+          id="admin-bundle-section"
+          className="rounded-lg border border-gray-200 bg-white shadow-sm p-4 space-y-3"
+        >
           <h3 className="text-lg font-semibold text-gray-900">Create an Upstream System for Your Lab</h3>
           <p className="text-sm text-gray-600">
             Manage your sensors, workflows, and data products in a unified, reproducible ecosystem.
@@ -851,8 +859,14 @@ const Admin = () => {
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="lg:col-span-2 rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+        <section
+          id="admin-pods-section"
+          className="lg:col-span-2 rounded-lg border border-gray-200 bg-white shadow-sm"
+        >
+          <div
+            id="admin-pods-header"
+            className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3"
+          >
             <div className="flex flex-wrap items-center gap-3">
               <h3 className="text-lg font-semibold text-gray-900">Pods</h3>
               {canRestartPods && (
@@ -901,7 +915,7 @@ const Admin = () => {
             </div>
           </div>
 
-          <div className="p-4">
+          <div id="admin-pods-body" className="p-4">
             {podsQuery.isLoading && (
               <div className="p-4 text-sm text-gray-700">Loading pods…</div>
             )}
@@ -933,7 +947,7 @@ const Admin = () => {
             )}
 
             {showPods && (
-              <div className="space-y-2">
+              <div id="admin-pods-list" className="space-y-2">
                 {visibleGroupedPodEntries.map(([base, podsForBase]) => {
                   const uiPod = podsForBase.find((p) => p.pod_id.toLowerCase() === base.toLowerCase());
                   const uiLink = uiPod ? buildLink(uiPod) : null;
@@ -963,6 +977,7 @@ const Admin = () => {
                   return (
                     <details
                       key={base}
+                      id={`admin-pod-group-${sanitizeId(base, '')}`}
                       className={`rounded border ${isSelectedGroup ? 'border-blue-300 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}
                       open
                     >
@@ -985,6 +1000,7 @@ const Admin = () => {
                           ref={(el) => {
                             actionMenuRefs.current[base] = el;
                           }}
+                          id={`admin-pod-group-actions-${sanitizeId(base, '')}`}
                         >
                           <button
                             type="button"
@@ -1053,7 +1069,7 @@ const Admin = () => {
                           )}
                         </div>
                       </div>
-                      <div className="divide-y divide-gray-100">
+                      <div className="divide-y divide-gray-100" id={`admin-pod-group-entries-${sanitizeId(base, '')}`}>
                         {podsForBase.map((pod) => {
                           const isSelected = isSelectedGroup || pod.pod_id === selectedPodId;
                           const link = buildLink(pod);
@@ -1069,6 +1085,7 @@ const Admin = () => {
                           return (
                             <button
                               key={pod.pod_id}
+                              id={`admin-pod-${sanitizeId(pod.pod_id, '')}`}
                               type="button"
                               onClick={() => setSelectedPodId(pod.pod_id)}
                               className={`w-full text-left transition ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
@@ -1129,8 +1146,8 @@ const Admin = () => {
           </div>
         </section>
 
-        <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 px-4 py-3">
+        <section id="admin-roles-section" className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div id="admin-roles-header" className="border-b border-gray-200 px-4 py-3">
             <h3 className="text-lg font-semibold text-gray-900">Application roles</h3>
             <p className="text-sm text-gray-600">
               Assign Upstream API roles for the selected pod group. These roles replace the legacy Pods permission list.
@@ -1164,7 +1181,7 @@ const Admin = () => {
 
           {isCurrentUserAdmin && selectedRolesBasePath && !userRolesQuery.isLoading && !userRolesQuery.isError && (
             userRoles.length > 0 ? (
-              <div className="divide-y divide-gray-100">
+              <div id="admin-roles-list" className="divide-y divide-gray-100">
                 {userRoles.map((entry) => (
                   <div key={entry.username} className="flex items-center justify-between px-4 py-3">
                     <div>
@@ -1185,7 +1202,7 @@ const Admin = () => {
           )}
 
           {isCurrentUserAdmin && selectedRolesBasePath && (
-            <div className="border-t border-gray-200 px-4 py-3 space-y-3">
+            <div id="admin-roles-form" className="border-t border-gray-200 px-4 py-3 space-y-3">
               <h4 className="text-sm font-semibold text-gray-900">Assign or update a role</h4>
               <div className="flex flex-col gap-2">
                 <input
@@ -1226,6 +1243,12 @@ const Admin = () => {
               </div>
             </div>
           )}
+        </section>
+        <section
+          id="admin-metadata-section"
+          className="rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-3"
+        >
+          <MetadataSchemaAdmin canManage={isCurrentUserAdmin} />
         </section>
       </div>
 

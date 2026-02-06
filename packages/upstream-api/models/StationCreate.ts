@@ -69,6 +69,12 @@ export interface StationCreate {
      * @memberof StationCreate
      */
     stationType?: StationType;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof StationCreate
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 
@@ -99,6 +105,7 @@ export function StationCreateFromJSONTyped(json: any, ignoreDiscriminator: boole
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -120,6 +127,6 @@ export function StationCreateToJSONTyped(value?: StationCreate | null, ignoreDis
         'active': value['active'],
         'start_date': ((value['startDate']).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
+        'metadata': value['metadata'],
     };
 }
-

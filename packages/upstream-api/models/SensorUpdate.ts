@@ -55,6 +55,12 @@ export interface SensorUpdate {
      * @memberof SensorUpdate
      */
     variablename?: string | null;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof SensorUpdate
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -80,6 +86,7 @@ export function SensorUpdateFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'postprocessscript': json['postprocessscript'] == null ? undefined : json['postprocessscript'],
         'units': json['units'] == null ? undefined : json['units'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -100,6 +107,6 @@ export function SensorUpdateToJSONTyped(value?: SensorUpdate | null, ignoreDiscr
         'postprocessscript': value['postprocessscript'],
         'units': value['units'],
         'variablename': value['variablename'],
+        'metadata': value['metadata'],
     };
 }
-

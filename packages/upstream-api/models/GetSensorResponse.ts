@@ -75,6 +75,12 @@ export interface GetSensorResponse {
      * @memberof GetSensorResponse
      */
     statistics?: SensorStatistics | null;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof GetSensorResponse
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -103,6 +109,7 @@ export function GetSensorResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         'units': json['units'] == null ? undefined : json['units'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
         'statistics': json['statistics'] == null ? undefined : SensorStatisticsFromJSON(json['statistics']),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -125,6 +132,6 @@ export function GetSensorResponseToJSONTyped(value?: GetSensorResponse | null, i
         'units': value['units'],
         'variablename': value['variablename'],
         'statistics': SensorStatisticsToJSON(value['statistics']),
+        'metadata': value['metadata'],
     };
 }
-

@@ -61,6 +61,12 @@ export interface CampaignUpdate {
      * @memberof CampaignUpdate
      */
     endDate?: Date | null;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof CampaignUpdate
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -87,6 +93,7 @@ export function CampaignUpdateFromJSONTyped(json: any, ignoreDiscriminator: bool
         'allocation': json['allocation'] == null ? undefined : json['allocation'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'endDate': json['end_date'] == null ? undefined : (new Date(json['end_date'])),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -108,6 +115,6 @@ export function CampaignUpdateToJSONTyped(value?: CampaignUpdate | null, ignoreD
         'allocation': value['allocation'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'end_date': value['endDate'] == null ? undefined : ((value['endDate'] as any).toISOString()),
+        'metadata': value['metadata'],
     };
 }
-

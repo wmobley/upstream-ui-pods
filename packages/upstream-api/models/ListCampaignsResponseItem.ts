@@ -100,6 +100,12 @@ export interface ListCampaignsResponseItem {
      * @memberof ListCampaignsResponseItem
      */
     geometry?: object;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof ListCampaignsResponseItem
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -133,6 +139,7 @@ export function ListCampaignsResponseItemFromJSONTyped(json: any, ignoreDiscrimi
         'allocation': json['allocation'] == null ? undefined : json['allocation'],
         'summary': SummaryListCampaignsFromJSON(json['summary']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -158,6 +165,6 @@ export function ListCampaignsResponseItemToJSONTyped(value?: ListCampaignsRespon
         'allocation': value['allocation'],
         'summary': SummaryListCampaignsToJSON(value['summary']),
         'geometry': value['geometry'],
+        'metadata': value['metadata'],
     };
 }
-

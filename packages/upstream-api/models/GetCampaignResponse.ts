@@ -113,6 +113,12 @@ export interface GetCampaignResponse {
      * @memberof GetCampaignResponse
      */
     stations?: Array<StationsListResponseItem>;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof GetCampaignResponse
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -148,6 +154,7 @@ export function GetCampaignResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'summary': SummaryGetCampaignFromJSON(json['summary']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
         'stations': json['stations'] == null ? undefined : ((json['stations'] as Array<any>).map(StationsListResponseItemFromJSON)),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -174,6 +181,6 @@ export function GetCampaignResponseToJSONTyped(value?: GetCampaignResponse | nul
         'summary': SummaryGetCampaignToJSON(value['summary']),
         'geometry': value['geometry'],
         'stations': value['stations'] == null ? undefined : ((value['stations'] as Array<any>).map(StationsListResponseItemToJSON)),
+        'metadata': value['metadata'],
     };
 }
-

@@ -81,6 +81,12 @@ export interface GetStationResponse {
      * @memberof GetStationResponse
      */
     sensors?: Array<SensorItem> | null;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof GetStationResponse
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -111,6 +117,7 @@ export function GetStationResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
         'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorItemFromJSON)),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -134,6 +141,6 @@ export function GetStationResponseToJSONTyped(value?: GetStationResponse | null,
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'geometry': value['geometry'],
         'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorItemToJSON)),
+        'metadata': value['metadata'],
     };
 }
-

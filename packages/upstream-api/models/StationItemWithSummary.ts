@@ -85,6 +85,12 @@ export interface StationItemWithSummary {
      * @memberof StationItemWithSummary
      */
     sensorVariables: Array<string>;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof StationItemWithSummary
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 /**
@@ -120,6 +126,7 @@ export function StationItemWithSummaryFromJSONTyped(json: any, ignoreDiscriminat
         'sensorCount': json['sensor_count'],
         'sensorTypes': json['sensor_types'],
         'sensorVariables': json['sensor_variables'],
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -145,6 +152,6 @@ export function StationItemWithSummaryToJSONTyped(value?: StationItemWithSummary
         'sensor_count': value['sensorCount'],
         'sensor_types': value['sensorTypes'],
         'sensor_variables': value['sensorVariables'],
+        'metadata': value['metadata'],
     };
 }
-

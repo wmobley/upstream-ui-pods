@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { StationCreate, StationType, GetCampaignResponse } from '@upstream/upstream-api';
 import { useCreate } from '../../../../hooks/station/useCreate';
+import { useMetadataSchemaList } from '../../../../hooks/metadataSchema/useMetadataSchemaList';
+import MetadataFields from '../../../../components/MetadataFields/MetadataFields';
+import { normalizeMetadata } from '../../../../utils/metadata';
 
 interface CreateStationFormProps {
   campaignId: string;
@@ -12,6 +15,11 @@ interface CreateStationFormProps {
 const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCancel }) => {
   const history = useHistory();
   const createStation = useCreate(campaignId);
+  const { data: metadataSchemaResponse, isLoading: metadataSchemaLoading } = useMetadataSchemaList({
+    scope: 'station',
+    activeOnly: true,
+  });
+  const metadataSchema = metadataSchemaResponse?.items ?? [];
 
   const [formData, setFormData] = useState<StationCreate>({
     name: '',
@@ -22,14 +30,26 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
     startDate: new Date(),
     stationType: StationType.Static,
   });
+  const [metadataValues, setMetadataValues] = useState<Record<string, any>>({});
 
   const [errors, setErrors] = useState<Partial<Record<keyof StationCreate, string>>>({});
+  const [metadataErrors, setMetadataErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (field: keyof StationCreate, value: string | Date | boolean | StationType) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+  const handleMetadataChange = (key: string, value: any) => {
+    setMetadataValues(prev => ({ ...prev, [key]: value }));
+    if (metadataErrors[key]) {
+      setMetadataErrors(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
     }
   };
 
@@ -49,7 +69,9 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const { errors: metaErrors } = normalizeMetadata(metadataSchema, metadataValues);
+    setMetadataErrors(metaErrors);
+    return Object.keys(newErrors).length === 0 && Object.keys(metaErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,7 +82,12 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
     }
 
     try {
-      const response = await createStation.mutateAsync(formData);
+      const { metadata, errors: metaErrors } = normalizeMetadata(metadataSchema, metadataValues);
+      if (Object.keys(metaErrors).length) {
+        setMetadataErrors(metaErrors);
+        return;
+      }
+      const response = await createStation.mutateAsync({ ...formData, metadata });
       // Navigate to the new station
       history.push(`/campaigns/${campaignId}/stations/${response.id}`);
     } catch (error) {
@@ -205,6 +232,21 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
           </label>
           <p className="mt-1 text-sm text-gray-500">Check this box if the station is currently active</p>
         </div>
+
+        {/* Metadata Fields */}
+        {metadataSchemaLoading ? (
+          <div className="text-sm text-gray-500">Loading metadata fields…</div>
+        ) : metadataSchema.length ? (
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Metadata</h3>
+            <MetadataFields
+              schema={metadataSchema}
+              values={metadataValues}
+              errors={metadataErrors}
+              onChange={handleMetadataChange}
+            />
+          </div>
+        ) : null}
 
         {/* Form Actions */}
         <div className="flex justify-end space-x-4 pt-6">

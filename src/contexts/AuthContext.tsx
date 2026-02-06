@@ -44,6 +44,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      if (import.meta.env.DEV) {
+        setIsAuthenticated(true);
+        setIsTapisAuth(false);
+        setUsername((prev) => prev ?? 'dev');
+        setRole((prev) => prev ?? 'ADMIN');
+        setIsLoading(false);
+        return;
+      }
+
       const tapisInitialized = initializeTapisAuth();
 
       if (tapisInitialized) {

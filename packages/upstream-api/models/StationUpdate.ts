@@ -69,6 +69,12 @@ export interface StationUpdate {
      * @memberof StationUpdate
      */
     stationType?: StationType | null;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof StationUpdate
+     */
+    metadata?: { [key: string]: any; } | null;
 }
 
 
@@ -97,6 +103,7 @@ export function StationUpdateFromJSONTyped(json: any, ignoreDiscriminator: boole
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -118,6 +125,6 @@ export function StationUpdateToJSONTyped(value?: StationUpdate | null, ignoreDis
         'active': value['active'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
+        'metadata': value['metadata'],
     };
 }
-
