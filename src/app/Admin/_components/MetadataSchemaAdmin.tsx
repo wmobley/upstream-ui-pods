@@ -173,7 +173,7 @@ const MetadataSchemaAdmin: React.FC<MetadataSchemaAdminProps> = ({ canManage }) 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">CKAN Mode</label>
             <select
-              value={formState.ckan_mode}
+              value={formState.ckan_mode ?? 'extra'}
               onChange={(e) => handleFormChange('ckan_mode', e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
             >
