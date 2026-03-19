@@ -24,11 +24,16 @@ export const createPublishRequestId = (entity: PublishEntity, ids: Array<number 
   return `${entity}-publish-${suffix}-${randomPart}`;
 };
 
-export const buildPublishInitOverrides = (requestId: string) => ({
+export const buildPublishInitOverrides = () => ({
   headers: {
-    'X-Request-ID': requestId,
   },
 });
+
+export const appendPublishRequestId = (url: string, requestId: string) => {
+  const parsed = new URL(url, window.location.origin);
+  parsed.searchParams.set('_request_id', requestId);
+  return parsed.toString();
+};
 
 export const logPublishResponse = (
   entity: PublishEntity,

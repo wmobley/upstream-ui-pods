@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PublishRequest, Configuration } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 import {
-  buildPublishInitOverrides,
+  appendPublishRequestId,
   createPublishRequestId,
   ensurePublishSucceeded,
   logPublishResponse,
@@ -32,12 +32,14 @@ export const usePublish = () => {
     mutationFn: async ({ campaignId, cascade = false, force = false }: PublishCampaignRequest) => {
       const publishRequest: PublishRequest = { cascade, force };
       const requestId = createPublishRequestId('campaign', [campaignId]);
-      const url = `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/publish`;
+      const url = appendPublishRequestId(
+        `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/publish`,
+        requestId
+      );
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         ...((apiConfig.headers as Record<string, string> | undefined) || {}),
-        ...(buildPublishInitOverrides(requestId).headers || {}),
       };
       console.info('[publish][campaign] request', {
         requestId,
@@ -168,12 +170,14 @@ export const useUnpublish = () => {
   return useMutation<PublishDebugResponse, Error, number>({
     mutationFn: async (campaignId: number) => {
       const requestId = createPublishRequestId('campaign', [campaignId, 'unpublish']);
-      const url = `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/unpublish`;
+      const url = appendPublishRequestId(
+        `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/unpublish`,
+        requestId
+      );
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         ...((apiConfig.headers as Record<string, string> | undefined) || {}),
-        ...(buildPublishInitOverrides(requestId).headers || {}),
       };
       console.info('[publish][campaign] unpublish request', {
         requestId,

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PublishRequest, Configuration } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 import {
-  buildPublishInitOverrides,
+  appendPublishRequestId,
   createPublishRequestId,
   ensurePublishSucceeded,
   logPublishResponse,
@@ -36,12 +36,14 @@ export const usePublish = () => {
     mutationFn: async ({ campaignId, stationId, cascade = false, force = false }: PublishStationRequest) => {
       const publishRequest: PublishRequest = { cascade, force };
       const requestId = createPublishRequestId('station', [campaignId, stationId]);
-      const url = `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/publish`;
+      const url = appendPublishRequestId(
+        `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/publish`,
+        requestId
+      );
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         ...((apiConfig.headers as Record<string, string> | undefined) || {}),
-        ...(buildPublishInitOverrides(requestId).headers || {}),
       };
       console.info('[publish][station] request', {
         requestId,
@@ -138,12 +140,14 @@ export const useUnpublish = () => {
   return useMutation<PublishDebugResponse, Error, UnpublishStationRequest>({
     mutationFn: async ({ campaignId, stationId }: UnpublishStationRequest) => {
       const requestId = createPublishRequestId('station', [campaignId, stationId, 'unpublish']);
-      const url = `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/unpublish`;
+      const url = appendPublishRequestId(
+        `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/unpublish`,
+        requestId
+      );
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         ...((apiConfig.headers as Record<string, string> | undefined) || {}),
-        ...(buildPublishInitOverrides(requestId).headers || {}),
       };
       console.info('[publish][station] unpublish request', {
         requestId,
