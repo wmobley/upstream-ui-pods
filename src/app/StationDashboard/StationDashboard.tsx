@@ -90,6 +90,10 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
       setPublishOverride(true);
     } catch (error) {
       console.error('Failed to publish station:', error);
+      console.error('[publish][station] dashboard failure', {
+        requestId: (error as Record<string, unknown>).__requestId,
+        publishResponse: (error as Record<string, unknown>).__publishResponse,
+      });
       // If server indicates parent campaign is not published, open confirm dialog to force publish
       try {
         const body = (error as unknown as Record<string, unknown>).__bodyText as string | undefined;
@@ -140,6 +144,27 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   React.useEffect(() => {
     setPublishOverride(null);
   }, [campaignId, stationId]);
+
+  React.useEffect(() => {
+    if (!station || publishOverride === null) {
+      return;
+    }
+    const s: Record<string, unknown> = station as unknown as Record<string, unknown>;
+    const serverPublished =
+      typeof s['isPublished'] === 'boolean'
+        ? Boolean(s['isPublished'])
+        : typeof s['is_published'] === 'boolean'
+          ? Boolean(s['is_published'])
+          : false;
+    if (publishOverride !== serverPublished) {
+      console.warn('[publish][station] publishOverride masking server state', {
+        campaignId,
+        stationId,
+        publishOverride,
+        serverPublished,
+      });
+    }
+  }, [campaignId, stationId, station, publishOverride]);
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>

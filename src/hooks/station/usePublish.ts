@@ -1,6 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { StationsApi, PublishRequest, PublishResponse, Configuration } from '@upstream/upstream-api';
+import { PublishRequest, Configuration } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
+import {
+  buildPublishInitOverrides,
+  createPublishRequestId,
+  ensurePublishSucceeded,
+  logPublishResponse,
+  PublishDebugResponse,
+} from '../api/publishDebug';
 
 interface PublishStationRequest {
   campaignId: number;
@@ -23,18 +30,41 @@ export const usePublish = () => {
     apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
   }
 
-  const stationsApi = new StationsApi(apiConfig);
   const queryClient = useQueryClient();
 
-  return useMutation<PublishResponse, Error, PublishStationRequest>({
+  return useMutation<PublishDebugResponse, Error, PublishStationRequest>({
     mutationFn: async ({ campaignId, stationId, cascade = false, force = false }: PublishStationRequest) => {
       const publishRequest: PublishRequest = { cascade, force };
+      const requestId = createPublishRequestId('station', [campaignId, stationId]);
+      const url = `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/publish`;
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...((apiConfig.headers as Record<string, string> | undefined) || {}),
+        ...(buildPublishInitOverrides(requestId).headers || {}),
+      };
+      console.info('[publish][station] request', {
+        requestId,
+        campaignId,
+        stationId,
+        publishRequest,
+      });
       try {
-        return await stationsApi.publishStationApiV1CampaignsCampaignIdStationsStationIdPublishPost({
-          campaignId,
-          stationId,
-          publishRequest,
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(publishRequest),
         });
+        const text = await resp.text();
+        const response = JSON.parse(text) as PublishDebugResponse;
+        if (!resp.ok) {
+          const error = new Error(`Station publish API error: ${resp.status} ${resp.statusText}`);
+          (error as unknown as Record<string, unknown>).__bodyText = text;
+          (error as unknown as Record<string, unknown>).__requestId = requestId;
+          throw error;
+        }
+        logPublishResponse('station', requestId, response);
+        return ensurePublishSucceeded('station', requestId, response);
       } catch (err_) {
         const err = err_ as { response?: Response };
         if (err && err.response) {
@@ -44,6 +74,7 @@ export const usePublish = () => {
               url: `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/publish`,
               status: err.response.status,
               statusText: err.response.statusText,
+              requestId,
               body,
             });
             (err_ as unknown as Record<string, unknown>).__bodyText = body;
@@ -53,6 +84,7 @@ export const usePublish = () => {
         } else {
           console.error('Station publish API error', err_);
         }
+        (err_ as unknown as Record<string, unknown>).__requestId = requestId;
         throw err_;
       }
     },
@@ -101,16 +133,38 @@ export const useUnpublish = () => {
     apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
   }
 
-  const stationsApi = new StationsApi(apiConfig);
   const queryClient = useQueryClient();
 
-  return useMutation<PublishResponse, Error, UnpublishStationRequest>({
+  return useMutation<PublishDebugResponse, Error, UnpublishStationRequest>({
     mutationFn: async ({ campaignId, stationId }: UnpublishStationRequest) => {
+      const requestId = createPublishRequestId('station', [campaignId, stationId, 'unpublish']);
+      const url = `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/unpublish`;
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...((apiConfig.headers as Record<string, string> | undefined) || {}),
+        ...(buildPublishInitOverrides(requestId).headers || {}),
+      };
+      console.info('[publish][station] unpublish request', {
+        requestId,
+        campaignId,
+        stationId,
+      });
       try {
-        return await stationsApi.unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPost({
-          campaignId,
-          stationId,
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers,
         });
+        const text = await resp.text();
+        const response = JSON.parse(text) as PublishDebugResponse;
+        if (!resp.ok) {
+          const error = new Error(`Station unpublish API error: ${resp.status} ${resp.statusText}`);
+          (error as unknown as Record<string, unknown>).__bodyText = text;
+          (error as unknown as Record<string, unknown>).__requestId = requestId;
+          throw error;
+        }
+        logPublishResponse('station', requestId, response);
+        return response;
       } catch (err_) {
         const err = err_ as { response?: Response };
         if (err && err.response) {
@@ -120,6 +174,7 @@ export const useUnpublish = () => {
               url: `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/unpublish`,
               status: err.response.status,
               statusText: err.response.statusText,
+              requestId,
               body,
             });
             (err_ as unknown as Record<string, unknown>).__bodyText = body;
@@ -129,6 +184,7 @@ export const useUnpublish = () => {
         } else {
           console.error('Station unpublish API error', err_);
         }
+        (err_ as unknown as Record<string, unknown>).__requestId = requestId;
         throw err_;
       }
     },

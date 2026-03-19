@@ -75,6 +75,12 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
     } catch (error) {
       console.error('Failed to publish campaign:', error);
+      const requestId = (error as Record<string, unknown>).__requestId;
+      const publishResponse = (error as Record<string, unknown>).__publishResponse;
+      console.error('[publish][campaign] dashboard failure', {
+        requestId,
+        publishResponse,
+      });
     }
   };
 
@@ -122,6 +128,23 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     // debug: log campaign object and published flag when page loads
     console.log('Campaign debug', { campaign, isPublishedFlag });
   }, [campaign, isPublishedFlag]);
+
+  React.useEffect(() => {
+    const serverPublished = topIsPublished || summaryIsPublished || publishErrIndicatesPublished;
+    if (publishOverride !== null && publishOverride !== serverPublished) {
+      console.warn('[publish][campaign] publishOverride masking server-derived state', {
+        campaignId,
+        publishOverride,
+        serverPublished,
+      });
+    }
+  }, [
+    campaignId,
+    publishOverride,
+    topIsPublished,
+    summaryIsPublished,
+    publishErrIndicatesPublished,
+  ]);
 
   React.useEffect(() => {
     setPublishOverride(null);
