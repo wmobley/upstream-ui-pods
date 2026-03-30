@@ -16,6 +16,14 @@ interface PublishStationRequest {
   force?: boolean;
 }
 
+const summarizeToken = (token: string | null | undefined) => ({
+  exists: Boolean(token),
+  length: token ? token.length : null,
+  dots: token ? (token.match(/\./g) || []).length : null,
+  prefix: token ? token.slice(0, 16) : null,
+  suffix: token ? token.slice(-16) : null,
+});
+
 export const usePublish = () => {
   const config = useConfiguration();
 
@@ -50,6 +58,7 @@ export const usePublish = () => {
         campaignId,
         stationId,
         publishRequest,
+        tapisToken: summarizeToken(tapisToken),
       });
       try {
         const resp = await fetch(url, {
@@ -153,6 +162,7 @@ export const useUnpublish = () => {
         requestId,
         campaignId,
         stationId,
+        tapisToken: summarizeToken(tapisToken),
       });
       try {
         const resp = await fetch(url, {
