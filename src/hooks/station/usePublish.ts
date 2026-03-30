@@ -60,6 +60,12 @@ export const usePublish = () => {
         publishRequest,
         tapisToken: summarizeToken(tapisToken),
       });
+      console.debug('[publish][station] headers', {
+        requestId,
+        headers,
+        apiConfigHeaders: apiConfig.headers,
+        tapisTokenInSession: Boolean(tapisToken),
+      });
       try {
         const resp = await fetch(url, {
           method: 'POST',
