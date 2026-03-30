@@ -48,11 +48,13 @@ export const usePublish = () => {
         `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/publish`,
         requestId
       );
-      const headers: HeadersInit = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         ...((apiConfig.headers as Record<string, string> | undefined) || {}),
       };
+      const rawXTapisToken = headers['X-TAPIS-TOKEN'] || headers['X-Tapis-Token'] || headers['x-tapis-token'] || null;
+      const rawAuthorization = headers['Authorization'] || headers['authorization'] || null;
       console.info('[publish][station] request', {
         requestId,
         campaignId,
@@ -65,6 +67,15 @@ export const usePublish = () => {
         headers,
         apiConfigHeaders: apiConfig.headers,
         tapisTokenInSession: Boolean(tapisToken),
+      });
+      console.debug('[publish][station] headers-debug', {
+        requestId,
+        xTapisTokenPresent: Boolean(rawXTapisToken),
+        xTapisTokenSummary: rawXTapisToken ? summarizeToken(rawXTapisToken) : null,
+        authorizationPresent: Boolean(rawAuthorization),
+        authorizationSummary: rawAuthorization
+          ? summarizeToken(rawAuthorization.replace(/^Bearer\s+/i, ''))
+          : null,
       });
       try {
         const resp = await fetch(url, {
