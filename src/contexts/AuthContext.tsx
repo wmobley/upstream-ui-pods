@@ -24,6 +24,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const config = useConfiguration();
   const authApi = new AuthApi(config);
 
+  const summarizeToken = (token: string | null | undefined) => ({
+    exists: Boolean(token),
+    length: token ? token.length : null,
+    dots: token ? (token.match(/\./g) || []).length : null,
+    prefix: token ? token.slice(0, 16) : null,
+    suffix: token ? token.slice(-16) : null,
+  });
+
   const applyJwtDetails = (token: string) => {
     try {
       const [, payloadBase64] = token.split('.');
@@ -93,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Debug: show the raw login response for troubleshooting tapis tokens
       // (Do not enable in production logs with real tokens.)
       console.debug('[Auth] login response:', response);
+      console.debug('[Auth] tapis token from login response summary:', summarizeToken(response.tapisAccessToken ?? undefined));
 
       if (!response.accessToken) {
         throw new Error('No access token received');
@@ -118,6 +127,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           accessToken: response.tapisAccessToken ?? undefined,
           refreshToken: response.tapisRefreshToken ?? undefined,
           expiresAt: response.tapisExpiresAt ?? undefined,
+        });
+        const storedTapisAccessToken =
+          typeof window !== 'undefined' ? sessionStorage.getItem('Tapis-Access-Token') : null;
+        console.debug('[Auth] tapis token stored in sessionStorage summary:', summarizeToken(storedTapisAccessToken));
+        console.debug('[Auth] tapis token login/stored equality:', {
+          same:
+            Boolean(response.tapisAccessToken) &&
+            Boolean(storedTapisAccessToken) &&
+            response.tapisAccessToken === storedTapisAccessToken,
         });
       } else {
         clearTapisTokens();
