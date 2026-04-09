@@ -3,12 +3,12 @@ import { MetadataSchemaItem } from '../../hooks/metadataSchema/types';
 
 type MetadataFieldsProps = {
   schema: MetadataSchemaItem[];
-  values: Record<string, any>;
+  values: Record<string, unknown>;
   errors?: Record<string, string>;
-  onChange: (key: string, value: any) => void;
+  onChange: (key: string, value: unknown) => void;
 };
 
-const getEnumOptions = (options?: Record<string, any> | null): string[] => {
+const getEnumOptions = (options?: Record<string, unknown> | null): string[] => {
   if (!options) return [];
   if (Array.isArray(options)) return options as string[];
   if (Array.isArray(options.values)) return options.values as string[];
@@ -64,12 +64,16 @@ const MetadataFields: React.FC<MetadataFieldsProps> = ({ schema, values, errors 
 
         if (fieldType === 'enum') {
           const options = getEnumOptions(field.options);
+          const selectValue =
+            typeof rawValue === 'string' || typeof rawValue === 'number'
+              ? String(rawValue)
+              : '';
           return (
             <div key={field.key}>
               {commonLabel}
               <select
                 id={`meta-${field.key}`}
-                value={rawValue ?? ''}
+                value={selectValue}
                 onChange={(e) => onChange(field.key, e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -110,13 +114,17 @@ const MetadataFields: React.FC<MetadataFieldsProps> = ({ schema, values, errors 
         }
 
         if (fieldType === 'number') {
+          const numberValue =
+            typeof rawValue === 'number' || typeof rawValue === 'string'
+              ? rawValue
+              : '';
           return (
             <div key={field.key}>
               {commonLabel}
               <input
                 id={`meta-${field.key}`}
                 type="number"
-                value={rawValue ?? ''}
+                value={numberValue}
                 onChange={(e) => onChange(field.key, e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -127,13 +135,19 @@ const MetadataFields: React.FC<MetadataFieldsProps> = ({ schema, values, errors 
         }
 
         if (fieldType === 'json') {
+          const jsonValue =
+            typeof rawValue === 'string'
+              ? rawValue
+              : rawValue == null
+                ? ''
+                : JSON.stringify(rawValue, null, 2);
           return (
             <div key={field.key}>
               {commonLabel}
               <textarea
                 id={`meta-${field.key}`}
                 rows={4}
-                value={rawValue ?? ''}
+                value={jsonValue}
                 onChange={(e) => onChange(field.key, e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                 placeholder='{"key":"value"}'
@@ -147,13 +161,21 @@ const MetadataFields: React.FC<MetadataFieldsProps> = ({ schema, values, errors 
         return (
           <div key={field.key}>
             {commonLabel}
+            {(() => {
+              const textValue =
+                typeof rawValue === 'string' || typeof rawValue === 'number'
+                  ? String(rawValue)
+                  : '';
+              return (
             <input
               id={`meta-${field.key}`}
               type="text"
-              value={rawValue ?? ''}
+              value={textValue}
               onChange={(e) => onChange(field.key, e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+              );
+            })()}
             {helpText}
             {errorText}
           </div>

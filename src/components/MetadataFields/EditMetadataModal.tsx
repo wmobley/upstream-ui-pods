@@ -2,7 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { CampaignUpdate, StationUpdate } from '@upstream/upstream-api';
 import Modal from '../../app/common/Modal';
 import { useMetadataSchemaList } from '../../hooks/metadataSchema/useMetadataSchemaList';
-import { MetadataSchemaScope } from '../../hooks/metadataSchema/types';
+import {
+  MetadataSchemaItem,
+  MetadataSchemaScope,
+} from '../../hooks/metadataSchema/types';
 import { normalizeMetadata } from '../../utils/metadata';
 import MetadataFields from './MetadataFields';
 
@@ -31,7 +34,6 @@ const EditMetadataModal: React.FC<EditMetadataModalProps> = ({
     scope,
     activeOnly: true,
   });
-  const schema = data?.items ?? [];
   const [metadataValues, setMetadataValues] = useState<Record<string, unknown>>(
     {},
   );
@@ -43,6 +45,32 @@ const EditMetadataModal: React.FC<EditMetadataModalProps> = ({
     () => initialMetadata ?? {},
     [initialMetadata],
   );
+  const effectiveSchema = useMemo<MetadataSchemaItem[]>(() => {
+    const schema = data?.items ?? [];
+    const definedKeys = new Set(schema.map((item) => item.key));
+    const inferredFields = Object.entries(normalizedInitialMetadata)
+      .filter(([key]) => !definedKeys.has(key))
+      .map(([key, value], index) => ({
+        id: -1 - index,
+        scope,
+        key,
+        label: key
+          .split('_')
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' '),
+        field_type: inferFieldType(value),
+        required: false,
+        help_text: 'Existing metadata field',
+        units: null,
+        ckan_field: null,
+        ckan_mode: 'extra',
+        order_index: schema.length + index,
+        active: true,
+        options: null,
+      }));
+
+    return [...schema, ...inferredFields];
+  }, [data?.items, normalizedInitialMetadata, scope]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -65,7 +93,7 @@ const EditMetadataModal: React.FC<EditMetadataModalProps> = ({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const { metadata, errors } = normalizeMetadata(schema, metadataValues);
+    const { metadata, errors } = normalizeMetadata(effectiveSchema, metadataValues);
     if (Object.keys(errors).length) {
       setMetadataErrors(errors);
       return;
@@ -83,9 +111,9 @@ const EditMetadataModal: React.FC<EditMetadataModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {isLoading ? (
           <div className="text-sm text-gray-500">Loading metadata fields…</div>
-        ) : schema.length ? (
+        ) : effectiveSchema.length ? (
           <MetadataFields
-            schema={schema}
+            schema={effectiveSchema}
             values={metadataValues}
             errors={metadataErrors}
             onChange={handleMetadataChange}
@@ -120,3 +148,16 @@ const EditMetadataModal: React.FC<EditMetadataModalProps> = ({
 };
 
 export default EditMetadataModal;
+
+function inferFieldType(value: unknown): string {
+  if (typeof value === 'boolean') {
+    return 'bool';
+  }
+  if (typeof value === 'number') {
+    return 'number';
+  }
+  if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+    return 'json';
+  }
+  return 'string';
+}
