@@ -11,6 +11,7 @@ import StationCard from '../../../Station/_components/StationCard';
 import GeometryMap from '../../../common/GeometryMap/GeometryMap';
 import EditMetadataModal from '../../../../components/MetadataFields/EditMetadataModal';
 import { useUpdate as useUpdateCampaign } from '../../../../hooks/campaign/useUpdate';
+import { useOrganizations } from '../../../../hooks/ckan/useOrganizations';
 // PublishButton was used previously; dropdown replicates its behavior here
 import { hasValidGeometry } from '../../../../utils/geometryValidation';
 
@@ -30,6 +31,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   const publishCampaign = usePublish();
   const unpublishCampaign = useUnpublish();
   const updateCampaign = useUpdateCampaign();
+  const { data: organizations } = useOrganizations();
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteStationsDialog, setShowDeleteStationsDialog] = useState(false);
@@ -98,11 +100,25 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   };
 
   const handleSaveMetadata = async (payload: {
+    name?: string | null;
+    description?: string | null;
+    contactName?: string | null;
+    contactEmail?: string | null;
+    allocation?: string | null;
+    startDate?: Date | null;
+    endDate?: Date | null;
     metadata?: Record<string, unknown> | null;
   }) => {
     await updateCampaign.mutateAsync({
       campaignId,
       campaignUpdate: {
+        name: payload.name ?? campaign?.name ?? '',
+        description: payload.description ?? null,
+        contactName: payload.contactName ?? null,
+        contactEmail: payload.contactEmail ?? null,
+        allocation: payload.allocation ?? null,
+        startDate: payload.startDate ?? null,
+        endDate: payload.endDate ?? null,
         metadata: payload.metadata ?? {},
       },
     });
@@ -428,6 +444,68 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
         onClose={() => setShowEditMetadataModal(false)}
         scope="campaign"
         title={`Edit Metadata: ${campaign?.name ?? 'Campaign'}`}
+        extraFields={[
+          {
+            key: 'name',
+            label: 'Dataset Name',
+            type: 'text',
+            required: true,
+            helpText: 'Used as the campaign title and CKAN dataset title.',
+          },
+          {
+            key: 'allocation',
+            label: 'Organization',
+            type: 'select',
+            required: true,
+            helpText: 'CKAN organization used when publishing the dataset.',
+            options: (organizations ?? []).map((organization) => ({
+              label:
+                organization.display_name ||
+                organization.title ||
+                organization.name,
+              value: organization.name,
+            })),
+          },
+          {
+            key: 'description',
+            label: 'Description',
+            type: 'textarea',
+            helpText: 'Used as the CKAN dataset description.',
+          },
+          {
+            key: 'contactName',
+            label: 'Contact Name',
+            type: 'text',
+            helpText: 'Maps to the CKAN author/maintainer name when configured.',
+          },
+          {
+            key: 'contactEmail',
+            label: 'Contact Email',
+            type: 'email',
+            helpText: 'Maps to the CKAN author/maintainer email when configured.',
+          },
+          {
+            key: 'startDate',
+            label: 'Start Date',
+            type: 'date',
+            helpText: 'Used for CKAN temporal coverage start when available.',
+          },
+          {
+            key: 'endDate',
+            label: 'End Date',
+            type: 'date',
+            helpText: 'Used for CKAN temporal coverage end when available.',
+          },
+        ]}
+        initialValues={{
+          name: campaign?.name ?? '',
+          allocation: campaign?.allocation ?? '',
+          description: campaign?.description ?? '',
+          contactName: campaign?.contactName ?? '',
+          contactEmail: campaign?.contactEmail ?? '',
+          startDate: campaign?.startDate ?? null,
+          endDate: campaign?.endDate ?? null,
+        }}
         initialMetadata={campaign?.metadata as
           | Record<string, unknown>
           | null

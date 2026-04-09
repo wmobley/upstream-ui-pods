@@ -133,12 +133,20 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   };
 
   const handleSaveMetadata = async (payload: {
+    name?: string | null;
+    description?: string | null;
+    contactName?: string | null;
+    contactEmail?: string | null;
     metadata?: Record<string, unknown> | null;
   }) => {
     await updateStation.mutateAsync({
       campaignId,
       stationId,
       stationUpdate: {
+        name: payload.name ?? station?.name ?? '',
+        description: payload.description ?? null,
+        contactName: payload.contactName ?? null,
+        contactEmail: payload.contactEmail ?? null,
         metadata: payload.metadata ?? {},
       },
     });
@@ -416,6 +424,39 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             onClose={() => setShowEditMetadataModal(false)}
             scope="station"
             title={`Edit Metadata: ${station?.name ?? 'Station'}`}
+            extraFields={[
+              {
+                key: 'name',
+                label: 'Dataset Name',
+                type: 'text',
+                required: true,
+                helpText: 'Used as the station title and CKAN dataset title.',
+              },
+              {
+                key: 'description',
+                label: 'Description',
+                type: 'textarea',
+                helpText: 'Used as the CKAN dataset description.',
+              },
+              {
+                key: 'contactName',
+                label: 'Contact Name',
+                type: 'text',
+                helpText: 'Maps to the CKAN author/maintainer name when configured.',
+              },
+              {
+                key: 'contactEmail',
+                label: 'Contact Email',
+                type: 'email',
+                helpText: 'Maps to the CKAN author/maintainer email when configured.',
+              },
+            ]}
+            initialValues={{
+              name: station?.name ?? '',
+              description: station?.description ?? '',
+              contactName: station?.contactName ?? '',
+              contactEmail: station?.contactEmail ?? '',
+            }}
             initialMetadata={station?.metadata as
               | Record<string, unknown>
               | null
