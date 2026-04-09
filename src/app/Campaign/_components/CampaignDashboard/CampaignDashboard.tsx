@@ -9,6 +9,8 @@ import QueryWrapper from '../../../common/QueryWrapper';
 import ConfirmDialog from '../../../common/ConfirmDialog';
 import StationCard from '../../../Station/_components/StationCard';
 import GeometryMap from '../../../common/GeometryMap/GeometryMap';
+import EditMetadataModal from '../../../../components/MetadataFields/EditMetadataModal';
+import { useUpdate as useUpdateCampaign } from '../../../../hooks/campaign/useUpdate';
 // PublishButton was used previously; dropdown replicates its behavior here
 import { hasValidGeometry } from '../../../../utils/geometryValidation';
 
@@ -27,11 +29,13 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   const deleteStations = useDeleteStations(campaignId);
   const publishCampaign = usePublish();
   const unpublishCampaign = useUnpublish();
+  const updateCampaign = useUpdateCampaign();
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteStationsDialog, setShowDeleteStationsDialog] = useState(false);
   const [showActionDropdown, setShowActionDropdown] = useState(false);
   const [showStationsActionDropdown, setShowStationsActionDropdown] = useState(false);
+  const [showEditMetadataModal, setShowEditMetadataModal] = useState(false);
   const [publishOverride, setPublishOverride] = useState<boolean | null>(null);
 
   const handleDeleteCampaign = async () => {
@@ -91,6 +95,18 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     } catch (error) {
       console.error('Failed to unpublish campaign:', error);
     }
+  };
+
+  const handleSaveMetadata = async (payload: {
+    metadata?: Record<string, unknown> | null;
+  }) => {
+    await updateCampaign.mutateAsync({
+      campaignId,
+      campaignUpdate: {
+        metadata: payload.metadata ?? {},
+      },
+    });
+    setShowEditMetadataModal(false);
   };
   const _campaignObj = campaign as unknown as Record<string, unknown>;
   console.log(_campaignObj)
@@ -238,6 +254,16 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
                           )}
 
                           {/* Station actions */}
+                          <button
+                            onClick={() => {
+                              setShowActionDropdown(false);
+                              setShowEditMetadataModal(true);
+                            }}
+                            className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 transition-colors border-b border-gray-100"
+                          >
+                            Edit Metadata
+                          </button>
+
                           <button
                             onClick={() => {
                               setShowActionDropdown(false);
@@ -395,6 +421,20 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
         onCancel={() => setShowDeleteStationsDialog(false)}
         isLoading={deleteStations.isPending}
         danger={true}
+      />
+
+      <EditMetadataModal
+        isOpen={showEditMetadataModal}
+        onClose={() => setShowEditMetadataModal(false)}
+        scope="campaign"
+        title={`Edit Metadata: ${campaign?.name ?? 'Campaign'}`}
+        initialMetadata={campaign?.metadata as
+          | Record<string, unknown>
+          | null
+          | undefined}
+        isSaving={updateCampaign.isPending}
+        saveError={updateCampaign.error?.message ?? null}
+        onSave={handleSaveMetadata}
       />
     </QueryWrapper>
   );

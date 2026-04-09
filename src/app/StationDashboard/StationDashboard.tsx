@@ -11,6 +11,8 @@ import { SensorTable } from './_components/SensorTable';
 import UploadDataModal from './_components/UploadDataModal';
 import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import { useAuth } from '../../contexts/AuthContextState';
+import EditMetadataModal from '../../components/MetadataFields/EditMetadataModal';
+import { useUpdate as useUpdateStation } from '../../hooks/station/useUpdate';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -32,10 +34,12 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const deleteStation = useDeleteStation();
   const publishStation = usePublish();
   const unpublishStation = useUnpublish();
+  const updateStation = useUpdateStation();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [showDeleteSensorsDialog, setShowDeleteSensorsDialog] = useState(false);
   const [showDeleteStationDialog, setShowDeleteStationDialog] = useState(false);
   const [showActionDropdown, setShowActionDropdown] = useState(false);
+  const [showEditMetadataModal, setShowEditMetadataModal] = useState(false);
   const [showForcePublishDialog, setShowForcePublishDialog] = useState(false);
   const [forcePublishArgs, setForcePublishArgs] = useState<{ cascade: boolean } | null>(null);
   const [publishOverride, setPublishOverride] = useState<boolean | null>(null);
@@ -128,6 +132,19 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
     }
   };
 
+  const handleSaveMetadata = async (payload: {
+    metadata?: Record<string, unknown> | null;
+  }) => {
+    await updateStation.mutateAsync({
+      campaignId,
+      stationId,
+      stationUpdate: {
+        metadata: payload.metadata ?? {},
+      },
+    });
+    setShowEditMetadataModal(false);
+  };
+
   // ...existing code...
 
   const isPublished = (() => {
@@ -207,6 +224,21 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
                 {/* Dropdown Menu */}
                 {showActionDropdown && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-[99999]" style={{ zIndex: 99999 }}>
+                    <button
+                      onClick={() => {
+                        setShowActionDropdown(false);
+                        setShowEditMetadataModal(true);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 transition-colors border-b border-gray-100"
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Metadata
+                      </div>
+                    </button>
+
                     <button
                       onClick={() => {
                         if (!canManageData) {
@@ -377,6 +409,20 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             }}
             isLoading={publishStation.isPending}
             danger={false}
+          />
+
+          <EditMetadataModal
+            isOpen={showEditMetadataModal}
+            onClose={() => setShowEditMetadataModal(false)}
+            scope="station"
+            title={`Edit Metadata: ${station?.name ?? 'Station'}`}
+            initialMetadata={station?.metadata as
+              | Record<string, unknown>
+              | null
+              | undefined}
+            isSaving={updateStation.isPending}
+            saveError={updateStation.error?.message ?? null}
+            onSave={handleSaveMetadata}
           />
         </div>
       </div>
