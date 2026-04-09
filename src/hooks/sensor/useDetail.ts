@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { GetSensorResponse } from '@upstream/upstream-api';
+import { GetSensorResponse, GetSensorResponseFromJSON } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 
 export const useDetail = (
@@ -36,7 +36,7 @@ export const useDetail = (
 
       const rawRec = raw as Record<string, unknown>;
       const mapped = {
-        ...rawRec,
+        ...GetSensorResponseFromJSON(raw),
         isPublished: (typeof rawRec['isPublished'] === 'boolean') ? rawRec['isPublished'] : (typeof rawRec['is_published'] === 'boolean' ? rawRec['is_published'] : false),
         publishedAt: rawRec['published_at'] ? new Date(String(rawRec['published_at'])) : (rawRec['publishedAt'] as Date | undefined) ?? undefined,
       } as unknown as GetSensorResponse;

@@ -36,8 +36,8 @@ export interface LineConfidenceContextProps {
   error: Error | null;
   selectedTimeRange: [number, number] | null;
   setSelectedTimeRange: Dispatch<SetStateAction<[number, number] | null>>;
-  aggregationInterval: AggregationInterval | null;
-  setAggregationInterval: Dispatch<SetStateAction<AggregationInterval | null>>;
+  aggregationInterval: AggregationInterval;
+  setAggregationInterval: Dispatch<SetStateAction<AggregationInterval>>;
   handleAggregationIntervalChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   aggregatedData: AggregatedMeasurement[] | null;
   aggregatedLoading: boolean;

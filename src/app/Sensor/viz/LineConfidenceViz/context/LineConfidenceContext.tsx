@@ -4,6 +4,7 @@ import { useList } from '../../../../../hooks/measurements/useList';
 import { useListConfidenceValues } from '../../../../../hooks/measurements/useListConfidenceValues';
 import {
   AggregationInterval,
+  AGGREGATION_INTERVALS,
   LineConfidenceContext,
   SensorData,
   SensorInfo,
@@ -86,7 +87,9 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     [number, number] | null
   >(null);
   const [aggregationInterval, setAggregationInterval] =
-    useState<AggregationInterval | null>(null);
+    useState<AggregationInterval>('minute');
+  const [hasUserSelectedAggregation, setHasUserSelectedAggregation] =
+    useState(false);
   const [additionalSensorInfos, setAdditionalSensorInfos] = useState<
     SensorInfo[]
   >([]);
@@ -107,11 +110,6 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
 
   useEffect(() => {
     if (data) {
-      if (aggregationInterval === null) {
-        setAggregationInterval('minute');
-      }
-    }
-    if (data) {
       if (data.statistics?.percentile99) {
         setMaxValueChart(data.statistics?.maxValue ?? undefined);
       } else {
@@ -125,17 +123,22 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
         setMinValueChart(undefined);
       }
     }
-  }, [data, aggregationInterval]);
+  }, [data]);
+
+  useEffect(() => {
+    setAggregationInterval('minute');
+    setHasUserSelectedAggregation(false);
+  }, [campaignId, stationId, sensorId]);
 
   const handleAggregationIntervalChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
+    setHasUserSelectedAggregation(true);
     setAggregationInterval(event.target.value as AggregationInterval);
   };
 
   const aggregationValue = 1;
-
-  const effectiveInterval = aggregationInterval || 'minute';
+  const effectiveInterval = aggregationInterval;
 
   const {
     data: aggregatedData,
@@ -160,6 +163,31 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   useEffect(() => {
     setSampleSizeLoading(allPointsLoading);
   }, [allPointsLoading]);
+
+  useEffect(() => {
+    if (
+      hasUserSelectedAggregation ||
+      aggregatedLoading ||
+      aggregatedError ||
+      aggregatedData === null ||
+      aggregatedData.length > 0
+    ) {
+      return;
+    }
+
+    const currentIndex = AGGREGATION_INTERVALS.indexOf(aggregationInterval);
+    const nextInterval = AGGREGATION_INTERVALS[currentIndex + 1];
+
+    if (nextInterval) {
+      setAggregationInterval(nextInterval);
+    }
+  }, [
+    aggregationInterval,
+    aggregatedData,
+    aggregatedError,
+    aggregatedLoading,
+    hasUserSelectedAggregation,
+  ]);
 
   // Function to add a new sensor
   const addSensor = (

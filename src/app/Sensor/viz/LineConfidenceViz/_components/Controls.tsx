@@ -186,11 +186,10 @@ const Controls = () => {
             </label>
             <select
               id="aggregationInterval"
-              value={aggregationInterval || ''}
+              value={aggregationInterval}
               onChange={handleAggregationIntervalChange}
               className="form-select text-sm border rounded px-2 py-1"
             >
-              <option value="">Select interval</option>
               <option value="minute">Minute</option>
               <option value="hour">Hour</option>
               <option value="day">Day</option>
