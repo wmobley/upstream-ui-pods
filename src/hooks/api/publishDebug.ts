@@ -2,9 +2,10 @@ import { PublishResponse } from '@upstream/upstream-api';
 
 type PublishEntity = 'campaign' | 'station';
 
-export type PublishDebugResponse = PublishResponse & {
+export type PublishDebugResponse = Partial<PublishResponse> & {
   success?: boolean;
   message?: string;
+  detail?: string;
   errors?: string[];
   published_count?: number;
 };
@@ -72,4 +73,21 @@ export const ensurePublishSucceeded = (
     response,
   });
   throw error;
+};
+
+export const parsePublishResponseText = (
+  text: string,
+): PublishDebugResponse => {
+  if (!text.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text) as PublishDebugResponse;
+  } catch {
+    return {
+      message: text,
+      detail: text,
+    };
+  }
 };

@@ -7,6 +7,7 @@ import {
   ensurePublishSucceeded,
   logPublishResponse,
   PublishDebugResponse,
+  parsePublishResponseText,
 } from '../api/publishDebug';
 
 interface PublishCampaignRequest {
@@ -53,11 +54,22 @@ export const usePublish = () => {
           body: JSON.stringify(publishRequest),
         });
         const text = await resp.text();
-        const response = JSON.parse(text) as PublishDebugResponse;
+        const response = parsePublishResponseText(text);
         if (!resp.ok) {
-          const error = new Error(`Publish API error: ${resp.status} ${resp.statusText}`);
+          const detail =
+            response?.message ||
+            response?.detail ||
+            (Array.isArray(response?.errors) && response.errors.length
+              ? response.errors.join('; ')
+              : null);
+          const error = new Error(
+            detail
+              ? `Publish API error: ${resp.status} ${detail}`
+              : `Publish API error: ${resp.status} ${resp.statusText}`,
+          );
           (error as unknown as Record<string, unknown>).__bodyText = text;
           (error as unknown as Record<string, unknown>).__requestId = requestId;
+          (error as unknown as Record<string, unknown>).__publishResponse = response;
           throw error;
         }
         logPublishResponse('campaign', requestId, response);
@@ -187,9 +199,20 @@ export const useUnpublish = () => {
         method: 'POST',
         headers,
       });
-      const response = await resp.json() as PublishDebugResponse;
+      const text = await resp.text();
+      const response = parsePublishResponseText(text);
       if (!resp.ok) {
-        throw new Error(`Unpublish API error: ${resp.status} ${resp.statusText}`);
+        const detail =
+          response?.message ||
+          response?.detail ||
+          (Array.isArray(response?.errors) && response.errors.length
+            ? response.errors.join('; ')
+            : null);
+        throw new Error(
+          detail
+            ? `Unpublish API error: ${resp.status} ${detail}`
+            : `Unpublish API error: ${resp.status} ${resp.statusText}`,
+        );
       }
       logPublishResponse('campaign', requestId, response);
       return response;
