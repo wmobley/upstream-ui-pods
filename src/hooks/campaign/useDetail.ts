@@ -48,6 +48,16 @@ export const useDetail = (campaignId: string) => {
       const rawRec = raw as Record<string, unknown>;
       const mapped = {
         ...rawRec,
+        startDate: rawRec['start_date']
+          ? new Date(String(rawRec['start_date']))
+          : (rawRec['startDate'] as Date | undefined) ?? undefined,
+        endDate: rawRec['end_date']
+          ? new Date(String(rawRec['end_date']))
+          : (rawRec['endDate'] as Date | undefined) ?? undefined,
+        contactName:
+          rawRec['contact_name'] ?? rawRec['contactName'],
+        contactEmail:
+          rawRec['contact_email'] ?? rawRec['contactEmail'],
         isPublished: rawRec['is_published'] ?? rawRec['isPublished'],
         publishedAt: rawRec['published_at'] ? new Date(String(rawRec['published_at'])) : (rawRec['publishedAt'] as Date | undefined) ?? undefined,
       } as unknown as GetCampaignResponse;
