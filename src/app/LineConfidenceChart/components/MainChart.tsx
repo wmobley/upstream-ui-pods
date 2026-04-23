@@ -322,12 +322,12 @@ const MainChart: React.FC<MainChartProps> = ({
         {additionalSensors?.map((sensor, sensorIndex) =>
           sensor.aggregatedData?.map((d) => (
             <DataPoint
-              key={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              key={`point-${sensor.info.key}-${d.measurementTime.getTime()}`}
               cx={scales.xScale(d.measurementTime.getTime())}
               cy={scales.yScale(d.value)}
               radius={pointRadius}
               color={getSensorColor('point', sensorIndex + 1)}
-              pointKey={`point-${sensor.info.id}-${d.measurementTime.getTime()}`}
+              pointKey={`point-${sensor.info.key}-${d.measurementTime.getTime()}`}
               isInteractive={true}
               onClick={(e) => {
                 e.stopPropagation(); // Prevent event from bubbling to zoom container
@@ -395,12 +395,12 @@ const MainChart: React.FC<MainChartProps> = ({
         {additionalSensors?.map((sensor, sensorIndex) =>
           sensor.allPoints?.map((d, index) => (
             <DataPoint
-              key={`individual-${d.collectiontime.getTime()}-${d.value}-${index}`}
+              key={`individual-${sensor.info.key}-${d.collectiontime.getTime()}-${d.value}-${index}`}
               cx={scales.xScale(d.collectiontime.getTime())}
               cy={scales.yScale(d.value)}
               radius={pointRadius}
               color={getSensorColor('point', sensorIndex + 1)}
-              pointKey={`individual-${d.collectiontime.getTime()}-${d.value}-${index}`}
+              pointKey={`individual-${sensor.info.key}-${d.collectiontime.getTime()}-${d.value}-${index}`}
               isInteractive
               onClick={(e) => {
                 e.stopPropagation(); // Prevent event from bubbling to zoom container

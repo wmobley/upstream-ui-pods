@@ -13,6 +13,7 @@ import { defaultChartStyles, defaultFormatters } from './utils/chartUtils';
 // Define the structure of additional sensors
 export interface AdditionalSensor {
   info: {
+    key: string;
     id: string;
     campaignId: string;
     stationId: string;

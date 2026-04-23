@@ -11,6 +11,9 @@ import {
   useLineConfidence,
 } from './LineConfidenceContextState';
 
+const getSensorKey = (sensorInfo: Omit<SensorInfo, 'key'>) =>
+  `${sensorInfo.campaignId}-${sensorInfo.stationId}-${sensorInfo.id}`;
+
 // Custom hook to fetch sensor data
 const useSensorData = (
   sensorInfo: SensorInfo,
@@ -190,21 +193,16 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   ]);
 
   // Function to add a new sensor
-  const addSensor = (
-    newCampaignId: string,
-    newStationId: string,
-    newSensorId: string,
-  ) => {
+  const addSensor = (newSensorInfo: Omit<SensorInfo, 'key'>) => {
+    const newSensorKey = getSensorKey(newSensorInfo);
+
     // Check if the sensor is already added
     if (
-      (newSensorId === sensorId &&
-        newCampaignId === campaignId &&
-        newStationId === stationId) ||
+      (newSensorInfo.id === sensorId &&
+        newSensorInfo.campaignId === campaignId &&
+        newSensorInfo.stationId === stationId) ||
       additionalSensorInfos.some(
-        (sensor) =>
-          sensor.id === newSensorId &&
-          sensor.campaignId === newCampaignId &&
-          sensor.stationId === newStationId,
+        (sensor) => sensor.key === newSensorKey,
       )
     ) {
       return; // Sensor already exists
@@ -217,9 +215,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     setAdditionalSensorInfos((prev) => [
       ...prev,
       {
-        id: newSensorId,
-        campaignId: newCampaignId,
-        stationId: newStationId,
+        ...newSensorInfo,
+        key: newSensorKey,
       },
     ]);
   };
@@ -228,7 +225,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const handleSensorDataUpdate = (updatedSensorData: SensorData) => {
     setAdditionalSensorsData((prev) => {
       const existingIndex = prev.findIndex(
-        (item) => item.info.id === updatedSensorData.info.id,
+        (item) => item.info.key === updatedSensorData.info.key,
       );
 
       // Don't update if the data hasn't actually changed
@@ -263,15 +260,15 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   useEffect(() => {
     setAdditionalSensorsData((prev) =>
       prev.filter((sensorData) =>
-        additionalSensorInfos.some((info) => info.id === sensorData.info.id),
+        additionalSensorInfos.some((info) => info.key === sensorData.info.key),
       ),
     );
   }, [additionalSensorInfos]);
 
   // Function to remove a sensor
-  const removeSensor = (sensorIdToRemove: string) => {
+  const removeSensor = (sensorKeyToRemove: string) => {
     setAdditionalSensorInfos((prev) =>
-      prev.filter((sensor) => sensor.id !== sensorIdToRemove),
+      prev.filter((sensor) => sensor.key !== sensorKeyToRemove),
     );
   };
 
@@ -313,7 +310,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
       {/* Render a component for each additional sensor to manage its data */}
       {additionalSensorInfos.map((sensorInfo) => (
         <AdditionalSensor
-          key={sensorInfo.id}
+          key={sensorInfo.key}
           sensorInfo={sensorInfo}
           effectiveInterval={effectiveInterval}
           aggregationValue={aggregationValue}

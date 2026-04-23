@@ -108,7 +108,7 @@ const Controls = () => {
             if (sensor.allPoints && sensor.allPoints.items) {
               sensor.allPoints.items.forEach((item: MeasurementItem) => {
                 const rowData = [
-                  sensor.info.id, // Additional sensor ID
+                  sensor.info.key,
                   item.id,
                   item.value,
                   new Date(item.collectiontime).toISOString(),
@@ -144,7 +144,7 @@ const Controls = () => {
           additionalSensors.forEach((sensor) => {
             if (sensor.allPoints && sensor.allPoints.items) {
               allData.push({
-                sensorId: sensor.info.id,
+                sensorId: sensor.info.key,
                 points: sensor.allPoints.items,
               });
             }

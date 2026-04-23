@@ -17,9 +17,12 @@ export const AGGREGATION_INTERVALS: AggregationInterval[] = [
 ];
 
 export interface SensorInfo {
+  key: string;
   id: string;
   campaignId: string;
   stationId: string;
+  label?: string;
+  stationName?: string;
 }
 
 export interface SensorData {
@@ -44,8 +47,8 @@ export interface LineConfidenceContextProps {
   aggregatedError: Error | null;
   allPoints: ListMeasurementsResponsePagination | null;
   additionalSensors: SensorData[];
-  addSensor: (campaignId: string, stationId: string, sensorId: string) => void;
-  removeSensor: (sensorId: string) => void;
+  addSensor: (sensorInfo: Omit<SensorInfo, 'key'>) => void;
+  removeSensor: (sensorKey: string) => void;
   renderDataPoints: boolean;
   setRenderDataPoints: Dispatch<SetStateAction<boolean>>;
   addingSensor: boolean;

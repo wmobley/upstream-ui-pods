@@ -20,11 +20,18 @@ export const AdditionalSensorsList: React.FC<AdditionalSensorsListProps> = ({
       <ul className="space-y-2">
         {additionalSensors.map((sensor) => (
           <li
-            key={sensor.info.id}
+            key={sensor.info.key}
             className="flex justify-between items-center p-3 border rounded bg-gray-50"
           >
             <div>
-              <span className="font-medium">Sensor {sensor.info.id}</span>
+              <span className="font-medium">
+                {sensor.info.label || `Sensor ${sensor.info.id}`}
+              </span>
+              {sensor.info.stationName && (
+                <span className="ml-2 text-sm text-gray-600">
+                  {sensor.info.stationName}
+                </span>
+              )}
               {color && (
                 <div
                   className="w-2 h-2 rounded-full"
@@ -33,9 +40,9 @@ export const AdditionalSensorsList: React.FC<AdditionalSensorsListProps> = ({
               )}
             </div>
             <button
-              onClick={() => removeSensor(sensor.info.id)}
+              onClick={() => removeSensor(sensor.info.key)}
               className="px-2 py-1 text-sm text-red-600 hover:text-red-800"
-              aria-label={`Remove sensor ${sensor.info.id}`}
+              aria-label={`Remove ${sensor.info.label || `sensor ${sensor.info.id}`}`}
             >
               Remove
             </button>
