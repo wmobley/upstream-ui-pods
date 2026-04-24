@@ -42,6 +42,8 @@ export interface TimeSeriesChartProps {
   xFormatterOverview?: (date: Date | number) => string;
   yFormatter?: (value: number) => string;
   onBrush?: (domain: [number, number]) => void;
+  minMeasurementValue?: number;
+  maxMeasurementValue?: number;
 }
 
 // Default props
@@ -93,6 +95,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     defaultProps.xFormatter!,
   yFormatter = defaultProps.yFormatter!,
   onBrush,
+  minMeasurementValue,
+  maxMeasurementValue,
 }) => {
   // Add refs for container
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -173,6 +177,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
             xFormatter={xFormatter}
             yFormatter={yFormatter}
             viewDomain={viewDomain}
+            minMeasurementValue={minMeasurementValue}
+            maxMeasurementValue={maxMeasurementValue}
             setTooltip={setTooltip}
           />
         )}

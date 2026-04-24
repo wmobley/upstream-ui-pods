@@ -19,6 +19,8 @@ export const useListFilterDate = (
   downsampleThreshold: number | undefined = undefined,
   startDate: Date,
   endDate: Date,
+  minMeasurementValue: number | undefined = undefined,
+  maxMeasurementValue: number | undefined = undefined,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
@@ -33,16 +35,19 @@ export const useListFilterDate = (
       downsampleThreshold,
       startDate,
       endDate,
+      minMeasurementValue,
+      maxMeasurementValue,
     ],
     queryFn: async () => {
-      const response =
+        const response =
         await measurementsApi.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(
           {
             campaignId: parseInt(campaignId),
             stationId: parseInt(stationId),
             sensorId: parseInt(sensorId),
             downsampleThreshold: downsampleThreshold,
-            minMeasurementValue: 0,
+            minMeasurementValue,
+            maxMeasurementValue,
             limit: limit,
             startDate: startDate,
             endDate: endDate,

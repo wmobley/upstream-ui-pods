@@ -27,6 +27,8 @@ export function useProcessedMeasurements(
   containerWidth: number,
   startTime?: Date,
   endTime?: Date,
+  minMeasurementValue?: number,
+  maxMeasurementValue?: number,
 ): ProcessedMeasurementsResult {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
@@ -43,6 +45,8 @@ export function useProcessedMeasurements(
       sensorId,
       startTime,
       endTime,
+      minMeasurementValue,
+      maxMeasurementValue,
     ],
     queryFn: async () => {
       const response =
@@ -51,10 +55,11 @@ export function useProcessedMeasurements(
             campaignId: parseInt(campaignId),
             stationId: parseInt(stationId),
             sensorId: parseInt(sensorId),
-            minMeasurementValue: 0,
             limit: 500000,
             startDate: startTime,
             endDate: endTime,
+            minMeasurementValue,
+            maxMeasurementValue,
           },
         );
       return response;

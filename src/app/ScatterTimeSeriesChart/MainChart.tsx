@@ -32,6 +32,8 @@ export interface MainChartProps {
   xFormatter: (date: Date | number) => string;
   yFormatter: (value: number) => string;
   viewDomain: [number, number];
+  minMeasurementValue?: number;
+  maxMeasurementValue?: number;
   setTooltip: (tooltip: TooltipData | null) => void;
 }
 
@@ -52,13 +54,23 @@ const MainChart: React.FC<MainChartProps> = ({
   xFormatter,
   yFormatter,
   viewDomain,
+  minMeasurementValue,
+  maxMeasurementValue,
   setTooltip,
 }) => {
   const {
     data: response,
     isLoading,
     error,
-  } = useList(campaignId, stationId, sensorId, 500000);
+  } = useList(
+    campaignId,
+    stationId,
+    sensorId,
+    500000,
+    undefined,
+    minMeasurementValue,
+    maxMeasurementValue,
+  );
   const data = response?.items.map((item) => ({
     timestamp: item.collectiontime,
     value: item.value,
@@ -85,7 +97,7 @@ const MainChart: React.FC<MainChartProps> = ({
       .range([0, innerWidth]);
 
     const yScale = scaleLinear()
-      .domain([0, yExtent[1]])
+      .domain([yExtent[0], yExtent[1]])
       .range([innerHeight, 0]);
 
     return { xScale, yScale };

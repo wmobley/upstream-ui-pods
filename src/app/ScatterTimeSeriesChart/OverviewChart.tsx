@@ -57,7 +57,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
       .range([0, innerWidth]);
 
     const yScale = scaleLinear()
-      .domain([0, yExtent[1]])
+      .domain([yExtent[0], yExtent[1]])
       .range([innerHeight, 0]);
 
     return { xScale, yScale };

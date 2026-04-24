@@ -17,6 +17,8 @@ export const useList = (
   sensorId: string,
   limit: number = 500000,
   downsampleThreshold: number | undefined = undefined,
+  minMeasurementValue: number | undefined = undefined,
+  maxMeasurementValue: number | undefined = undefined,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
@@ -30,6 +32,8 @@ export const useList = (
         sensorId,
         limit,
         downsampleThreshold,
+        minMeasurementValue,
+        maxMeasurementValue,
       ],
       queryFn: async () => {
         const response =
@@ -39,7 +43,8 @@ export const useList = (
               stationId: parseInt(stationId),
               sensorId: parseInt(sensorId),
               downsampleThreshold,
-              minMeasurementValue: 0,
+              minMeasurementValue,
+              maxMeasurementValue,
               limit,
             },
           );
