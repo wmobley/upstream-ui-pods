@@ -18,6 +18,10 @@ const Controls = () => {
     sampleSize,
     setSampleSize,
     sampleSizeLoading,
+    minFilterValueInput,
+    setMinFilterValueInput,
+    maxFilterValueInput,
+    setMaxFilterValueInput,
   } = useLineConfidence();
 
   // State for active button styling
@@ -231,6 +235,31 @@ const Controls = () => {
               </div>
             </div>
           )}
+          <div className="h-8 border-r border-gray-300"></div>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <span>Value &gt;=</span>
+              <input
+                className="w-28 rounded border px-2 py-1 text-sm"
+                inputMode="decimal"
+                type="number"
+                value={minFilterValueInput}
+                onChange={(event) => setMinFilterValueInput(event.target.value)}
+                placeholder="Any"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <span>Value &lt;=</span>
+              <input
+                className="w-28 rounded border px-2 py-1 text-sm"
+                inputMode="decimal"
+                type="number"
+                value={maxFilterValueInput}
+                onChange={(event) => setMaxFilterValueInput(event.target.value)}
+                placeholder="Any"
+              />
+            </label>
+          </div>
         </div>
 
         <div className="flex flex-row justify-between gap-4 w-full">

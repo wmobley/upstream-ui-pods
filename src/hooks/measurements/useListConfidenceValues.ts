@@ -18,6 +18,8 @@ export const useListConfidenceValues = (
   sensorId: string,
   interval: string,
   intervalValue: number,
+  minValue?: number,
+  maxValue?: number,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
@@ -30,6 +32,8 @@ export const useListConfidenceValues = (
       sensorId,
       interval,
       intervalValue,
+      minValue,
+      maxValue,
     ],
     queryFn: async () => {
       const requestParams: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest =
@@ -39,7 +43,8 @@ export const useListConfidenceValues = (
           sensorId: parseInt(sensorId),
           interval: interval,
           intervalValue: intervalValue,
-          minValue: 0,
+          minValue,
+          maxValue,
         };
       return await measurementsApi.getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet(
         requestParams,

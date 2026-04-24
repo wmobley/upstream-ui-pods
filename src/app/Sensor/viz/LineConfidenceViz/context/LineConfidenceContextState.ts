@@ -64,6 +64,10 @@ export interface LineConfidenceContextProps {
   sampleSize: number;
   setSampleSize: Dispatch<SetStateAction<number>>;
   sampleSizeLoading: boolean;
+  minFilterValueInput: string;
+  setMinFilterValueInput: Dispatch<SetStateAction<string>>;
+  maxFilterValueInput: string;
+  setMaxFilterValueInput: Dispatch<SetStateAction<string>>;
 }
 
 export const LineConfidenceContext = createContext<LineConfidenceContextProps | undefined>(undefined);

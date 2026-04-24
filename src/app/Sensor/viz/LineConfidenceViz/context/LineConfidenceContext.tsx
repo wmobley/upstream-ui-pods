@@ -20,6 +20,8 @@ const useSensorData = (
   effectiveInterval: string,
   aggregationValue: number,
   sampleSize: number,
+  minFilterValue?: number,
+  maxFilterValue?: number,
 ): SensorData => {
   const {
     data: sensorAggregatedData,
@@ -31,6 +33,8 @@ const useSensorData = (
     sensorInfo.id,
     effectiveInterval,
     aggregationValue,
+    minFilterValue,
+    maxFilterValue,
   );
 
   const { data: sensorAllPoints } = useList(
@@ -39,6 +43,8 @@ const useSensorData = (
     sensorInfo.id,
     100000,
     sampleSize,
+    minFilterValue,
+    maxFilterValue,
   );
 
   return {
@@ -62,14 +68,25 @@ const AdditionalSensor: React.FC<{
   sensorInfo: SensorInfo;
   effectiveInterval: string;
   aggregationValue: number;
+  minFilterValue?: number;
+  maxFilterValue?: number;
   onDataReady: (sensorData: SensorData) => void;
-}> = ({ sensorInfo, effectiveInterval, aggregationValue, onDataReady }) => {
+}> = ({
+  sensorInfo,
+  effectiveInterval,
+  aggregationValue,
+  minFilterValue,
+  maxFilterValue,
+  onDataReady,
+}) => {
   const { sampleSize } = useLineConfidence();
   const sensorData = useSensorData(
     sensorInfo,
     effectiveInterval,
     aggregationValue,
     sampleSize,
+    minFilterValue,
+    maxFilterValue,
   );
 
   useEffect(() => {
@@ -110,6 +127,18 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const [addSensorModalOpen, setAddSensorModalOpen] = useState<boolean>(false);
   const [sampleSize, setSampleSize] = useState<number>(2000);
   const [sampleSizeLoading, setSampleSizeLoading] = useState<boolean>(false);
+  const [minFilterValueInput, setMinFilterValueInput] = useState<string>('');
+  const [maxFilterValueInput, setMaxFilterValueInput] = useState<string>('');
+  const parsedMinFilterValue =
+    minFilterValueInput.trim() === '' ? undefined : Number(minFilterValueInput);
+  const parsedMaxFilterValue =
+    maxFilterValueInput.trim() === '' ? undefined : Number(maxFilterValueInput);
+  const minFilterValue = Number.isFinite(parsedMinFilterValue)
+    ? parsedMinFilterValue
+    : undefined;
+  const maxFilterValue = Number.isFinite(parsedMaxFilterValue)
+    ? parsedMaxFilterValue
+    : undefined;
 
   useEffect(() => {
     if (data) {
@@ -153,6 +182,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     sensorId,
     effectiveInterval,
     aggregationValue,
+    minFilterValue,
+    maxFilterValue,
   );
   const { data: allPoints, isLoading: allPointsLoading } = useList(
     campaignId,
@@ -160,6 +191,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     sensorId,
     100000,
     sampleSize,
+    minFilterValue,
+    maxFilterValue,
   );
 
   // Update sampleSizeLoading when allPointsLoading changes
@@ -303,6 +336,10 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     sampleSize,
     setSampleSize,
     sampleSizeLoading,
+    minFilterValueInput,
+    setMinFilterValueInput,
+    maxFilterValueInput,
+    setMaxFilterValueInput,
   };
 
   return (
@@ -314,6 +351,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
           sensorInfo={sensorInfo}
           effectiveInterval={effectiveInterval}
           aggregationValue={aggregationValue}
+          minFilterValue={minFilterValue}
+          maxFilterValue={maxFilterValue}
           onDataReady={handleSensorDataUpdate}
         />
       ))}
