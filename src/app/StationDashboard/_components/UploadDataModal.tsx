@@ -188,6 +188,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
     () => ['collectiontime', 'Lat_deg', 'Lon_deg'],
     [],
   );
+  const exampleDataBasePath = '/examples/data';
 
   const missingMeasurementColumns = requiredMeasurementColumns.filter(
     (column) => !measurementHeaders.includes(column),
@@ -298,6 +299,47 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
             sensor <code>alias</code>. Dates should be ISO (YYYY-MM-DD or full
             timestamp). Numbers should not include commas; leave blanks for
             missing values.
+          </p>
+        </div>
+
+        <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+          <p className="text-sm font-medium text-gray-700">
+            Example datasets
+          </p>
+          <p className="mt-1 text-xs text-gray-600">
+            Use these files as working templates for expected sensor and
+            measurement CSV formats.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+            <a
+              href={`${exampleDataBasePath}/sensors.csv`}
+              download
+              className="rounded border border-primary-200 bg-white px-2 py-1 text-primary-700 hover:bg-primary-50"
+            >
+              Download sensors.csv
+            </a>
+            <a
+              href={`${exampleDataBasePath}/measurements.csv`}
+              download
+              className="rounded border border-primary-200 bg-white px-2 py-1 text-primary-700 hover:bg-primary-50"
+            >
+              Download measurements.csv
+            </a>
+            <a
+              href={`${exampleDataBasePath}/CKAN_DATASET_EXAMPLE.md`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded border border-gray-200 bg-white px-2 py-1 text-gray-700 hover:bg-gray-100"
+            >
+              Open dataset notes
+            </a>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Example sensor aliases in this dataset are <code>River Stage</code>
+            , <code>Rain Increment</code>, and <code>Flow Volume</code>. The
+            measurement file includes matching columns with{' '}
+            <code>collectiontime</code>, <code>Lat_deg</code>, and{' '}
+            <code>Lon_deg</code>.
           </p>
         </div>
 
