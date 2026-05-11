@@ -30,7 +30,7 @@ const derivePodsUrlFromTapisBase = (tapisBaseUrl: string | null): string | null 
   }
   try {
     const url = new URL(tapisBaseUrl);
-    // Insert a pods. prefix in front of the host (e.g., tacc.tapis.io -> pods.tacc.tapis.io)
+    // Insert a pods. prefix in front of the host (e.g., portals.tapis.io -> pods.portals.tapis.io)
     const hostWithPods = url.host.startsWith('pods.') ? url.host : `pods.${url.host}`;
     return `${url.protocol}//${hostWithPods}`;
   } catch (error) {
@@ -48,13 +48,12 @@ export const resolvePodsBaseUrl = (): string | null => {
   const derivedFromTapisBase =
     derivePodsUrlFromTapisBase(runtimeTapisBase) || derivePodsUrlFromTapisBase(envTapisBase);
 
-  // Default to the TACC develop tenant endpoint if nothing else is set. This matches the
-  // environment the Admin tooling targets and avoids pointing to the deprecated hub hostname.
+  // Default to the portals tenant endpoint if nothing else is set.
   return clean(
     runtimePodsBase ||
       envPodsBase ||
       derivedFromTapisBase ||
-      'https://tacc.tapis.io'
+      'https://portals.tapis.io'
   )
     ?.replace(/\/+$/, '') || null;
 };

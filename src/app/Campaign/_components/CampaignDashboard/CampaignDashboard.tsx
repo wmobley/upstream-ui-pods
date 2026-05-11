@@ -7,11 +7,19 @@ import { usePublish, useUnpublish } from '../../../../hooks/campaign/usePublish'
 import { useDelete as useDeleteStations } from '../../../../hooks/station/useDelete';
 import QueryWrapper from '../../../common/QueryWrapper';
 import ConfirmDialog from '../../../common/ConfirmDialog';
+import PublishErrorModal from '../../../common/PublishErrorModal';
+import PublishSuccessModal from '../../../common/PublishSuccessModal';
 import StationCard from '../../../Station/_components/StationCard';
 import GeometryMap from '../../../common/GeometryMap/GeometryMap';
 import EditMetadataModal from '../../../../components/MetadataFields/EditMetadataModal';
 import { useUpdate as useUpdateCampaign } from '../../../../hooks/campaign/useUpdate';
 import { useOrganizations } from '../../../../hooks/ckan/useOrganizations';
+import {
+  formatPublishError,
+  formatPublishSuccess,
+  type FormattedPublishError,
+  type FormattedPublishSuccess,
+} from '../../../../hooks/api/publishDebug';
 // PublishButton was used previously; dropdown replicates its behavior here
 import { hasValidGeometry } from '../../../../utils/geometryValidation';
 
@@ -39,6 +47,8 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   const [showStationsActionDropdown, setShowStationsActionDropdown] = useState(false);
   const [showEditMetadataModal, setShowEditMetadataModal] = useState(false);
   const [publishOverride, setPublishOverride] = useState<boolean | null>(null);
+  const [publishError, setPublishError] = useState<FormattedPublishError | null>(null);
+  const [publishSuccess, setPublishSuccess] = useState<FormattedPublishSuccess | null>(null);
 
   const handleDeleteCampaign = async () => {
     try {
@@ -60,7 +70,9 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
 
   const handlePublish = async (cascade?: boolean) => {
     try {
-      await publishCampaign.mutateAsync({
+      setPublishError(null);
+      setPublishSuccess(null);
+      const response = await publishCampaign.mutateAsync({
         campaignId: parseInt(campaignId),
         cascade: cascade || false,
       });
@@ -79,6 +91,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       }
       setPublishOverride(true);
       queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
+      setPublishSuccess(formatPublishSuccess('campaign', response));
     } catch (error) {
       console.error('Failed to publish campaign:', error);
       const requestId = (error as Record<string, unknown>).__requestId;
@@ -87,15 +100,19 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
         requestId,
         publishResponse,
       });
+      setPublishError(formatPublishError(error));
     }
   };
 
   const handleUnpublish = async () => {
     try {
+      setPublishError(null);
+      setPublishSuccess(null);
       await unpublishCampaign.mutateAsync(parseInt(campaignId));
       setPublishOverride(false);
     } catch (error) {
       console.error('Failed to unpublish campaign:', error);
+      setPublishError(formatPublishError(error));
     }
   };
 
@@ -437,6 +454,18 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
         onCancel={() => setShowDeleteStationsDialog(false)}
         isLoading={deleteStations.isPending}
         danger={true}
+      />
+
+      <PublishErrorModal
+        error={publishError}
+        entityLabel="campaign"
+        onClose={() => setPublishError(null)}
+      />
+
+      <PublishSuccessModal
+        result={publishSuccess}
+        entityLabel="campaign"
+        onClose={() => setPublishSuccess(null)}
       />
 
       <EditMetadataModal

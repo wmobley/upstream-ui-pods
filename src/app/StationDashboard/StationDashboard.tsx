@@ -4,6 +4,8 @@ import { useDeleteStation } from '../../hooks/station/useDeleteStation';
 import { usePublish, useUnpublish } from '../../hooks/station/usePublish';
 import QueryWrapper from '../common/QueryWrapper';
 import ConfirmDialog from '../common/ConfirmDialog';
+import PublishErrorModal from '../common/PublishErrorModal';
+import PublishSuccessModal from '../common/PublishSuccessModal';
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import StatsSection from './_components/StatsSection';
@@ -13,6 +15,12 @@ import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import { useAuth } from '../../contexts/AuthContextState';
 import EditMetadataModal from '../../components/MetadataFields/EditMetadataModal';
 import { useUpdate as useUpdateStation } from '../../hooks/station/useUpdate';
+import {
+  formatPublishError,
+  formatPublishSuccess,
+  type FormattedPublishError,
+  type FormattedPublishSuccess,
+} from '../../hooks/api/publishDebug';
 
 interface StationDashboardProps {
   campaignId: string;
@@ -43,6 +51,8 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const [showForcePublishDialog, setShowForcePublishDialog] = useState(false);
   const [forcePublishArgs, setForcePublishArgs] = useState<{ cascade: boolean } | null>(null);
   const [publishOverride, setPublishOverride] = useState<boolean | null>(null);
+  const [publishError, setPublishError] = useState<FormattedPublishError | null>(null);
+  const [publishSuccess, setPublishSuccess] = useState<FormattedPublishSuccess | null>(null);
 
   const handleDeleteSensors = async () => {
     if (!canManageData) {
@@ -77,21 +87,34 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
 
   const handlePublishStation = async (cascade?: boolean) => {
     if (!canManageData) {
-      alert('Write permissions required to publish stations.');
+      setPublishSuccess(null);
+      setPublishError({
+        title: 'Publishing unavailable',
+        message: 'Write permissions are required to publish stations.',
+        details: [],
+      });
       return;
     }
     if (!campaign || !station) {
-      console.error('Campaign or station details missing; cannot publish to CKAN.');
+      setPublishSuccess(null);
+      setPublishError({
+        title: 'Publishing unavailable',
+        message: 'Campaign or station details are missing; this station cannot be published to CKAN.',
+        details: [],
+      });
       return;
     }
     try {
-      await publishStation.mutateAsync({
+      setPublishError(null);
+      setPublishSuccess(null);
+      const response = await publishStation.mutateAsync({
         campaignId: parseInt(campaignId),
         stationId: parseInt(stationId),
         cascade: cascade || false,
       });
       setShowActionDropdown(false);
       setPublishOverride(true);
+      setPublishSuccess(formatPublishSuccess('station', response));
     } catch (error) {
       console.error('Failed to publish station:', error);
       console.error('[publish][station] dashboard failure', {
@@ -104,23 +127,37 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
         if (body && body.includes('parent campaign is not published')) {
           setForcePublishArgs({ cascade: cascade || false });
           setShowForcePublishDialog(true);
+          return;
         }
       } catch {
         // ignore
       }
+      setPublishError(formatPublishError(error));
     }
   };
 
   const handleUnpublishStation = async () => {
     if (!canManageData) {
-      alert('Write permissions required to unpublish stations.');
+      setPublishSuccess(null);
+      setPublishError({
+        title: 'Unpublishing unavailable',
+        message: 'Write permissions are required to unpublish stations.',
+        details: [],
+      });
       return;
     }
     if (!campaign || !station) {
-      console.error('Campaign or station details missing; cannot unpublish CKAN dataset.');
+      setPublishSuccess(null);
+      setPublishError({
+        title: 'Unpublishing unavailable',
+        message: 'Campaign or station details are missing; this station cannot be unpublished from CKAN.',
+        details: [],
+      });
       return;
     }
     try {
+      setPublishError(null);
+      setPublishSuccess(null);
       await unpublishStation.mutateAsync({
         campaignId: parseInt(campaignId),
         stationId: parseInt(stationId),
@@ -129,6 +166,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
       setPublishOverride(false);
     } catch (error) {
       console.error('Failed to unpublish station:', error);
+      setPublishError(formatPublishError(error));
     }
   };
 
@@ -398,14 +436,19 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
                 if (!campaign || !station) {
                   throw new Error('Missing campaign or station detail.');
                 }
-                await publishStation.mutateAsync({
+                setPublishError(null);
+                setPublishSuccess(null);
+                const response = await publishStation.mutateAsync({
                   campaignId: parseInt(campaignId),
                   stationId: parseInt(stationId),
                   cascade: forcePublishArgs?.cascade || false,
                   force: true,
                 });
+                setPublishOverride(true);
+                setPublishSuccess(formatPublishSuccess('station', response));
               } catch (err) {
                 console.error('Failed to force publish station:', err);
+                setPublishError(formatPublishError(err));
               } finally {
                 setShowForcePublishDialog(false);
                 setForcePublishArgs(null);
@@ -417,6 +460,18 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             }}
             isLoading={publishStation.isPending}
             danger={false}
+          />
+
+          <PublishErrorModal
+            error={publishError}
+            entityLabel="station"
+            onClose={() => setPublishError(null)}
+          />
+
+          <PublishSuccessModal
+            result={publishSuccess}
+            entityLabel="station"
+            onClose={() => setPublishSuccess(null)}
           />
 
           <EditMetadataModal

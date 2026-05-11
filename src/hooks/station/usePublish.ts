@@ -6,6 +6,7 @@ import {
   createPublishRequestId,
   ensurePublishSucceeded,
   logPublishResponse,
+  parsePublishResponseText,
   PublishDebugResponse,
 } from '../api/publishDebug';
 
@@ -84,11 +85,22 @@ export const usePublish = () => {
           body: JSON.stringify(publishRequest),
         });
         const text = await resp.text();
-        const response = JSON.parse(text) as PublishDebugResponse;
+        const response = parsePublishResponseText(text);
         if (!resp.ok) {
-          const error = new Error(`Station publish API error: ${resp.status} ${resp.statusText}`);
+          const detail =
+            response?.message ||
+            response?.detail ||
+            (Array.isArray(response?.errors) && response.errors.length
+              ? response.errors.join('; ')
+              : null);
+          const error = new Error(
+            detail
+              ? `Station publish API error: ${resp.status} ${detail}`
+              : `Station publish API error: ${resp.status} ${resp.statusText}`
+          );
           (error as unknown as Record<string, unknown>).__bodyText = text;
           (error as unknown as Record<string, unknown>).__requestId = requestId;
+          (error as unknown as Record<string, unknown>).__publishResponse = response;
           throw error;
         }
         logPublishResponse('station', requestId, response);

@@ -931,7 +931,7 @@ const Admin = () => {
                   </p>
                   <div className="mt-3">
                     <a
-                      href="https://upstream.pods.tacc.tapis.io/admin"
+                      href="https://upstream.pods.portals.tapis.io/admin"
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
