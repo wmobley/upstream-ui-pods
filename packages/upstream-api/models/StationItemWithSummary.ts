@@ -13,6 +13,8 @@
  */
 
 import { mapValues } from '../runtime';
+import type { StationType } from './StationType';
+import { StationTypeFromJSON, StationTypeToJSON } from './StationType';
 /**
  * 
  * @export
@@ -62,7 +64,13 @@ export interface StationItemWithSummary {
      */
     startDate?: Date | null;
     /**
-     * 
+     *
+     * @type {StationType}
+     * @memberof StationItemWithSummary
+     */
+    stationType?: StationType;
+    /**
+     *
      * @type {object}
      * @memberof StationItemWithSummary
      */
@@ -122,6 +130,7 @@ export function StationItemWithSummaryFromJSONTyped(json: any, ignoreDiscriminat
         'contactEmail': json['contact_email'] == null ? undefined : json['contact_email'],
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
+        'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
         'sensorCount': json['sensor_count'],
         'sensorTypes': json['sensor_types'],
@@ -148,6 +157,7 @@ export function StationItemWithSummaryToJSONTyped(value?: StationItemWithSummary
         'contact_email': value['contactEmail'],
         'active': value['active'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
+        'station_type': StationTypeToJSON(value['stationType']),
         'geometry': value['geometry'],
         'sensor_count': value['sensorCount'],
         'sensor_types': value['sensorTypes'],

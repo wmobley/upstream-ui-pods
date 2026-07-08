@@ -13,6 +13,8 @@
  */
 
 import { mapValues } from '../runtime';
+import type { StationType } from './StationType';
+import { StationTypeFromJSON, StationTypeToJSON } from './StationType';
 import type { SensorSummaryForStations } from './SensorSummaryForStations';
 import {
     SensorSummaryForStationsFromJSON,
@@ -70,7 +72,13 @@ export interface StationsListResponseItem {
      */
     startDate: Date;
     /**
-     * 
+     *
+     * @type {StationType}
+     * @memberof StationsListResponseItem
+     */
+    stationType?: StationType;
+    /**
+     *
      * @type {object}
      * @memberof StationsListResponseItem
      */
@@ -116,6 +124,7 @@ export function StationsListResponseItemFromJSONTyped(json: any, ignoreDiscrimin
         'contactEmail': json['contact_email'] == null ? undefined : json['contact_email'],
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': (new Date(json['start_date'])),
+        'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
         'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorSummaryForStationsFromJSON)),
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
@@ -140,6 +149,7 @@ export function StationsListResponseItemToJSONTyped(value?: StationsListResponse
         'contact_email': value['contactEmail'],
         'active': value['active'],
         'start_date': ((value['startDate']).toISOString()),
+        'station_type': StationTypeToJSON(value['stationType']),
         'geometry': value['geometry'],
         'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorSummaryForStationsToJSON)),
         'metadata': value['metadata'],
