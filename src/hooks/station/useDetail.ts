@@ -42,6 +42,7 @@ export const useDetail = (campaignId: string, stationId: string) => {
           // normalize publishing fields
           isPublished: (typeof rawRec['isPublished'] === 'boolean') ? rawRec['isPublished'] : (typeof rawRec['is_published'] === 'boolean' ? rawRec['is_published'] : false),
           publishedAt: rawRec['published_at'] ? new Date(String(rawRec['published_at'])) : (rawRec['publishedAt'] as Date | undefined) ?? undefined,
+          stationType: (rawRec['station_type'] ?? rawRec['stationType']) as GetStationResponse['stationType'],
         } as unknown as GetStationResponse;
         console.debug('useStationDetail: mapped station', mapped);
 
