@@ -169,6 +169,7 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
                   stationId={stationId}
                   sensorId={sensorId}
                   data={data}
+                  stationType={station?.stationType}
                 />
               )}
             </QueryWrapper>

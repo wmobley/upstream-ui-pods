@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import { FaFire, FaChartLine } from 'react-icons/fa';
-import { GetSensorResponse } from '@upstream/upstream-api';
+import { GetSensorResponse, StationType } from '@upstream/upstream-api';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 interface MeasurementsSummaryProps {
   data: GetSensorResponse | null;
   campaignId: string;
   stationId: string;
   sensorId: string;
+  stationType?: StationType;
 }
 
 const MeasurementsSummary = ({
@@ -14,7 +15,9 @@ const MeasurementsSummary = ({
   campaignId,
   stationId,
   sensorId,
+  stationType,
 }: MeasurementsSummaryProps) => {
+  const isMobile = stationType == null || stationType === StationType.Mobile;
   return (
     <>
       <h2 className="text-xl font-semibold mb-4">Measurements</h2>
@@ -62,15 +65,17 @@ const MeasurementsSummary = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
-        <Link
-          to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/heat-map`}
-          className="block"
-        >
-          <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
-            <FaFire className="text-lg" />
-            <span>View Heat Map</span>
-          </button>
-        </Link>
+        {isMobile && (
+          <Link
+            to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/heat-map`}
+            className="block"
+          >
+            <button className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-md transition-colors duration-200">
+              <FaFire className="text-lg" />
+              <span>View Heat Map</span>
+            </button>
+          </Link>
+        )}
         {/* <Link
           to={`/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/viz/scatter-time`}
           className="block"
