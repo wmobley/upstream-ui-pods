@@ -16,9 +16,15 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.sha.outputs.short_sha }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Compute short SHA
+        id: sha
+        run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-7)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -108,16 +114,21 @@ jobs:
             -d "$PAYLOAD" | jq -r '.status')
           echo "Tapis Pods update status: ${STATUS}"
 
+  deploy-develop:
+    needs: build
+    if: github.ref == 'refs/heads/feature/unified-ui-tapis-auth' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: Tapis Configure
+    env:
+      TAPIS_SERVICE_USERNAME: ${{ secrets.TAPIS_DEVELOP_USERNAME }}
+      TAPIS_SERVICE_PASSWORD: ${{ secrets.TAPIS_DEVELOP_PASSWORD }}
+      TAPIS_BASE_URL: https://portals.develop.tapis.io
+      TAPIS_POD_ID: upstream-develop
+
+    steps:
       - name: Deploy to Tapis Pods (develop)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/unified-ui-tapis-auth'
-        env:
-          TAPIS_SERVICE_USERNAME: ${{ secrets.TAPIS_DEVELOP_USERNAME }}
-          TAPIS_SERVICE_PASSWORD: ${{ secrets.TAPIS_DEVELOP_PASSWORD }}
-          TAPIS_BASE_URL: https://portals.develop.tapis.io
-          TAPIS_POD_ID: upstream-develop
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE="ghcr.io/${{ github.repository }}:sha-${SHORT_SHA}"
+          IMAGE="ghcr.io/${{ github.repository }}:sha-${{ needs.build.outputs.short_sha }}"
 
           TAPIS_TOKEN=$(curl -sf -X POST "${TAPIS_BASE_URL}/v3/oauth2/tokens" \
             -H "Content-Type: application/json" \
