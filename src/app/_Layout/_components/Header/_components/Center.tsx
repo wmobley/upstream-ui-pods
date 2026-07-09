@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ProjectDropdown from './ProjectDropdown';
 
 const Center = () => (
   <div className="flex flex-1 items-center justify-end md:justify-between">
@@ -14,6 +15,9 @@ const Center = () => (
         </li>
       </ul>
     </nav>
+    <div className="hidden md:flex items-center">
+      <ProjectDropdown />
+    </div>
   </div>
 );
 

@@ -1,7 +1,25 @@
 import { Configuration } from '@upstream/upstream-api';
+import { useInstance } from '../../contexts/InstanceContext';
 import { getTapisHeaders } from '../../utils/tapisAuth';
 
 const useConfiguration = () => {
+  const { selectedInstance, discoveryEnabled } = useInstance();
+
+  // --- Mode 1: Unified UI — instance selected, use Tapis JWT as Bearer ---
+  if (discoveryEnabled && selectedInstance) {
+    const tapisToken = sessionStorage.getItem('Tapis-Access-Token');
+    if (tapisToken) {
+      return new Configuration({
+        basePath: selectedInstance.apiUrl,
+        headers: {
+          Authorization: `Bearer ${tapisToken}`,
+          Accept: 'application/json',
+        },
+      });
+    }
+  }
+
+  // --- Mode 2: Legacy per-project UI — fixed API URL from env/runtime config ---
   const runtimeBasePath =
     window.__UPSTREAM_CONFIG__?.VITE_UPSTREAM_API_URL?.trim() || undefined;
   const envBasePath = import.meta.env.VITE_UPSTREAM_API_URL?.trim() || undefined;
@@ -9,69 +27,38 @@ const useConfiguration = () => {
   const rawBasePath = runtimeBasePath ?? envBasePath ?? defaultBasePath;
   const basePath = rawBasePath.replace(/\/+$/, '');
 
-  if (!basePath) {
-    throw new Error('UPSTREAM_API_URL is not set');
-  }
-
-  // Check for Tapis authentication first. Only treat the environment as a
-  // Tapis "pod" when the full Tapis headers (username, tenant, site)
-  // are present. Previously we considered a lone Tapis access token as
-  // enough, which caused the client to prefer `X-TAPIS-TOKEN` and omit
-  // the application's `Authorization: Bearer` header. That could result
-  // in 401s for endpoints that expect the app JWT. Keep the tokens
-  // distinct: prefer full Tapis headers only when the full set exists.
+  // Mode 2a: Inside a Tapis pod — full proxy headers injected
   const tapisHeaders = getTapisHeaders();
-
   const hasFullTapisHeaders = Boolean(
-    tapisHeaders &&
-      tapisHeaders['X-Tapis-Username'] &&
-      tapisHeaders['X-Tapis-Tenant'] &&
-      tapisHeaders['X-Tapis-Site']
+    tapisHeaders?.['X-Tapis-Username'] &&
+      tapisHeaders?.['X-Tapis-Tenant'] &&
+      tapisHeaders?.['X-Tapis-Site']
   );
 
   if (hasFullTapisHeaders && tapisHeaders) {
-    // Prefer Tapis-provided headers. Normalize token header to the
-    // server-expected `X-TAPIS-TOKEN` and set Accept header for JSON.
-    const headers = Object.entries(tapisHeaders).reduce<Record<string, string>>((acc, [key, value]) => {
-      if (value) {
-        // Normalize the token header name to the server-expected casing
-        if (key.toLowerCase() === 'x-tapis-token') {
-          acc['X-TAPIS-TOKEN'] = value;
-        } else {
-          acc[key] = value;
+    const headers = Object.entries(tapisHeaders).reduce<Record<string, string>>(
+      (acc, [key, value]) => {
+        if (value) {
+          acc[key.toLowerCase() === 'x-tapis-token' ? 'X-TAPIS-TOKEN' : key] = value;
         }
-      }
-      return acc;
-    }, {});
-
-    // Ensure the API receives JSON responses
+        return acc;
+      },
+      {}
+    );
     headers['Accept'] = 'application/json';
-
-    // When running inside a Tapis pod with full headers, prefer the
-    // Tapis headers and do not attach the local Authorization bearer token.
     return new Configuration({ basePath, headers });
   }
 
-  // NOTE: do NOT treat a lone tapis token in sessionStorage as the default
-  // auth for the main API client. The application access token (stored in
-  // localStorage as 'access_token') must be used for most upstream API
-  // requests. CKAN-specific calls that require the Tapis token will read
-  // it directly from sessionStorage where needed.
-
-  // Fall back to JWT token authentication
+  // Mode 2b: Upstream HS256 JWT (username/password login, legacy path)
   const token = localStorage.getItem('access_token');
   if (token) {
-    const bearer = `Bearer ${token}`;
-    const headers: Record<string, string> = {
-      Authorization: bearer,
-    };
-    // Request JSON responses by default
-    headers['Accept'] = 'application/json';
-
     return new Configuration({
       basePath,
-      headers,
-      accessToken: bearer,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      accessToken: `Bearer ${token}`,
     });
   }
 
