@@ -1,6 +1,5 @@
 import React, { useEffect, useState, ReactNode } from 'react';
-import { AuthApi } from '@upstream/upstream-api';
-import useConfiguration from '../hooks/api/useConfiguration';
+import { AuthApi, Configuration } from '@upstream/upstream-api';
 import {
   initializeTapisAuth,
   clearTapisHeaders,
@@ -14,6 +13,12 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+function getLoginBasePath(): string {
+  const runtimeUrl = window.__UPSTREAM_CONFIG__?.VITE_UPSTREAM_API_URL?.trim();
+  const envUrl = import.meta.env.VITE_UPSTREAM_API_URL?.trim();
+  return (runtimeUrl ?? envUrl ?? 'http://127.0.0.1:8000').replace(/\/+$/, '');
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,8 +26,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isTapisAuth, setIsTapisAuth] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const config = useConfiguration();
-  const authApi = new AuthApi(config);
 
   const summarizeToken = (token: string | null | undefined) => ({
     exists: Boolean(token),
@@ -90,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
+    const authApi = new AuthApi(new Configuration({ basePath: getLoginBasePath() }));
     try {
       setIsLoading(true);
       setError(null);
