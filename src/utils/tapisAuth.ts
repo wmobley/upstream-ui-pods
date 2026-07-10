@@ -233,6 +233,14 @@ function getOAuthClientId(): string {
   );
 }
 
+function getOAuthClientKey(): string | undefined {
+  return (
+    window.__UPSTREAM_CONFIG__?.VITE_TAPIS_OAUTH_CLIENT_KEY?.trim() ||
+    import.meta.env.VITE_TAPIS_OAUTH_CLIENT_KEY?.trim() ||
+    undefined
+  );
+}
+
 /** Redirect to Tapis OAuth2 authorization endpoint. */
 export const initiateOAuthLogin = (): void => {
   const base = getTapisOAuthBaseUrl();
@@ -250,6 +258,7 @@ export const exchangeOAuthCode = async (code: string): Promise<void> => {
   const base = getTapisOAuthBaseUrl();
   const redirectUri = `${window.location.origin}/callback`;
 
+  const clientKey = getOAuthClientKey();
   const resp = await fetch(`${base}/v3/oauth2/tokens`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -258,6 +267,7 @@ export const exchangeOAuthCode = async (code: string): Promise<void> => {
       redirect_uri: redirectUri,
       client_id: getOAuthClientId(),
       grant_type: 'authorization_code',
+      ...(clientKey && { client_key: clientKey }),
     }),
   });
 
