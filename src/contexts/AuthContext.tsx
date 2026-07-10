@@ -83,27 +83,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (import.meta.env.DEV) {
-        // If a real Tapis token was stored (e.g. via DevTapisAuthHelper),
-        // use it so instance discovery and Tapis-auth paths work during dev.
-        const devTapisToken = sessionStorage.getItem('Tapis-Access-Token');
-        if (devTapisToken) {
-          const tapisUser = getTapisUser();
-          setIsAuthenticated(true);
-          setIsTapisAuth(true);
-          setUsername(tapisUser?.username ?? 'dev');
-          setIsLoading(false);
-          return;
-        }
-        // No token: plain auto-login so non-Tapis flows still work.
-        setIsAuthenticated(true);
-        setIsTapisAuth(false);
-        setUsername((prev) => prev ?? 'dev');
-        setRole((prev) => prev ?? 'ADMIN');
-        setIsLoading(false);
-        return;
-      }
-
       const tapisInitialized = initializeTapisAuth();
 
       if (tapisInitialized) {
