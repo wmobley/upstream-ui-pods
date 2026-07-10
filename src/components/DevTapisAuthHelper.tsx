@@ -53,15 +53,13 @@ const DevTapisAuthHelper: React.FC = () => {
       'X-Tapis-Site': site,
       'Internal': internal,
     });
-    updateCurrentUser();
-    alert('Tapis headers set! Refresh the page to apply.');
+    window.location.reload();
   };
 
   const handleClearHeaders = () => {
     clearTapisHeaders();
     clearTapisTokens();
-    updateCurrentUser();
-    alert('Tapis headers cleared! Refresh the page to apply.');
+    window.location.reload();
   };
 
   const handleQuickTest = () => {
@@ -71,8 +69,7 @@ const DevTapisAuthHelper: React.FC = () => {
       'X-Tapis-Site': 'tacc',
       'Internal': 'testuser.tacc.tacc',
     });
-    updateCurrentUser();
-    alert('Quick test headers set! Refresh the page to apply.');
+    window.location.reload();
   };
 
   const handleSetAccessToken = () => {
@@ -81,16 +78,12 @@ const DevTapisAuthHelper: React.FC = () => {
       return;
     }
     storeTapisTokens({ accessToken: accessTokenInput.trim() });
-    setHasStoredToken(true);
-    updateCurrentUser();
-    alert('Tapis access token stored in sessionStorage.');
+    window.location.reload();
   };
 
   const handleClearAccessToken = () => {
     clearTapisTokens();
-    setHasStoredToken(false);
-    updateCurrentUser();
-    alert('Tapis access token cleared.');
+    window.location.reload();
   };
 
   // Only show in development mode
@@ -328,16 +321,6 @@ const DevTapisAuthHelper: React.FC = () => {
             </div>
           </div>
 
-          <div style={{
-            marginTop: '15px',
-            padding: '10px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '5px',
-            fontSize: '11px',
-            color: '#666',
-          }}>
-            <strong>Note:</strong> After setting/clearing headers, refresh the page to apply changes.
-          </div>
         </div>
       )}
     </div>
