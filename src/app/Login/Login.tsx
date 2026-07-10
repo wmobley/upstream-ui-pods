@@ -1,130 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContextState';
 import { initiateOAuthLogin } from '../../utils/tapisAuth';
 
 const Login: React.FC = () => {
-  const { login, isLoading, error } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { isAuthenticated, error } = useAuth();
   const history = useHistory();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await login(email, password);
-      history.push('/');
-    } catch (err) {
-      console.error('Login failed:', err);
+  useEffect(() => {
+    if (isAuthenticated) {
+      history.replace('/');
+      return;
     }
-  };
+    if (!error) {
+      initiateOAuthLogin();
+    }
+  }, [isAuthenticated, error, history]);
 
-  return (
-    <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-login">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-2xl font-extrabold text-gray-900">
-            Log in
-          </h2>
-          <h4 className="mt-6 text-center text-md font-bold text-gray-700">
-            to continue to the upstream portal
-          </h4>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Login Failed
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    {error.message}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                TACC Username
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="text"
-                required
-                autoComplete="username"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="TACC Username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50"
-            >
-              {isLoading ? 'Log in...' : 'Log in'}
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or</span>
-            </div>
-          </div>
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={() => initiateOAuthLogin()}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
-            >
-              Log in with Tapis
-            </button>
-          </div>
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-login">
+        <div className="max-w-md w-full p-8 bg-white shadow-lg text-center">
+          <p className="text-red-600 mb-6">{error.message}</p>
+          <button
+            type="button"
+            onClick={() => initiateOAuthLogin()}
+            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+          >
+            Log in with Tapis
+          </button>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex items-center justify-center py-12 px-4 bg-login">
+      <p className="text-gray-500">Redirecting to Tapis login&hellip;</p>
     </div>
   );
 };

@@ -10,7 +10,7 @@ import ConfidenceMethodExplanation from '../Sensor/viz/ConfidenceMethodExplanati
 import Admin from '../Admin';
 
 const Router: React.FC = () => {
-  const { isLoading, isTapisAuth } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return <Loading />;
@@ -22,12 +22,9 @@ const Router: React.FC = () => {
         <OAuthCallback />
       </Route>
 
-      {/* Login route - only needed for JWT auth, not Tapis */}
-      {!isTapisAuth && (
-        <Route exact path="/login">
-          <Login />
-        </Route>
-      )}
+      <Route exact path="/login">
+        <Login />
+      </Route>
 
       {/* Public routes - authentication handled by backend via Tapis headers or JWT */}
       <Route exact path="/">
