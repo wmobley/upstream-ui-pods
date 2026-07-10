@@ -54,6 +54,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+    const expiresAt = sessionStorage.getItem('Tapis-Expires-At');
+    if (!expiresAt) return;
+
+    const expiresAtMs = parseInt(expiresAt, 10) * 1000;
+    const msUntilExpiry = expiresAtMs - Date.now();
+
+    const expire = () => {
+      localStorage.removeItem('access_token');
+      clearTapisHeaders();
+      clearTapisTokens();
+      setIsAuthenticated(false);
+      setIsTapisAuth(false);
+      setUsername(null);
+      setRole(null);
+      setError(new Error('Your session has expired. Please log in again.'));
+    };
+
+    if (msUntilExpiry <= 0) {
+      expire();
+      return;
+    }
+
+    const timer = setTimeout(expire, msUntilExpiry);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     const checkAuth = async () => {
       if (import.meta.env.DEV) {
         setIsAuthenticated(true);

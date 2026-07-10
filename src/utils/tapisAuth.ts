@@ -213,6 +213,73 @@ export const extractTapisHeadersFromUrl = (): TapisHeaders | null => {
   };
 };
 
+// ---------------------------------------------------------------------------
+// OAuth2 authorization code flow
+// ---------------------------------------------------------------------------
+
+function getTapisOAuthBaseUrl(): string {
+  return (
+    window.__UPSTREAM_CONFIG__?.VITE_TAPIS_PODS_BASE_URL?.trim() ||
+    import.meta.env.VITE_TAPIS_PODS_BASE_URL?.trim() ||
+    'https://portals.tapis.io'
+  );
+}
+
+function getOAuthClientId(): string {
+  return (
+    window.__UPSTREAM_CONFIG__?.VITE_TAPIS_OAUTH_CLIENT_ID?.trim() ||
+    import.meta.env.VITE_TAPIS_OAUTH_CLIENT_ID?.trim() ||
+    'upstream-ui'
+  );
+}
+
+/** Redirect to Tapis OAuth2 authorization endpoint. */
+export const initiateOAuthLogin = (): void => {
+  const base = getTapisOAuthBaseUrl();
+  const redirectUri = `${window.location.origin}/callback`;
+  const params = new URLSearchParams({
+    client_id: getOAuthClientId(),
+    redirect_uri: redirectUri,
+    response_type: 'code',
+  });
+  window.location.href = `${base}/v3/oauth2/authorize?${params}`;
+};
+
+/** Exchange an authorization code for Tapis tokens and store them. */
+export const exchangeOAuthCode = async (code: string): Promise<void> => {
+  const base = getTapisOAuthBaseUrl();
+  const redirectUri = `${window.location.origin}/callback`;
+
+  const resp = await fetch(`${base}/v3/oauth2/tokens`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      code,
+      redirect_uri: redirectUri,
+      client_id: getOAuthClientId(),
+      grant_type: 'authorization_code',
+    }),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new Error(`OAuth token exchange failed (${resp.status}): ${body}`);
+  }
+
+  const data = await resp.json();
+  const result = data.result ?? data;
+  const accessTokenObj = result.access_token ?? {};
+  const refreshTokenObj = result.refresh_token ?? {};
+
+  storeTapisTokens({
+    accessToken: typeof accessTokenObj === 'string' ? accessTokenObj : accessTokenObj.access_token,
+    refreshToken: typeof refreshTokenObj === 'string' ? refreshTokenObj : refreshTokenObj.access_token,
+    expiresAt: accessTokenObj.expires_at ?? null,
+  });
+};
+
+// ---------------------------------------------------------------------------
+
 /**
  * Initialize Tapis authentication from URL if available
  * Should be called on app startup

@@ -3,6 +3,7 @@ import { Route, Switch } from 'react-router-dom';
 import Home from '../Home';
 import Campaign from '../Campaign';
 import Login from '../Login/Login';
+import OAuthCallback from '../OAuth/OAuthCallback';
 import { useAuth } from '../../contexts/AuthContextState';
 import { Loading } from '../common/Loading';
 import ConfidenceMethodExplanation from '../Sensor/viz/ConfidenceMethodExplanation';
@@ -17,6 +18,10 @@ const Router: React.FC = () => {
 
   return (
     <Switch>
+      <Route exact path="/callback">
+        <OAuthCallback />
+      </Route>
+
       {/* Login route - only needed for JWT auth, not Tapis */}
       {!isTapisAuth && (
         <Route exact path="/login">
