@@ -200,16 +200,19 @@ export const extractTapisHeadersFromUrl = (): TapisHeaders | null => {
   const tenant = params.get('tapis_tenant');
   const site = params.get('tapis_site');
   const internal = params.get('tapis_internal');
+  // Tapis pod proxy may pass the access token as a URL param on initial redirect
+  const token = params.get('tapis_token') || params.get('X-Tapis-Token');
 
-  if (!username || !tenant || !site) {
+  if (!username && !tenant && !site && !token) {
     return null;
   }
 
   return {
-    'X-Tapis-Username': username,
-    'X-Tapis-Tenant': tenant,
-    'X-Tapis-Site': site,
+    ...(username && { 'X-Tapis-Username': username }),
+    ...(tenant && { 'X-Tapis-Tenant': tenant }),
+    ...(site && { 'X-Tapis-Site': site }),
     ...(internal && { 'Internal': internal }),
+    ...(token && { 'X-Tapis-Token': token }),
   };
 };
 
@@ -299,6 +302,11 @@ export const initializeTapisAuth = (): boolean => {
 
   if (urlHeaders) {
     storeTapisHeaders(urlHeaders);
+    // If the pod proxy included the access token in the URL, store it so
+    // InstanceContext can use it for Tapis API calls (e.g. GET /v3/pods/stacks).
+    if (urlHeaders['X-Tapis-Token']) {
+      storeTapisTokens({ accessToken: urlHeaders['X-Tapis-Token'] });
+    }
 
     // Clean up URL params after storing
     const url = new URL(window.location.href);
@@ -306,6 +314,8 @@ export const initializeTapisAuth = (): boolean => {
     url.searchParams.delete('tapis_tenant');
     url.searchParams.delete('tapis_site');
     url.searchParams.delete('tapis_internal');
+    url.searchParams.delete('tapis_token');
+    url.searchParams.delete('X-Tapis-Token');
     window.history.replaceState({}, '', url.toString());
 
     return true;
