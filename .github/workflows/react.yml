@@ -141,7 +141,7 @@ jobs:
           POD=$(curl -sf "${TAPIS_BASE_URL}/v3/pods/${TAPIS_POD_ID}" \
             -H "X-Tapis-Token: ${TAPIS_TOKEN}" | jq '.result')
 
-          CLIENT_ID="upstream-devui"
+          CLIENT_ID="upstream-develop"
           PAYLOAD=$(echo "$POD" | jq --arg img "$IMAGE" --arg client_id "$CLIENT_ID" '{
             image: $img,
             description: .description,
