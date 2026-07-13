@@ -232,7 +232,7 @@ function getOAuthClientId(): string {
   return (
     window.__UPSTREAM_CONFIG__?.VITE_TAPIS_OAUTH_CLIENT_ID?.trim() ||
     import.meta.env.VITE_TAPIS_OAUTH_CLIENT_ID?.trim() ||
-    'upstream-dev'
+    'upstream-devui'
   );
 }
 
