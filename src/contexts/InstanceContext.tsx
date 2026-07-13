@@ -31,20 +31,20 @@ interface InstanceContextType {
 const InstanceContext = createContext<InstanceContextType | undefined>(undefined);
 
 // ---------------------------------------------------------------------------
-// Tapis Stacks API types
-// TODO: verify exact field names against portals.develop.tapis.io/v3/pods/stacks
+// Tapis Pods API types
 // ---------------------------------------------------------------------------
+interface TapisPodNetworking {
+  url?: string;
+  protocol?: string;
+  port?: number;
+}
+
 interface TapisPod {
   pod_id: string;
   image?: string;
-}
-
-interface TapisStack {
-  stack_id: string;
   description?: string;
-  /** Permission level for the calling user. Field name TBD pending API verification. */
-  permission?: Permission;
-  pods?: TapisPod[];
+  status?: string;
+  networking?: Record<string, TapisPodNetworking>;
 }
 
 const UPSTREAM_API_IMAGE = 'upstream-docker-pods';
@@ -69,10 +69,8 @@ function getPodsDomain(baseUrl: string): string {
 
 async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const baseUrl = getPodsBaseUrl();
-  const podsDomain = getPodsDomain(baseUrl);
 
-  // TODO: confirm /v3/pods/stacks endpoint path and response shape
-  const resp = await fetch(`${baseUrl}/v3/pods/stacks`, {
+  const resp = await fetch(`${baseUrl}/v3/pods`, {
     headers: {
       'X-Tapis-Token': tapisToken,
       Accept: 'application/json',
@@ -81,22 +79,36 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
 
   if (!resp.ok) {
     const body = await resp.text().catch(() => '');
-    throw new Error(`Tapis Stacks API ${resp.status}: ${body}`);
+    throw new Error(`Tapis Pods API ${resp.status}: ${body}`);
   }
 
   const data = await resp.json();
-  // TODO: adjust `data.result` path once actual response shape is known
-  const stacks: TapisStack[] = Array.isArray(data.result) ? data.result : [];
+  const pods: TapisPod[] = Array.isArray(data.result) ? data.result : [];
 
-  return stacks
-    .filter((s) => s.pods?.some((p) => p.image?.includes(UPSTREAM_API_IMAGE)))
-    .map((s) => ({
-      stackId: s.stack_id,
-      displayName: s.description?.trim() || s.stack_id,
-      // Convention: API pod is always {stackId}api
-      apiUrl: `https://${s.stack_id}api.${podsDomain}`,
-      permission: s.permission ?? 'READ',
-    }));
+  // Find API pods: image contains our marker and pod_id ends with 'api'
+  const apiPods = pods.filter(
+    (p) => p.image?.includes(UPSTREAM_API_IMAGE) && p.pod_id.endsWith('api')
+  );
+
+  return apiPods.map((p) => {
+    // Derive API URL from the pod's networking entry, or fall back to convention
+    const netEntry = p.networking
+      ? Object.values(p.networking)[0]
+      : undefined;
+    const apiUrl = netEntry?.url
+      ? `https://${netEntry.url}`
+      : `https://${p.pod_id}.${getPodsDomain(baseUrl)}`;
+
+    // Stack name = pod_id with trailing 'api' stripped
+    const stackId = p.pod_id.replace(/api$/, '');
+
+    return {
+      stackId,
+      displayName: p.description?.trim() || stackId,
+      apiUrl,
+      permission: 'ADMIN' as Permission,
+    };
+  });
 }
 
 function loadPersistedInstance(): ProjectInstance | null {

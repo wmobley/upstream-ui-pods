@@ -177,14 +177,14 @@ export const isTapisAuthenticated = (): boolean => {
  */
 export const getTapisUser = (): TapisUser | null => {
   const headers = getTapisHeaders();
-  if (!headers || !headers['X-Tapis-Username'] || !headers['X-Tapis-Tenant'] || !headers['X-Tapis-Site']) {
+  if (!headers || !headers['X-Tapis-Username'] || !headers['X-Tapis-Tenant']) {
     return null;
   }
 
   return {
     username: headers['X-Tapis-Username'],
     tenant: headers['X-Tapis-Tenant'],
-    site: headers['X-Tapis-Site'],
+    site: headers['X-Tapis-Site'] ?? '',
     internal: headers['Internal'],
   };
 };

@@ -94,6 +94,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsLoading(false);
           return;
         }
+        // Token present but JWT claims didn't map to expected header names —
+        // still treat as authenticated so the app doesn't loop back to login.
+        const hasToken = Boolean(sessionStorage.getItem('Tapis-Access-Token'));
+        const partialUsername = sessionStorage.getItem('X-Tapis-Username');
+        if (hasToken) {
+          setIsAuthenticated(true);
+          setIsTapisAuth(true);
+          if (partialUsername) setUsername(partialUsername);
+          setIsLoading(false);
+          return;
+        }
       }
 
       const token = localStorage.getItem('access_token');
