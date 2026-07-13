@@ -19,20 +19,24 @@ const useConfiguration = () => {
     }
   }
 
+  // --- Discovery mode with no instance yet: return empty config so API hooks
+  // stay disabled rather than firing against a wrong localhost fallback. ---
+  if (discoveryEnabled) {
+    return new Configuration({ basePath: '' });
+  }
+
   // --- Mode 2: Legacy per-project UI — fixed API URL from env/runtime config ---
   const runtimeBasePath =
     window.__UPSTREAM_CONFIG__?.VITE_UPSTREAM_API_URL?.trim() || undefined;
   const envBasePath = import.meta.env.VITE_UPSTREAM_API_URL?.trim() || undefined;
-  const defaultBasePath = 'http://127.0.0.1:8000';
-  const rawBasePath = runtimeBasePath ?? envBasePath ?? defaultBasePath;
+  const rawBasePath = runtimeBasePath ?? envBasePath ?? 'http://127.0.0.1:8000';
   const basePath = rawBasePath.replace(/\/+$/, '');
 
   // Mode 2a: Inside a Tapis pod — full proxy headers injected
   const tapisHeaders = getTapisHeaders();
   const hasFullTapisHeaders = Boolean(
     tapisHeaders?.['X-Tapis-Username'] &&
-      tapisHeaders?.['X-Tapis-Tenant'] &&
-      tapisHeaders?.['X-Tapis-Site']
+      tapisHeaders?.['X-Tapis-Tenant']
   );
 
   if (hasFullTapisHeaders && tapisHeaders) {

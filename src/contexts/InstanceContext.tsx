@@ -85,9 +85,19 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const data = await resp.json();
   const pods: TapisPod[] = Array.isArray(data.result) ? data.result : [];
 
-  // Find API pods: image contains our marker and pod_id ends with 'api'
+  console.debug('[InstanceContext] GET /v3/pods result:', pods.map((p) => ({
+    pod_id: p.pod_id,
+    image: p.image,
+    status: p.status,
+    networking: p.networking,
+  })));
+
+  // Find API pods: image contains our marker and pod_id ends with 'api'.
+  // Some Tapis tenants omit the image field for pods you don't own — fall back
+  // to matching only on pod_id convention when image is absent.
   const apiPods = pods.filter(
-    (p) => p.image?.includes(UPSTREAM_API_IMAGE) && p.pod_id.endsWith('api')
+    (p) => p.pod_id.endsWith('api') &&
+      (p.image === undefined || p.image === null || p.image.includes(UPSTREAM_API_IMAGE))
   );
 
   return apiPods.map((p) => {
