@@ -70,7 +70,15 @@ function getPodsDomain(baseUrl: string): string {
 async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const baseUrl = getPodsBaseUrl();
 
-  const resp = await fetch(`${baseUrl}/v3/pods`, {
+  // Use the same-origin nginx proxy (/tapis-proxy/) to avoid CORS when calling
+  // Tapis from a pod subdomain. Falls back to the direct URL in local dev.
+  const isDeployedPod = typeof window !== 'undefined' &&
+    window.location.hostname.endsWith('.tapis.io');
+  const podsUrl = isDeployedPod
+    ? `/tapis-proxy/v3/pods`
+    : `${baseUrl}/v3/pods`;
+
+  const resp = await fetch(podsUrl, {
     headers: {
       'X-Tapis-Token': tapisToken,
       Accept: 'application/json',
