@@ -47,9 +47,23 @@ interface TapisPod {
   status?: string;
   tags?: string[];
   networking?: Record<string, TapisPodNetworking>;
+  owner?: string;
+  permissions?: Record<string, string>;
 }
 
 const SESSION_KEY = 'upstream_selected_instance';
+
+function getUsernameFromTapisToken(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const username = payload['tapis/username'] as string | undefined;
+    if (username) return username;
+    const sub = payload.sub as string | undefined;
+    return sub?.includes('@') ? sub.split('@')[0] : (sub ?? null);
+  } catch {
+    return null;
+  }
+}
 
 class TapisAuthError extends Error {
   constructor(message: string) {
@@ -75,7 +89,7 @@ function getPodsDomain(baseUrl: string): string {
   return `pods.${hostname}`;
 }
 
-async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
+async function fetchInstances(tapisToken: string, currentUsername?: string): Promise<ProjectInstance[]> {
   const baseUrl = getPodsBaseUrl();
 
   // Use the same-origin nginx proxy (/tapis-proxy/) to avoid CORS when calling
@@ -83,8 +97,8 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const isDeployedPod = typeof window !== 'undefined' &&
     window.location.hostname.endsWith('.tapis.io');
   const podsUrl = isDeployedPod
-    ? `/tapis-proxy/v3/pods`
-    : `${baseUrl}/v3/pods`;
+    ? `/tapis-proxy/v3/pods?list_type=ALL`
+    : `${baseUrl}/v3/pods?list_type=ALL`;
 
   const resp = await fetch(podsUrl, {
     headers: {
@@ -127,11 +141,24 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
       ? desc.replace('[upstream]', '').trim() || stackId
       : stackId;
 
+    let permission: Permission = 'READ';
+    if (currentUsername) {
+      const level = p.permissions?.[currentUsername]?.toUpperCase();
+      if (level === 'ADMIN' || level === 'USER' || level === 'READ') {
+        permission = level as Permission;
+      } else if (p.owner === currentUsername) {
+        permission = 'ADMIN';
+      }
+    } else {
+      // No username available — fall back to ADMIN (original behavior)
+      permission = 'ADMIN';
+    }
+
     return {
       stackId,
       displayName,
       apiUrl,
-      permission: 'ADMIN' as Permission,
+      permission,
     };
   });
 }
@@ -220,7 +247,8 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
     setIsLoading(true);
     setError(null);
     try {
-      const list = await fetchInstances(tapisToken);
+      const currentUsername = getUsernameFromTapisToken(tapisToken) ?? undefined;
+      const list = await fetchInstances(tapisToken, currentUsername);
       setInstances(list);
 
       // Auto-select: restore persisted selection if still in list, otherwise
