@@ -207,16 +207,25 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fetchedRef = useRef(false);
+  const prevStackIdRef = useRef<string | null>(null);
 
   const setSelectedInstance = useCallback((instance: ProjectInstance) => {
-    setSelectedInstanceState((prev) => {
-      if (prev?.stackId !== instance.stackId) {
+    setSelectedInstanceState(instance);
+    persistInstance(instance);
+  }, []);
+
+  // Invalidate all cached data after the render in which selectedInstance
+  // changes — this way useConfiguration() already returns the new basePath
+  // before any query refetches, so they hit the correct API immediately.
+  useEffect(() => {
+    const stackId = selectedInstance?.stackId ?? null;
+    if (stackId !== prevStackIdRef.current) {
+      prevStackIdRef.current = stackId;
+      if (stackId !== null) {
         queryClient.invalidateQueries();
       }
-      return instance;
-    });
-    persistInstance(instance);
-  }, [queryClient]);
+    }
+  }, [selectedInstance, queryClient]);
 
   const load = useCallback(async () => {
     if (!discoveryEnabled || !isAuthenticated) return;

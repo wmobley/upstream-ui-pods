@@ -9,7 +9,6 @@ import { createRoot } from 'react-dom/client';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
       retry: 1,
     },
   },
