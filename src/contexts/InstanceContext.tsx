@@ -51,6 +51,13 @@ interface TapisPod {
 const UPSTREAM_API_IMAGE = 'upstream-docker-pods';
 const SESSION_KEY = 'upstream_selected_instance';
 
+class TapisAuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TapisAuthError';
+  }
+}
+
 function getPodsBaseUrl(): string {
   return (
     window.__UPSTREAM_CONFIG__?.VITE_TAPIS_PODS_BASE_URL?.trim() ||
@@ -88,6 +95,9 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
 
   if (!resp.ok) {
     const body = await resp.text().catch(() => '');
+    if (resp.status === 400 || resp.status === 401) {
+      throw new TapisAuthError(`Tapis Pods API ${resp.status}: ${body}`);
+    }
     throw new Error(`Tapis Pods API ${resp.status}: ${body}`);
   }
 
@@ -185,7 +195,7 @@ function isDiscoveryEnabled(): boolean {
 }
 
 export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const discoveryEnabled = isDiscoveryEnabled();
 
   const [instances, setInstances] = useState<ProjectInstance[]>([]);
@@ -223,11 +233,15 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
         return auto;
       });
     } catch (err) {
+      if (err instanceof TapisAuthError) {
+        logout();
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Failed to load projects');
     } finally {
       setIsLoading(false);
     }
-  }, [discoveryEnabled, isAuthenticated]);
+  }, [discoveryEnabled, isAuthenticated, logout]);
 
   useEffect(() => {
     if (!isAuthenticated) {
