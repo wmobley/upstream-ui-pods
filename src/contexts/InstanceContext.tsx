@@ -49,7 +49,6 @@ interface TapisPod {
   networking?: Record<string, TapisPodNetworking>;
 }
 
-const UPSTREAM_API_IMAGE = 'upstream-docker-pods';
 const SESSION_KEY = 'upstream_selected_instance';
 
 class TapisAuthError extends Error {
@@ -105,16 +104,11 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const data = await resp.json();
   const pods: TapisPod[] = Array.isArray(data.result) ? data.result : [];
 
-  // Step 2 — filter to upstream API pods
-  const podIds = new Set(pods.map((p) => p.pod_id));
-  const apiPods = pods.filter((p) => {
-    if (!p.pod_id.endsWith('api')) return false;
-    if ((p.description ?? '').startsWith('[upstream]')) return true;
-    return (
-      podIds.has(p.pod_id.replace(/api$/, '') + 'postgres') &&
-      (p.image === undefined || p.image === null || p.image.includes(UPSTREAM_API_IMAGE))
-    );
-  });
+  // Filter to upstream API pods — only pods whose description starts with
+  // '[upstream]' (set via tag_upstream_stacks.py or build_bundle).
+  const apiPods = pods.filter(
+    (p) => p.pod_id.endsWith('api') && (p.description ?? '').startsWith('[upstream]')
+  );
 
   return apiPods.map((p) => {
     // Derive API URL from the pod's networking entry, or fall back to convention

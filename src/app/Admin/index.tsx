@@ -63,8 +63,8 @@ const deriveBaseName = (podId: string) => {
   return podId;
 };
 
-const UI_IMAGE = 'ghcr.io/wmobley/upstream-ui-pods:main';
-const API_IMAGE = 'ghcr.io/wmobley/upstream-docker-pods:main';
+const UI_IMAGE_SUBSTR = 'upstream-ui-pods';
+const API_IMAGE_SUBSTR = 'upstream-docker-pods';
 const POSTGIS_IMAGE = 'postgis/postgis:17-3.5';
 const normalizeImage = (image?: string | null) => (image || '').trim().toLowerCase();
 const getPodImage = (pod: Pods.PodResponseModel): string | null => {
@@ -75,8 +75,8 @@ const getPodImage = (pod: Pods.PodResponseModel): string | null => {
   };
   return podAny.image || podAny.container_image || podAny.containerImage || null;
 };
-const isUiImage = (pod: Pods.PodResponseModel) => normalizeImage(getPodImage(pod)) === UI_IMAGE;
-const isApiImage = (pod: Pods.PodResponseModel) => normalizeImage(getPodImage(pod)) === API_IMAGE;
+const isUiImage = (pod: Pods.PodResponseModel) => normalizeImage(getPodImage(pod)).includes(UI_IMAGE_SUBSTR);
+const isApiImage = (pod: Pods.PodResponseModel) => normalizeImage(getPodImage(pod)).includes(API_IMAGE_SUBSTR);
 const isPostgisImage = (pod: Pods.PodResponseModel) => normalizeImage(getPodImage(pod)) === POSTGIS_IMAGE;
 
 const buildBaseUrlFromPod = (pod: Pods.PodResponseModel) => {
