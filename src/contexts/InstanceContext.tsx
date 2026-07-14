@@ -44,6 +44,7 @@ interface TapisPod {
   image?: string;
   description?: string;
   status?: string;
+  tags?: string[];
   networking?: Record<string, TapisPodNetworking>;
 }
 
@@ -100,13 +101,19 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
     networking: p.networking,
   })));
 
-  // Find API pods: image contains our marker and pod_id ends with 'api'.
-  // Some Tapis tenants omit the image field for pods you don't own — fall back
-  // to matching only on pod_id convention when image is absent.
-  const apiPods = pods.filter(
-    (p) => p.pod_id.endsWith('api') &&
+  // Find upstream API pods: description starts with '[upstream]' (set via
+  // tag_upstream_stacks.py). Falls back to image + postgres-pair matching
+  // for pods that predate the description convention.
+  const podIds = new Set(pods.map((p) => p.pod_id));
+  const apiPods = pods.filter((p) => {
+    if (!p.pod_id.endsWith('api')) return false;
+    if ((p.description ?? '').startsWith('[upstream]')) return true;
+    // Fallback: image matches and has a matching postgres pod
+    return (
+      podIds.has(p.pod_id.replace(/api$/, '') + 'postgres') &&
       (p.image === undefined || p.image === null || p.image.includes(UPSTREAM_API_IMAGE))
-  );
+    );
+  });
 
   return apiPods.map((p) => {
     // Derive API URL from the pod's networking entry, or fall back to convention
@@ -120,9 +127,14 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
     // Stack name = pod_id with trailing 'api' stripped
     const stackId = p.pod_id.replace(/api$/, '');
 
+    const desc = (p.description ?? '').trim();
+    const displayName = desc.startsWith('[upstream]')
+      ? desc.replace('[upstream]', '').trim() || stackId
+      : stackId;
+
     return {
       stackId,
-      displayName: p.description?.trim() || stackId,
+      displayName,
       apiUrl,
       permission: 'ADMIN' as Permission,
     };
