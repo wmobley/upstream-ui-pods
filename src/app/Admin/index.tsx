@@ -149,6 +149,7 @@ const Admin = () => {
   const [newLevel, setNewLevel] = useState<UserRoleValue>('ADMIN');
   const [savingUserRole, setSavingUserRole] = useState(false);
   const [bundleBase, setBundleBase] = useState('');
+  const [bundleDisplayName, setBundleDisplayName] = useState('');
   const [pgUser, setPgUser] = useState('fastapi_traefik');
   const [pgPassword, setPgPassword] = useState('fastapi_traefik');
   const [showPods] = useState(true);
@@ -614,6 +615,7 @@ const Admin = () => {
         headers,
         body: JSON.stringify({
           base,
+          display_name: bundleDisplayName.trim(),
           pg_user: pgUser,
           pg_password: pgPassword,
         }),
@@ -819,6 +821,14 @@ const Admin = () => {
               value={bundleBase}
               onChange={(e) => setBundleBase(e.target.value)}
               className="flex-1 min-w-[200px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+              disabled={bundleControlsDisabled}
+            />
+            <input
+              type="text"
+              placeholder="Display name (e.g., SNIFFER Mobile Lab)"
+              value={bundleDisplayName}
+              onChange={(e) => setBundleDisplayName(e.target.value)}
+              className="flex-1 min-w-[240px] rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
               disabled={bundleControlsDisabled}
             />
             <input
