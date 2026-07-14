@@ -105,26 +105,26 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const data = await resp.json();
   const pods: TapisPod[] = Array.isArray(data.result) ? data.result : [];
 
-  console.debug('[InstanceContext] GET /v3/pods result:', pods.map((p) => ({
-    pod_id: p.pod_id,
-    image: p.image,
-    status: p.status,
-    networking: p.networking,
-  })));
+  // Step 1 — raw Tapis pod list
+  console.log('[Discovery] Step 1 — all pods returned by Tapis (%d total):', pods.length,
+    pods.map((p) => ({ pod_id: p.pod_id, status: p.status, description: p.description, image: p.image }))
+  );
 
-  // Find upstream API pods: description starts with '[upstream]' (set via
-  // tag_upstream_stacks.py). Falls back to image + postgres-pair matching
-  // for pods that predate the description convention.
+  // Step 2 — filter to upstream API pods
   const podIds = new Set(pods.map((p) => p.pod_id));
   const apiPods = pods.filter((p) => {
     if (!p.pod_id.endsWith('api')) return false;
-    if ((p.description ?? '').startsWith('[upstream]')) return true;
-    // Fallback: image matches and has a matching postgres pod
-    return (
-      podIds.has(p.pod_id.replace(/api$/, '') + 'postgres') &&
-      (p.image === undefined || p.image === null || p.image.includes(UPSTREAM_API_IMAGE))
+    const hasMarker = (p.description ?? '').startsWith('[upstream]');
+    const hasImage = p.image === undefined || p.image === null || p.image.includes(UPSTREAM_API_IMAGE);
+    const hasPostgres = podIds.has(p.pod_id.replace(/api$/, '') + 'postgres');
+    const passes = hasMarker || (hasPostgres && hasImage);
+    console.log(
+      `[Discovery] Step 2 — ${p.pod_id}: endsWithApi=true hasMarker=${hasMarker} hasPostgres=${hasPostgres} hasImage=${hasImage} → ${passes ? 'INCLUDED' : 'EXCLUDED'}`
     );
+    return passes;
   });
+
+  console.log('[Discovery] Step 2 — pods passing filter (%d):', apiPods.length, apiPods.map((p) => p.pod_id));
 
   return apiPods.map((p) => {
     // Derive API URL from the pod's networking entry, or fall back to convention
