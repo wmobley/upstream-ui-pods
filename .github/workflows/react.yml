@@ -87,6 +87,7 @@ jobs:
       - name: Deploy to Tapis Pods (production)
         run: |
           IMAGE="ghcr.io/${{ github.repository }}:sha-${{ needs.build.outputs.short_sha }}"
+          CLEAN_CLIENT_KEY=$(printf '%s' "${OAUTH_CLIENT_KEY}" | tr -d '\n\r')
 
           TAPIS_TOKEN=$(curl -sf -X POST "${TAPIS_BASE_URL}/v3/oauth2/tokens" \
             -H "Content-Type: application/json" \
@@ -102,7 +103,7 @@ jobs:
           PAYLOAD=$(echo "$POD" | jq \
             --arg img "$IMAGE" \
             --arg client_id "$OAUTH_CLIENT_ID" \
-            --arg client_key "$OAUTH_CLIENT_KEY" '{
+            --arg client_key "$CLEAN_CLIENT_KEY" '{
             image: $img,
             description: .description,
             command: .command,

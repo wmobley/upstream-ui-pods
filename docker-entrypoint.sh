@@ -28,7 +28,8 @@ if [ -n "${VITE_UPSTREAM_API_URL:-}" ] || [ -n "${VITE_CKAN_URL:-}" ] || \
       echo "window.__UPSTREAM_CONFIG__.VITE_TAPIS_OAUTH_CLIENT_ID = \"${VITE_TAPIS_OAUTH_CLIENT_ID}\";"
     fi
     if [ -n "${VITE_TAPIS_OAUTH_CLIENT_KEY:-}" ]; then
-      echo "window.__UPSTREAM_CONFIG__.VITE_TAPIS_OAUTH_CLIENT_KEY = \"${VITE_TAPIS_OAUTH_CLIENT_KEY}\";"
+      CLEAN_KEY=$(printf '%s' "${VITE_TAPIS_OAUTH_CLIENT_KEY}" | tr -d '\n\r')
+      echo "window.__UPSTREAM_CONFIG__.VITE_TAPIS_OAUTH_CLIENT_KEY = \"${CLEAN_KEY}\";"
     fi
   } > "$CONFIG_PATH"
 fi
