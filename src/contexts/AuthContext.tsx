@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'X-TAPIS-TOKEN': tapisToken,
+          'Authorization': `Bearer ${tapisToken}`,
         },
       });
       console.log('[Auth] /users/me status:', res.status);
