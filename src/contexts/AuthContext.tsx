@@ -81,10 +81,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearTimeout(timer);
   }, [isAuthenticated]);
 
-  const fetchRoleFromApi = async (tapisToken: string): Promise<string | null> => {
-    const basePath = getLoginBasePath();
-    const url = `${basePath}/api/v1/users/me`;
-    console.log('[Auth] Fetching role from', url);
+  const resolveRole = async (apiBasePath: string, tapisToken: string): Promise<void> => {
+    const url = `${apiBasePath.replace(/\/+$/, '')}/api/v1/users/me`;
+    console.log('[Auth] resolveRole fetching', url);
     try {
       const res = await fetch(url, {
         method: 'GET',
@@ -97,14 +96,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!res.ok) {
         const text = await res.text();
         console.warn('[Auth] /users/me failed:', res.status, text);
-        return null;
+        return;
       }
       const data = await res.json() as { username?: string; role?: string };
       console.log('[Auth] /users/me response:', data);
-      return data.role ?? null;
+      if (data.role) setRole(data.role);
     } catch (err) {
       console.error('[Auth] /users/me fetch error:', err);
-      return null;
     }
   };
 
@@ -124,15 +122,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAuthenticated(true);
           setIsTapisAuth(true);
           setUsername(tapisUser.username);
-
-          if (tapisToken) {
-            const resolvedRole = await fetchRoleFromApi(tapisToken);
-            console.log('[Auth] resolved role for Tapis user:', resolvedRole);
-            setRole(resolvedRole);
-          } else {
-            console.warn('[Auth] No Tapis token available to fetch role');
-          }
-
+          // Role is fetched by RoleSyncOnTapisAuth inside InstanceProvider,
+          // which has access to the correct API base URL via useConfiguration.
           setIsLoading(false);
           return;
         }
@@ -146,11 +137,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAuthenticated(true);
           setIsTapisAuth(true);
           if (partialUsername) setUsername(partialUsername);
-
-          const resolvedRole = await fetchRoleFromApi(tapisToken!);
-          console.log('[Auth] resolved role for fallback Tapis user:', resolvedRole);
-          setRole(resolvedRole);
-
           setIsLoading(false);
           return;
         }
@@ -285,6 +271,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isTapisAuth,
         username,
         role,
+        resolveRole,
       }}
     >
       {children}

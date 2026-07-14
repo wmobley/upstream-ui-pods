@@ -9,6 +9,7 @@ export interface AuthContextType {
   isTapisAuth: boolean;
   username: string | null;
   role: string | null;
+  resolveRole: (apiBasePath: string, tapisToken: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
