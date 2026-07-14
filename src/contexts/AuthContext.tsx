@@ -81,33 +81,83 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearTimeout(timer);
   }, [isAuthenticated]);
 
+  const fetchRoleFromApi = async (tapisToken: string): Promise<string | null> => {
+    const basePath = getLoginBasePath();
+    const url = `${basePath}/api/v1/users/me`;
+    console.log('[Auth] Fetching role from', url);
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TAPIS-TOKEN': tapisToken,
+        },
+      });
+      console.log('[Auth] /users/me status:', res.status);
+      if (!res.ok) {
+        const text = await res.text();
+        console.warn('[Auth] /users/me failed:', res.status, text);
+        return null;
+      }
+      const data = await res.json() as { username?: string; role?: string };
+      console.log('[Auth] /users/me response:', data);
+      return data.role ?? null;
+    } catch (err) {
+      console.error('[Auth] /users/me fetch error:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('[Auth] checkAuth start');
       const tapisInitialized = initializeTapisAuth();
+      console.log('[Auth] tapisInitialized:', tapisInitialized);
 
       if (tapisInitialized) {
         const tapisUser = getTapisUser();
+        console.log('[Auth] tapisUser:', tapisUser);
+        const tapisToken = sessionStorage.getItem('Tapis-Access-Token');
+        console.log('[Auth] Tapis-Access-Token present:', Boolean(tapisToken));
+
         if (tapisUser) {
           setIsAuthenticated(true);
           setIsTapisAuth(true);
           setUsername(tapisUser.username);
+
+          if (tapisToken) {
+            const resolvedRole = await fetchRoleFromApi(tapisToken);
+            console.log('[Auth] resolved role for Tapis user:', resolvedRole);
+            setRole(resolvedRole);
+          } else {
+            console.warn('[Auth] No Tapis token available to fetch role');
+          }
+
           setIsLoading(false);
           return;
         }
+
         // Token present but JWT claims didn't map to expected header names —
         // still treat as authenticated so the app doesn't loop back to login.
-        const hasToken = Boolean(sessionStorage.getItem('Tapis-Access-Token'));
+        const hasToken = Boolean(tapisToken);
         const partialUsername = sessionStorage.getItem('X-Tapis-Username');
+        console.log('[Auth] fallback — hasToken:', hasToken, 'partialUsername:', partialUsername);
         if (hasToken) {
           setIsAuthenticated(true);
           setIsTapisAuth(true);
           if (partialUsername) setUsername(partialUsername);
+
+          const resolvedRole = await fetchRoleFromApi(tapisToken!);
+          console.log('[Auth] resolved role for fallback Tapis user:', resolvedRole);
+          setRole(resolvedRole);
+
           setIsLoading(false);
           return;
         }
       }
 
       const token = localStorage.getItem('access_token');
+      console.log('[Auth] local JWT present:', Boolean(token));
       if (token) {
         setIsAuthenticated(true);
         setIsTapisAuth(false);
@@ -117,6 +167,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setRole(null);
       }
       setIsLoading(false);
+      console.log('[Auth] checkAuth complete');
     };
 
     checkAuth();
