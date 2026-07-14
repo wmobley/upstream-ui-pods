@@ -50,6 +50,12 @@ const useConfiguration = () => {
       {}
     );
     headers['Accept'] = 'application/json';
+    // API uses standard OAuth2 bearer auth — include Tapis token as Bearer too.
+    const tapisToken =
+      tapisHeaders['X-Tapis-Token'] || sessionStorage.getItem('Tapis-Access-Token');
+    if (tapisToken) {
+      headers['Authorization'] = `Bearer ${tapisToken}`;
+    }
     return new Configuration({ basePath, headers });
   }
 
