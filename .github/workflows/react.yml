@@ -108,7 +108,7 @@ jobs:
             description: .description,
             command: .command,
             arguments: .arguments,
-            environment_variables: ((.environment_variables // {}) + {
+            environment_variables: (((.environment_variables // {}) | del(.VITE_UPSTREAM_API_URL)) + {
               VITE_TAPIS_OAUTH_CLIENT_ID: $client_id,
               VITE_TAPIS_OAUTH_CLIENT_KEY: $client_key
             }),
