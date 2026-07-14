@@ -105,26 +105,16 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const data = await resp.json();
   const pods: TapisPod[] = Array.isArray(data.result) ? data.result : [];
 
-  // Step 1 — raw Tapis pod list
-  console.log('[Discovery] Step 1 — all pods returned by Tapis (%d total):', pods.length,
-    pods.map((p) => ({ pod_id: p.pod_id, status: p.status, description: p.description, image: p.image }))
-  );
-
   // Step 2 — filter to upstream API pods
   const podIds = new Set(pods.map((p) => p.pod_id));
   const apiPods = pods.filter((p) => {
     if (!p.pod_id.endsWith('api')) return false;
-    const hasMarker = (p.description ?? '').startsWith('[upstream]');
-    const hasImage = p.image === undefined || p.image === null || p.image.includes(UPSTREAM_API_IMAGE);
-    const hasPostgres = podIds.has(p.pod_id.replace(/api$/, '') + 'postgres');
-    const passes = hasMarker || (hasPostgres && hasImage);
-    console.log(
-      `[Discovery] Step 2 — ${p.pod_id}: endsWithApi=true hasMarker=${hasMarker} hasPostgres=${hasPostgres} hasImage=${hasImage} → ${passes ? 'INCLUDED' : 'EXCLUDED'}`
+    if ((p.description ?? '').startsWith('[upstream]')) return true;
+    return (
+      podIds.has(p.pod_id.replace(/api$/, '') + 'postgres') &&
+      (p.image === undefined || p.image === null || p.image.includes(UPSTREAM_API_IMAGE))
     );
-    return passes;
   });
-
-  console.log('[Discovery] Step 2 — pods passing filter (%d):', apiPods.length, apiPods.map((p) => p.pod_id));
 
   return apiPods.map((p) => {
     // Derive API URL from the pod's networking entry, or fall back to convention
