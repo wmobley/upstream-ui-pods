@@ -142,12 +142,26 @@ function persistInstance(instance: ProjectInstance | null): void {
   }
 }
 
-/** True when no fixed API URL is configured, meaning instance discovery should run. */
-function isDiscoveryEnabled(): boolean {
+function getFixedApiUrl(): string | null {
   const fixed =
     window.__UPSTREAM_CONFIG__?.VITE_UPSTREAM_API_URL?.trim() ||
     import.meta.env.VITE_UPSTREAM_API_URL?.trim();
-  return !fixed;
+  return fixed || null;
+}
+
+/** When a fixed API URL is configured, synthesize a single instance from it. */
+function getFixedInstance(): ProjectInstance | null {
+  const url = getFixedApiUrl();
+  if (!url) return null;
+  const cleanUrl = url.replace(/\/+$/, '');
+  const hostname = cleanUrl.replace(/^https?:\/\//, '').split('.')[0];
+  const stackId = hostname.replace(/api$/, '');
+  return { stackId, displayName: stackId, apiUrl: cleanUrl, permission: 'ADMIN' };
+}
+
+/** True when no fixed API URL is configured, meaning instance discovery should run. */
+function isDiscoveryEnabled(): boolean {
+  return !getFixedApiUrl();
 }
 
 export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -197,13 +211,23 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   useEffect(() => {
     if (!isAuthenticated) {
-      // Clear on logout
       setInstances([]);
       setSelectedInstanceState(null);
       persistInstance(null);
       fetchedRef.current = false;
       return;
     }
+
+    // Fixed URL mode: skip Tapis discovery and synthesize a single instance.
+    const fixedInstance = getFixedInstance();
+    if (fixedInstance) {
+      setInstances([fixedInstance]);
+      setSelectedInstanceState(fixedInstance);
+      persistInstance(fixedInstance);
+      return;
+    }
+
+    // Discovery mode: fetch available API pods from Tapis.
     if (!fetchedRef.current) {
       fetchedRef.current = true;
       load();

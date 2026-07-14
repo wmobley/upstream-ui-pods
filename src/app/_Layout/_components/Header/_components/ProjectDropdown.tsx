@@ -26,7 +26,7 @@ const ProjectDropdown: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!discoveryEnabled) return null;
+  if (!discoveryEnabled && instances.length === 0) return null;
 
   const grouped = PERMISSION_ORDER.reduce<Record<Permission, ProjectInstance[]>>(
     (acc, p) => {

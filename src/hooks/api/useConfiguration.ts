@@ -5,8 +5,8 @@ import { getTapisHeaders } from '../../utils/tapisAuth';
 const useConfiguration = () => {
   const { selectedInstance, discoveryEnabled } = useInstance();
 
-  // --- Mode 1: Unified UI — instance selected, use Tapis JWT as Bearer ---
-  if (discoveryEnabled && selectedInstance) {
+  // --- Mode 1: Any instance selected (from discovery or fixed config) ---
+  if (selectedInstance) {
     const tapisToken = sessionStorage.getItem('Tapis-Access-Token');
     if (tapisToken) {
       return new Configuration({
