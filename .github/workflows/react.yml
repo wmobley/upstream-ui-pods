@@ -70,34 +70,47 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  deploy-production:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: Tapis Configure
+    env:
+      TAPIS_SERVICE_USERNAME: ${{ secrets.TAPIS_DEVELOP_USERNAME }}
+      TAPIS_SERVICE_PASSWORD: ${{ secrets.TAPIS_DEVELOP_PASSWORD }}
+      TAPIS_BASE_URL: https://portals.tapis.io
+      TAPIS_POD_ID: upstream
+      OAUTH_CLIENT_ID: upstream-prod
+      OAUTH_CLIENT_KEY: ${{ secrets.TAPIS_UPSTREAM_CLIENT_KEY }}
+
+    steps:
       - name: Deploy to Tapis Pods (production)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          TAPIS_SERVICE_USERNAME: ${{ secrets.TAPIS_USERNAME }}
-          TAPIS_SERVICE_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-          TAPIS_BASE_URL: https://portals.tapis.io
-          TAPIS_POD_ID: upstream
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE="ghcr.io/${{ github.repository }}:sha-${SHORT_SHA}"
+          IMAGE="ghcr.io/${{ github.repository }}:sha-${{ needs.build.outputs.short_sha }}"
 
           TAPIS_TOKEN=$(curl -sf -X POST "${TAPIS_BASE_URL}/v3/oauth2/tokens" \
             -H "Content-Type: application/json" \
             -d "{\"username\":\"${TAPIS_SERVICE_USERNAME}\",\"password\":\"${TAPIS_SERVICE_PASSWORD}\",\"grant_type\":\"password\"}" \
             | jq -r '.result.access_token.access_token')
           if [ -z "$TAPIS_TOKEN" ] || [ "$TAPIS_TOKEN" = "null" ]; then
-            echo "ERROR: Failed to obtain Tapis token" && exit 1
+            echo "ERROR: Failed to obtain Tapis token from ${TAPIS_BASE_URL}" && exit 1
           fi
 
           POD=$(curl -sf "${TAPIS_BASE_URL}/v3/pods/${TAPIS_POD_ID}" \
             -H "X-Tapis-Token: ${TAPIS_TOKEN}" | jq '.result')
 
-          PAYLOAD=$(echo "$POD" | jq --arg img "$IMAGE" '{
+          PAYLOAD=$(echo "$POD" | jq \
+            --arg img "$IMAGE" \
+            --arg client_id "$OAUTH_CLIENT_ID" \
+            --arg client_key "$OAUTH_CLIENT_KEY" '{
             image: $img,
             description: .description,
             command: .command,
             arguments: .arguments,
-            environment_variables: (.environment_variables // {}),
+            environment_variables: ((.environment_variables // {}) + {
+              VITE_TAPIS_OAUTH_CLIENT_ID: $client_id,
+              VITE_TAPIS_OAUTH_CLIENT_KEY: $client_key
+            }),
             secret_map: (.secret_map // {}),
             status_requested: "RESTART",
             volume_mounts: (.volume_mounts // {}),
