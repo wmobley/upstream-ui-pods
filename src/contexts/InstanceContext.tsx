@@ -7,6 +7,7 @@ import React, {
   useState,
   ReactNode,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContextState';
 
 export type Permission = 'ADMIN' | 'USER' | 'READ';
@@ -196,6 +197,7 @@ function isDiscoveryEnabled(): boolean {
 
 export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { isAuthenticated, logout } = useAuth();
+  const queryClient = useQueryClient();
   const discoveryEnabled = isDiscoveryEnabled();
 
   const [instances, setInstances] = useState<ProjectInstance[]>([]);
@@ -207,9 +209,14 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
   const fetchedRef = useRef(false);
 
   const setSelectedInstance = useCallback((instance: ProjectInstance) => {
-    setSelectedInstanceState(instance);
+    setSelectedInstanceState((prev) => {
+      if (prev?.stackId !== instance.stackId) {
+        queryClient.invalidateQueries();
+      }
+      return instance;
+    });
     persistInstance(instance);
-  }, []);
+  }, [queryClient]);
 
   const load = useCallback(async () => {
     if (!discoveryEnabled || !isAuthenticated) return;

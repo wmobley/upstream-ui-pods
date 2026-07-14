@@ -6,7 +6,14 @@ import App from './App.tsx';
 import { createRoot } from 'react-dom/client';
 
 // Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+    },
+  },
+});
 
 // Debug: intercept fetch calls and log any requests to the CKAN organizations
 // endpoint so we can see the full outgoing request (method, headers, body).
