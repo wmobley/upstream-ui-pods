@@ -319,6 +319,13 @@ const Admin = () => {
       return acc;
     }, {});
     return Object.entries(grouped).reduce<Record<string, Pods.PodResponseModel[]>>((acc, [base, podsForBase]) => {
+      // Only show groups where the API pod has the [upstream] description marker.
+      const apiPod = podsForBase.find((pod) => pod.pod_id.toLowerCase().endsWith('api'));
+      const isUpstreamStack = apiPod
+        ? ((apiPod as unknown as { description?: string }).description ?? '').startsWith('[upstream]')
+        : false;
+      if (!isUpstreamStack) return acc;
+
       const hasUi = podsForBase.some(isUiImage);
       const hasApi = podsForBase.some(isApiImage);
       const allowPostgis = hasUi && hasApi;
@@ -329,15 +336,6 @@ const Admin = () => {
           isApiImage(pod) ||
           (allowPostgis && isPostgisImage(pod)),
       );
-      if (podsForBase.length && filtered.length === 0) {
-        console.debug('[Admin] filtered out pods for base', {
-          base,
-          pods: podsForBase.map((pod) => ({
-            pod_id: pod.pod_id,
-            image: getPodImage(pod),
-          })),
-        });
-      }
       if (filtered.length) {
         acc[base] = filtered;
       }

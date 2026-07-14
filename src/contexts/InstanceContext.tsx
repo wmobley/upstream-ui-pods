@@ -230,11 +230,11 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
       setInstances(list);
 
       // Auto-select: restore persisted selection if still in list, otherwise
-      // pick the first instance (single-project users land immediately).
+      // prefer the 'upstream' base system, then fall back to first in list.
       setSelectedInstanceState((prev) => {
         const stillValid = prev && list.some((i) => i.stackId === prev.stackId);
         if (stillValid) return prev;
-        const auto = list[0] ?? null;
+        const auto = list.find((i) => i.stackId === 'upstream') ?? list[0] ?? null;
         persistInstance(auto);
         return auto;
       });
