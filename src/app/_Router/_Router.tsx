@@ -6,11 +6,12 @@ import Login from '../Login/Login';
 import OAuthCallback from '../OAuth/OAuthCallback';
 import { useAuth } from '../../contexts/AuthContextState';
 import { Loading } from '../common/Loading';
+import ProtectedRoute from '../common/ProtectedRoute';
 import ConfidenceMethodExplanation from '../Sensor/viz/ConfidenceMethodExplanation';
 import Admin from '../Admin';
 
 const Router: React.FC = () => {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
     return <Loading />;
@@ -26,16 +27,15 @@ const Router: React.FC = () => {
         <Login />
       </Route>
 
-      {/* Public routes - authentication handled by backend via Tapis headers or JWT */}
       <Route exact path="/">
         <Home />
       </Route>
-      <Route path="/campaigns">
+      <ProtectedRoute isAuthenticated={isAuthenticated} path="/campaigns">
         <Campaign />
-      </Route>
-      <Route path="/admin">
+      </ProtectedRoute>
+      <ProtectedRoute isAuthenticated={isAuthenticated} path="/admin">
         <Admin />
-      </Route>
+      </ProtectedRoute>
       <Route path="/docs/confidence-explanation">
         <ConfidenceMethodExplanation />
       </Route>
