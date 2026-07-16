@@ -139,7 +139,7 @@ export function useDeleteNote(queryKey: unknown[]) {
   const apiFetch = useNotesFetch();
   const config = useConfiguration();
   return useMutation({
-    mutationFn: async ({ noteId, deletePath }: { noteId: number; deletePath: string }) => {
+    mutationFn: async ({ noteId: _noteId, deletePath }: { noteId: number; deletePath: string }) => {
       const res = await apiFetch(notesUrl(config.basePath ?? '', deletePath), {
         method: 'DELETE',
       });
