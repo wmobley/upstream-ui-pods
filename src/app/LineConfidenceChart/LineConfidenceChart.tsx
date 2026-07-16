@@ -55,6 +55,7 @@ export interface LineConfidenceChartProps {
   }>;
   renderDataPoints: boolean;
   selectedSensorId: string;
+  onSelectMeasurementForNote?: (measurementId: number) => void;
 }
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
@@ -87,6 +88,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   ],
   renderDataPoints,
   selectedSensorId: sensorId,
+  onSelectMeasurementForNote,
 }) => {
   // Container ref for resizing
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -211,6 +213,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
         setTooltipAggregation={setTooltipAggregation}
         setTooltipPoint={setTooltipPoint}
         renderDataPoints={renderDataPoints}
+        onSelectMeasurementForNote={onSelectMeasurementForNote}
       />
     </div>
   );

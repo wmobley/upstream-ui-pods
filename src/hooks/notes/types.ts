@@ -1,4 +1,4 @@
-export type NoteScope = 'campaign' | 'station' | 'measurement';
+export type NoteScope = 'campaign' | 'station' | 'sensor' | 'measurement';
 
 export interface Note {
   id: number;
@@ -8,6 +8,7 @@ export interface Note {
   created_at: string;
   campaign_id: number;
   station_id: number | null;
+  sensor_id: number | null;
   measurement_id: number | null;
 }
 

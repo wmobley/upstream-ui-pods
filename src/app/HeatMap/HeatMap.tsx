@@ -14,9 +14,10 @@ import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 interface HeatMapProps {
   measurements: MeasurementItem[];
   intervals: Interval[];
+  onSelectMeasurement?: (measurementId: number) => void;
 }
 
-export default function HeatMap({ measurements, intervals }: HeatMapProps) {
+export default function HeatMap({ measurements, intervals, onSelectMeasurement }: HeatMapProps) {
   const [selectedInterval, setSelectedInterval] = useState<Interval | null>(
     null,
   );
@@ -81,6 +82,9 @@ export default function HeatMap({ measurements, intervals }: HeatMapProps) {
                     percentile: 0,
                     position,
                   });
+                  if (onSelectMeasurement && m.id !== undefined) {
+                    onSelectMeasurement(m.id);
+                  }
                 },
               }}
             />

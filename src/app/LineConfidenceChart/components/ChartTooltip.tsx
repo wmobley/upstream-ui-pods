@@ -26,6 +26,7 @@ interface ChartTooltipProps {
     React.SetStateAction<PointTooltipData | null>
   >;
   renderDataPoints: boolean;
+  onSelectMeasurementForNote?: (measurementId: number) => void;
 }
 
 const ChartTooltip: React.FC<ChartTooltipProps> = ({
@@ -34,6 +35,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
   setTooltipAggregation,
   setTooltipPoint,
   renderDataPoints,
+  onSelectMeasurementForNote,
 }) => {
   return (
     <>
@@ -133,6 +135,17 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({
               />
             </div>
           </div>
+          {tooltipPoint.id !== undefined && onSelectMeasurementForNote && (
+            <button
+              onClick={() => {
+                onSelectMeasurementForNote(tooltipPoint.id!);
+                setTooltipPoint(null);
+              }}
+              className="mt-2 w-full rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
+            >
+              View / Add Note
+            </button>
+          )}
         </div>
       )}
     </>

@@ -47,6 +47,40 @@ export function useStationNotes(campaignId: number, stationId: number) {
   });
 }
 
+export function useSensorNotes(campaignId: number, stationId: number, sensorId: number) {
+  const config = useConfiguration();
+  const apiFetch = useNotesFetch();
+  return useQuery<ListNotesResponse>({
+    queryKey: ['notes', 'sensor', campaignId, stationId, sensorId],
+    queryFn: async () => {
+      const res = await apiFetch(
+        notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/notes`)
+      );
+      if (!res.ok) throw new Error('Failed to fetch sensor notes');
+      return res.json();
+    },
+    enabled: Boolean(config.basePath),
+  });
+}
+
+export function useCreateSensorNote(campaignId: number, stationId: number, sensorId: number) {
+  const queryClient = useQueryClient();
+  const apiFetch = useNotesFetch();
+  const config = useConfiguration();
+  return useMutation({
+    mutationFn: async (content: string) => {
+      const res = await apiFetch(
+        notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/notes`),
+        { method: 'POST', body: JSON.stringify({ content }) }
+      );
+      if (!res.ok) throw new Error('Failed to create note');
+      return res.json();
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notes', 'sensor', campaignId, stationId, sensorId] }),
+  });
+}
+
 export function useMeasurementNotes(
   campaignId: number,
   stationId: number,
