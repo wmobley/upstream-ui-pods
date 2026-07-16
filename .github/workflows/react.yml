@@ -2,9 +2,9 @@ name: React CI/CD
 
 on:
   push:
-    branches: [main, 'feature/unified-ui-tapis-auth']
+    branches: [main, 'feature/**']
   pull_request:
-    branches: [main, 'feature/unified-ui-tapis-auth']
+    branches: [main, 'feature/**']
 
 permissions:
   contents: write
@@ -116,7 +116,7 @@ jobs:
 
   deploy-develop:
     needs: build
-    if: github.ref == 'refs/heads/feature/unified-ui-tapis-auth' && github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/heads/feature/') && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: Tapis Configure
     env:
