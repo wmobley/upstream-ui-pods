@@ -9,6 +9,7 @@ import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import {useDetail as stationInfo} from '../../hooks/station/useDetail';
 import { renderChm } from '../../utils/helpers';
 import { useAuth } from '../../contexts/AuthContextState';
+import { MeasurementNotePanel } from './_components/MeasurementNotePanel';
 
 interface SensorDashboardProps {
   campaignId: string;
@@ -157,6 +158,14 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
               sensorId={sensorId}
             />
           </section>
+
+          <div className="mb-4">
+            <MeasurementNotePanel
+              campaignId={campaignId}
+              stationId={stationId}
+              sensorId={sensorId}
+            />
+          </div>
 
           <section className="flex flex-col gap-10 bg-white rounded-lg p-4 shadow-md">
             <QueryWrapper isLoading={isLoading} error={error}>

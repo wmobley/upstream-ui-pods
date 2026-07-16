@@ -1,5 +1,5 @@
 import { useDetail } from '../../hooks/station/useDetail';
-import { useStationNotes, useCreateStationNote, useDeleteNote } from '../../hooks/notes/useNotes';
+import { useStationNotes, useCreateStationNote, useDeleteNote, useUpdateNote } from '../../hooks/notes/useNotes';
 import { NotesList } from '../common/Notes/NotesList';
 import { useDelete as useDeleteSensors } from '../../hooks/sensor/useDelete';
 import { useDeleteStation } from '../../hooks/station/useDeleteStation';
@@ -42,6 +42,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const { data: notesData, isLoading: notesLoading } = useStationNotes(campaignIdNum, stationIdNum);
   const createNote = useCreateStationNote(campaignIdNum, stationIdNum);
   const deleteNote = useDeleteNote(['notes', 'station', campaignIdNum, stationIdNum]);
+  const updateNote = useUpdateNote(['notes', 'station', campaignIdNum, stationIdNum]);
   const roleUpper = (role || '').toUpperCase();
   const canManageData = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
   const canDeleteData = canManageData;
@@ -412,8 +413,15 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
                   deletePath: `/campaigns/${campaignIdNum}/stations/${stationIdNum}/notes/${noteId}`,
                 })
               }
+              onUpdate={(noteId, content) =>
+                updateNote.mutate({
+                  updatePath: `/campaigns/${campaignIdNum}/stations/${stationIdNum}/notes/${noteId}`,
+                  content,
+                })
+              }
               isAdding={createNote.isPending}
               isDeleting={deleteNote.isPending}
+              isUpdating={updateNote.isPending}
             />
           </div>
 

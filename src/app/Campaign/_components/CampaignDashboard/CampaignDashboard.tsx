@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useDetail } from '../../../../hooks/campaign/useDetail';
 import { useAuth } from '../../../../contexts/AuthContextState';
-import { useCampaignNotes, useCreateCampaignNote, useDeleteNote } from '../../../../hooks/notes/useNotes';
+import { useCampaignNotes, useCreateCampaignNote, useDeleteNote, useUpdateNote } from '../../../../hooks/notes/useNotes';
 import { NotesList } from '../../../common/Notes/NotesList';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDelete } from '../../../../hooks/campaign/useDelete';
@@ -40,6 +40,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   const { data: notesData, isLoading: notesLoading } = useCampaignNotes(campaignIdNum);
   const createNote = useCreateCampaignNote(campaignIdNum);
   const deleteNote = useDeleteNote(['notes', 'campaign', campaignIdNum]);
+  const updateNote = useUpdateNote(['notes', 'campaign', campaignIdNum]);
   // Since we removed allocations, allow all authenticated users to manage campaigns
   const canDeleteData = true; // Previously: useIsOwner(campaignId)
   const deleteCampaign = useDelete();
@@ -375,8 +376,15 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
                 deletePath: `/campaigns/${campaignIdNum}/notes/${noteId}`,
               })
             }
+            onUpdate={(noteId, content) =>
+              updateNote.mutate({
+                updatePath: `/campaigns/${campaignIdNum}/notes/${noteId}`,
+                content,
+              })
+            }
             isAdding={createNote.isPending}
             isDeleting={deleteNote.isPending}
+            isUpdating={updateNote.isPending}
           />
         </div>
       </div>

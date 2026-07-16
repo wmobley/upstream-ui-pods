@@ -67,7 +67,7 @@ export function useMeasurementNotes(
       if (!res.ok) throw new Error('Failed to fetch measurement notes');
       return res.json();
     },
-    enabled: Boolean(config.basePath),
+    enabled: Boolean(config.basePath) && measurementId > 0,
   });
 }
 
@@ -131,6 +131,23 @@ export function useCreateMeasurementNote(
       queryClient.invalidateQueries({
         queryKey: ['notes', 'measurement', campaignId, stationId, measurementId],
       }),
+  });
+}
+
+export function useUpdateNote(queryKey: unknown[]) {
+  const queryClient = useQueryClient();
+  const apiFetch = useNotesFetch();
+  const config = useConfiguration();
+  return useMutation({
+    mutationFn: async ({ updatePath, content }: { updatePath: string; content: string }) => {
+      const res = await apiFetch(notesUrl(config.basePath ?? '', updatePath), {
+        method: 'PATCH',
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) throw new Error('Failed to update note');
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 }
 
