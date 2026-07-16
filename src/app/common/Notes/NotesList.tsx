@@ -34,7 +34,7 @@ export function NotesList({
   isUpdating,
   canWrite,
 }: NotesListProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState('');
 

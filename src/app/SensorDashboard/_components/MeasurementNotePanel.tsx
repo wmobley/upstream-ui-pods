@@ -17,7 +17,7 @@ interface Props {
 
 export function MeasurementNotePanel({ campaignId, stationId, sensorId }: Props) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const { username } = useAuth();
   const { data, isLoading } = useList(campaignId, stationId, sensorId, 20);
   const measurements = data?.items ?? [];
