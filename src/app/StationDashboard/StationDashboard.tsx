@@ -1,4 +1,6 @@
 import { useDetail } from '../../hooks/station/useDetail';
+import { useStationNotes, useCreateStationNote, useDeleteNote } from '../../hooks/notes/useNotes';
+import { NotesList } from '../common/Notes/NotesList';
 import { useDelete as useDeleteSensors } from '../../hooks/sensor/useDelete';
 import { useDeleteStation } from '../../hooks/station/useDeleteStation';
 import { usePublish, useUnpublish } from '../../hooks/station/usePublish';
@@ -34,7 +36,12 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
   const history = useHistory();
   const { station, isLoading, error } = useDetail(campaignId, stationId);
   const { campaign } = campaignInfo(campaignId);
-  const { role } = useAuth();
+  const { role, username } = useAuth();
+  const campaignIdNum = parseInt(campaignId);
+  const stationIdNum = parseInt(stationId);
+  const { data: notesData, isLoading: notesLoading } = useStationNotes(campaignIdNum, stationIdNum);
+  const createNote = useCreateStationNote(campaignIdNum, stationIdNum);
+  const deleteNote = useDeleteNote(['notes', 'station', campaignIdNum, stationIdNum]);
   const roleUpper = (role || '').toUpperCase();
   const canManageData = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
   const canDeleteData = canManageData;
@@ -391,6 +398,24 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             {/* banner removed per user request */}
             {station && <StatsSection station={station} />}
           </section>
+
+          <div className="mb-4">
+            <NotesList
+              notes={notesData?.items ?? []}
+              isLoading={notesLoading}
+              currentUsername={username ?? undefined}
+              canWrite={Boolean(username)}
+              onAdd={(content) => createNote.mutate(content)}
+              onDelete={(noteId) =>
+                deleteNote.mutate({
+                  noteId,
+                  deletePath: `/campaigns/${campaignIdNum}/stations/${stationIdNum}/notes/${noteId}`,
+                })
+              }
+              isAdding={createNote.isPending}
+              isDeleting={deleteNote.isPending}
+            />
+          </div>
 
           <SensorTable campaignId={campaignId} stationId={stationId} />
 
