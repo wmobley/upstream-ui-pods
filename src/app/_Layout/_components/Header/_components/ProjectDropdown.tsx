@@ -6,9 +6,10 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   ADMIN: 'Owner',
   USER: 'Editor',
   READ: 'Viewer',
+  UNKNOWN: 'Unverified',
 };
 
-const PERMISSION_ORDER: Permission[] = ['ADMIN', 'USER', 'READ'];
+const PERMISSION_ORDER: Permission[] = ['ADMIN', 'USER', 'READ', 'UNKNOWN'];
 
 const ProjectDropdown: React.FC = () => {
   const { instances, selectedInstance, setSelectedInstance, isLoading, error, discoveryEnabled } =
@@ -33,7 +34,7 @@ const ProjectDropdown: React.FC = () => {
       acc[p] = instances.filter((i) => i.permission === p);
       return acc;
     },
-    { ADMIN: [], USER: [], READ: [] }
+    { ADMIN: [], USER: [], READ: [], UNKNOWN: [] }
   );
 
   const label = isLoading

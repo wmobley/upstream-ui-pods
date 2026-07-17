@@ -10,7 +10,7 @@ import React, {
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContextState';
 
-export type Permission = 'ADMIN' | 'USER' | 'READ';
+export type Permission = 'ADMIN' | 'USER' | 'READ' | 'UNKNOWN';
 
 export interface ProjectInstance {
   stackId: string;
@@ -47,22 +47,77 @@ interface TapisPod {
   status?: string;
   tags?: string[];
   networking?: Record<string, TapisPodNetworking>;
-  owner?: string;
-  permissions?: Record<string, string>;
 }
 
 const SESSION_KEY = 'upstream_selected_instance';
+const ROLE_LOOKUP_CONCURRENCY = 6;
 
-function getUsernameFromTapisToken(token: string): string | null {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const username = payload['tapis/username'] as string | undefined;
-    if (username) return username;
-    const sub = payload.sub as string | undefined;
-    return sub?.includes('@') ? sub.split('@')[0] : (sub ?? null);
-  } catch {
+/** Runs `fn` over `items` with at most `limit` in flight; never throws — each
+ *  outcome is captured like Promise.allSettled, so one failure can't affect
+ *  the others or abort the batch. */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (nextIndex < items.length) {
+      const current = nextIndex++;
+      try {
+        const value = await fn(items[current]);
+        results[current] = { status: 'fulfilled', value };
+      } catch (reason) {
+        results[current] = { status: 'rejected', reason };
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+/** Maps the app's own per-project DB role (from GET /user-roles/me) to a
+ *  Permission. Returns null for NONE — the caller has no real access and
+ *  the instance should be dropped, not just relabeled. */
+function mapBackendRole(role: unknown): Permission | null {
+  switch (role) {
+    case 'ADMIN':
+    case 'APPROVEDADMIN':
+      return 'ADMIN';
+    case 'USER':
+      return 'USER';
+    case 'READ':
+      return 'READ';
+    default:
+      return null;
+  }
+}
+
+/** Resolves the caller's own DB role for one project instance.
+ *  Returns null when the caller genuinely has no access (NONE role, or
+ *  401/403). Throws for anything else (network error, timeout, 5xx) so the
+ *  caller can distinguish "no access" from "couldn't check" instead of
+ *  conflating a down/restarting pod with a real permission denial. */
+async function fetchRoleForInstance(apiUrl: string, tapisToken: string): Promise<Permission | null> {
+  const resp = await fetch(`${apiUrl}/api/v1/user-roles/me`, {
+    headers: {
+      Authorization: `Bearer ${tapisToken}`,
+      Accept: 'application/json',
+    },
+  });
+
+  if (resp.status === 401 || resp.status === 403) {
     return null;
   }
+  if (!resp.ok) {
+    throw new Error(`GET /user-roles/me ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  return mapBackendRole(data?.role);
 }
 
 class TapisAuthError extends Error {
@@ -89,16 +144,19 @@ function getPodsDomain(baseUrl: string): string {
   return `pods.${hostname}`;
 }
 
-async function fetchInstances(tapisToken: string, currentUsername?: string): Promise<ProjectInstance[]> {
+async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   const baseUrl = getPodsBaseUrl();
 
   // Use the same-origin nginx proxy (/tapis-proxy/) to avoid CORS when calling
   // Tapis from a pod subdomain. Falls back to the direct URL in local dev.
+  // No list_type param needed — GET /pods already returns every pod the
+  // caller has READ+ access to by default (confirmed against the Tapis
+  // Pods service source; there is no list_type query param on this endpoint).
   const isDeployedPod = typeof window !== 'undefined' &&
     window.location.hostname.endsWith('.tapis.io');
   const podsUrl = isDeployedPod
-    ? `/tapis-proxy/v3/pods?list_type=ALL`
-    : `${baseUrl}/v3/pods?list_type=ALL`;
+    ? `/tapis-proxy/v3/pods`
+    : `${baseUrl}/v3/pods`;
 
   const resp = await fetch(podsUrl, {
     headers: {
@@ -124,7 +182,7 @@ async function fetchInstances(tapisToken: string, currentUsername?: string): Pro
     (p) => p.pod_id.endsWith('api') && (p.description ?? '').startsWith('[upstream]')
   );
 
-  return apiPods.map((p) => {
+  const candidates = apiPods.map((p) => {
     // Derive API URL from the pod's networking entry, or fall back to convention
     const netEntry = p.networking
       ? Object.values(p.networking)[0]
@@ -141,26 +199,32 @@ async function fetchInstances(tapisToken: string, currentUsername?: string): Pro
       ? desc.replace('[upstream]', '').trim() || stackId
       : stackId;
 
-    let permission: Permission = 'READ';
-    if (currentUsername) {
-      const level = p.permissions?.[currentUsername]?.toUpperCase();
-      if (level === 'ADMIN' || level === 'USER' || level === 'READ') {
-        permission = level as Permission;
-      } else if (p.owner === currentUsername) {
-        permission = 'ADMIN';
-      }
-    } else {
-      // No username available — fall back to ADMIN (original behavior)
-      permission = 'ADMIN';
-    }
-
-    return {
-      stackId,
-      displayName,
-      apiUrl,
-      permission,
-    };
+    return { stackId, displayName, apiUrl };
   });
+
+  // Resolve each project's real per-user DB role (GET /user-roles/me) in
+  // parallel, capped, so one slow/erroring project can't block the others.
+  // NONE/401/403 -> real no-access, drop the instance. Any other failure
+  // (network error, timeout, 5xx — e.g. a pod mid-restart) -> keep the
+  // instance but mark it 'UNKNOWN' rather than silently hiding a project
+  // the user may actually have access to.
+  const roleResults = await mapWithConcurrency(candidates, ROLE_LOOKUP_CONCURRENCY, (c) =>
+    fetchRoleForInstance(c.apiUrl, tapisToken)
+  );
+
+  const instances: ProjectInstance[] = [];
+  candidates.forEach((c, i) => {
+    const result = roleResults[i];
+    if (result.status === 'fulfilled') {
+      if (result.value === null) return; // no access — drop
+      instances.push({ ...c, permission: result.value });
+    } else {
+      console.warn(`[InstanceContext] Could not verify role for ${c.stackId}:`, result.reason);
+      instances.push({ ...c, permission: 'UNKNOWN' });
+    }
+  });
+
+  return instances;
 }
 
 function loadPersistedInstance(): ProjectInstance | null {
@@ -247,8 +311,7 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
     setIsLoading(true);
     setError(null);
     try {
-      const currentUsername = getUsernameFromTapisToken(tapisToken) ?? undefined;
-      const list = await fetchInstances(tapisToken, currentUsername);
+      const list = await fetchInstances(tapisToken);
       setInstances(list);
 
       // Auto-select: restore persisted selection if still in list, otherwise
