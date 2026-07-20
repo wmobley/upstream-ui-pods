@@ -5,11 +5,7 @@ import QueryWrapper from '../../../../common/QueryWrapper';
 import { useLineConfidence } from '../context/LineConfidenceContextState';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 
-interface ChartProps {
-  onSelectMeasurementForNote?: (measurementId: number) => void;
-}
-
-export const Chart = ({ onSelectMeasurementForNote }: ChartProps) => {
+export const Chart = () => {
   // Get the time range from context
   const {
     setSelectedTimeRange,
@@ -21,6 +17,8 @@ export const Chart = ({ onSelectMeasurementForNote }: ChartProps) => {
     renderDataPoints,
     addingSensor,
     data,
+    campaignId,
+    stationId,
     sensorId,
     maxValueChart,
     minValueChart,
@@ -124,7 +122,8 @@ export const Chart = ({ onSelectMeasurementForNote }: ChartProps) => {
             colorPalette={colorPalette}
             renderDataPoints={renderDataPoints}
             selectedSensorId={sensorId}
-            onSelectMeasurementForNote={onSelectMeasurementForNote}
+            campaignId={campaignId}
+            stationId={stationId}
           />
         </div>
       )}
