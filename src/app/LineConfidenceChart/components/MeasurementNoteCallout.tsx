@@ -1,6 +1,8 @@
 import React from 'react';
 import NumberFormatter from '../../common/NumberFormatter/NumberFormatter';
 import { NotesList } from '../../common/Notes/NotesList';
+import GeometryMap from '../../common/GeometryMap/GeometryMap';
+import { hasValidGeometry } from '../../../utils/geometryValidation';
 import { useAuth } from '../../../contexts/AuthContextState';
 import {
   useMeasurementNotes,
@@ -19,6 +21,7 @@ export interface SelectedPointPayload {
   stationId: string;
   sensorId: string;
   bucketContext?: { averageValue: number; pointCount: number } | null;
+  geometry?: GeoJSON.Point | null;
 }
 
 interface MeasurementNoteCalloutProps {
@@ -97,18 +100,35 @@ const MeasurementNoteCallout: React.FC<MeasurementNoteCalloutProps> = ({
         </button>
       </div>
 
+      {hasValidGeometry(point) && (
+        <div className="h-32 w-full border-b border-gray-100">
+          <GeometryMap
+            geoJSON={point.geometry as GeoJSON.Geometry}
+            markers={(notesData?.items ?? [])
+              .filter((note) => note.location)
+              .map((note) => ({
+                position: note.location as GeoJSON.Point,
+                color: '#ea580c',
+                label: note.content,
+              }))}
+          />
+        </div>
+      )}
+
       <div className="p-1">
         <NotesList
           notes={notesData?.items ?? []}
           isLoading={notesLoading}
           currentUsername={username ?? undefined}
           canWrite={Boolean(username)}
-          onAdd={(content) => createNote.mutate(content)}
+          enableLocationPicker
+          baseGeometry={point.geometry}
+          onAdd={(content, location) => createNote.mutate({ content, location })}
           onDelete={(noteId) =>
             deleteNote.mutate({ noteId, deletePath: `${basePath}/${noteId}` })
           }
-          onUpdate={(noteId, content) =>
-            updateNote.mutate({ updatePath: `${basePath}/${noteId}`, content })
+          onUpdate={(noteId, content, location) =>
+            updateNote.mutate({ updatePath: `${basePath}/${noteId}`, content, location })
           }
           isAdding={createNote.isPending}
           isDeleting={deleteNote.isPending}

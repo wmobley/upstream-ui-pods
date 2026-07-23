@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import useConfiguration from '../api/useConfiguration';
-import type { ListNotesResponse } from './types';
+import { pointToWkt, type ListNotesResponse } from './types';
 
 function notesUrl(basePath: string, path: string): string {
   return `${basePath.replace(/\/+$/, '')}/api/v1${path}`;
@@ -150,13 +150,22 @@ export function useCreateMeasurementNote(
   const apiFetch = useNotesFetch();
   const config = useConfiguration();
   return useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({
+      content,
+      location,
+    }: {
+      content: string;
+      location?: GeoJSON.Point | null;
+    }) => {
       const res = await apiFetch(
         notesUrl(
           config.basePath ?? '',
           `/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/measurements/${measurementId}/notes`
         ),
-        { method: 'POST', body: JSON.stringify({ content }) }
+        {
+          method: 'POST',
+          body: JSON.stringify({ content, location: location ? pointToWkt(location) : undefined }),
+        }
       );
       if (!res.ok) throw new Error('Failed to create note');
       return res.json();
@@ -173,10 +182,25 @@ export function useUpdateNote(queryKey: unknown[]) {
   const apiFetch = useNotesFetch();
   const config = useConfiguration();
   return useMutation({
-    mutationFn: async ({ updatePath, content }: { updatePath: string; content: string }) => {
+    mutationFn: async ({
+      updatePath,
+      content,
+      location,
+    }: {
+      updatePath: string;
+      content: string;
+      // Only meaningful for measurement notes — the base NoteUpdate schema
+      // the other three scopes use has no `location` field, so this is
+      // silently ignored server-side if included for those. Omit entirely
+      // (rather than sending null) when the caller never supplies it.
+      location?: GeoJSON.Point | null;
+    }) => {
       const res = await apiFetch(notesUrl(config.basePath ?? '', updatePath), {
         method: 'PATCH',
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({
+          content,
+          ...(location !== undefined ? { location: location ? pointToWkt(location) : null } : {}),
+        }),
       });
       if (!res.ok) throw new Error('Failed to update note');
       return res.json();

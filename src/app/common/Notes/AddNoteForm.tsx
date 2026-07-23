@@ -1,19 +1,30 @@
 import { useState } from 'react';
+import { LocationPickerField } from './LocationPickerField';
 
 interface AddNoteFormProps {
-  onSubmit: (content: string) => void;
+  onSubmit: (content: string, location?: GeoJSON.Point | null) => void;
   isLoading: boolean;
+  /** Measurement notes only — see docs/design/2026-07-23-measurement-note-location.md. */
+  enableLocationPicker?: boolean;
+  baseGeometry?: GeoJSON.Point | null;
 }
 
-export function AddNoteForm({ onSubmit, isLoading }: AddNoteFormProps) {
+export function AddNoteForm({
+  onSubmit,
+  isLoading,
+  enableLocationPicker,
+  baseGeometry,
+}: AddNoteFormProps) {
   const [content, setContent] = useState('');
+  const [location, setLocation] = useState<GeoJSON.Point | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = content.trim();
     if (!trimmed) return;
-    onSubmit(trimmed);
+    onSubmit(trimmed, enableLocationPicker ? location : undefined);
     setContent('');
+    setLocation(null);
   }
 
   return (
@@ -26,6 +37,14 @@ export function AddNoteForm({ onSubmit, isLoading }: AddNoteFormProps) {
         onChange={(e) => setContent(e.target.value)}
         disabled={isLoading}
       />
+      {enableLocationPicker && (
+        <LocationPickerField
+          value={location}
+          onChange={setLocation}
+          baseGeometry={baseGeometry}
+          disabled={isLoading}
+        />
+      )}
       <button
         type="submit"
         disabled={isLoading || !content.trim()}

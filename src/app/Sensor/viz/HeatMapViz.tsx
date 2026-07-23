@@ -96,7 +96,7 @@ const HeatMapViz = ({
             isLoading={notesLoading}
             currentUsername={username ?? undefined}
             canWrite={Boolean(username)}
-            onAdd={(content) => createNote.mutate(content)}
+            onAdd={(content) => createNote.mutate({ content })}
             onDelete={(noteId) =>
               deleteNote.mutate({
                 noteId,

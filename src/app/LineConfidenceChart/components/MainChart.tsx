@@ -324,6 +324,7 @@ const MainChart: React.FC<MainChartProps> = ({
                   stationId,
                   sensorId: selectedSensorId,
                   bucketContext: { averageValue: d.value, pointCount: d.pointCount },
+                  geometry: nearest.geometry as unknown as GeoJSON.Point,
                 });
               }
             }}
@@ -359,6 +360,7 @@ const MainChart: React.FC<MainChartProps> = ({
                     stationId: sensor.info.stationId,
                     sensorId: sensor.info.id,
                     bucketContext: { averageValue: d.value, pointCount: d.pointCount },
+                    geometry: nearest.geometry as unknown as GeoJSON.Point,
                   });
                 }
               }}
@@ -412,6 +414,7 @@ const MainChart: React.FC<MainChartProps> = ({
                   stationId,
                   sensorId: selectedSensorId,
                   bucketContext: null,
+                  geometry: d.geometry as unknown as GeoJSON.Point,
                 });
               }
             }}
@@ -441,6 +444,7 @@ const MainChart: React.FC<MainChartProps> = ({
                     stationId: sensor.info.stationId,
                     sensorId: sensor.info.id,
                     bucketContext: null,
+                    geometry: d.geometry as unknown as GeoJSON.Point,
                   });
                 }
               }}

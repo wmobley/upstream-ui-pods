@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import type { Note } from '../../../hooks/notes/types';
 import { AddNoteForm } from './AddNoteForm';
+import { LocationPickerField } from './LocationPickerField';
 
 interface NotesListProps {
   notes: Note[];
   isLoading: boolean;
   currentUsername?: string;
-  onAdd: (content: string) => void;
+  onAdd: (content: string, location?: GeoJSON.Point | null) => void;
   onDelete: (noteId: number) => void;
-  onUpdate: (noteId: number, content: string) => void;
+  onUpdate: (noteId: number, content: string, location?: GeoJSON.Point | null) => void;
   isAdding: boolean;
   isDeleting: boolean;
   isUpdating: boolean;
   canWrite: boolean;
+  /** Measurement notes only — see docs/design/2026-07-23-measurement-note-location.md. */
+  enableLocationPicker?: boolean;
+  baseGeometry?: GeoJSON.Point | null;
 }
 
 function formatDate(iso: string): string {
@@ -33,26 +37,32 @@ export function NotesList({
   isDeleting,
   isUpdating,
   canWrite,
+  enableLocationPicker,
+  baseGeometry,
 }: NotesListProps) {
   const [open, setOpen] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [editLocation, setEditLocation] = useState<GeoJSON.Point | null>(null);
 
   function startEdit(note: Note) {
     setEditingId(note.id);
     setEditContent(note.content);
+    setEditLocation(note.location ?? null);
   }
 
   function cancelEdit() {
     setEditingId(null);
     setEditContent('');
+    setEditLocation(null);
   }
 
   function saveEdit(noteId: number) {
     if (!editContent.trim()) return;
-    onUpdate(noteId, editContent.trim());
+    onUpdate(noteId, editContent.trim(), enableLocationPicker ? editLocation : undefined);
     setEditingId(null);
     setEditContent('');
+    setEditLocation(null);
   }
 
   return (
@@ -83,6 +93,14 @@ export function NotesList({
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
                       />
+                      {enableLocationPicker && (
+                        <LocationPickerField
+                          value={editLocation}
+                          onChange={setEditLocation}
+                          baseGeometry={baseGeometry}
+                          disabled={isUpdating}
+                        />
+                      )}
                       <div className="flex gap-2">
                         <button
                           onClick={() => saveEdit(note.id)}
@@ -130,7 +148,12 @@ export function NotesList({
           )}
 
           {canWrite && (
-            <AddNoteForm onSubmit={onAdd} isLoading={isAdding} />
+            <AddNoteForm
+              onSubmit={onAdd}
+              isLoading={isAdding}
+              enableLocationPicker={enableLocationPicker}
+              baseGeometry={baseGeometry}
+            />
           )}
         </div>
       )}
