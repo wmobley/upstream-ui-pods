@@ -31,6 +31,22 @@ export function useCampaignNotes(campaignId: number) {
   });
 }
 
+/** Every note in the campaign (any scope) that has its own location — for
+ * plotting pins on the campaign coverage map. */
+export function useCampaignNoteLocations(campaignId: number) {
+  const config = useConfiguration();
+  const apiFetch = useNotesFetch();
+  return useQuery<ListNotesResponse>({
+    queryKey: ['notes', 'campaign', campaignId, 'locations'],
+    queryFn: async () => {
+      const res = await apiFetch(notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/notes/locations`));
+      if (!res.ok) throw new Error('Failed to fetch campaign note locations');
+      return res.json();
+    },
+    enabled: Boolean(config.basePath),
+  });
+}
+
 export function useStationNotes(campaignId: number, stationId: number) {
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
@@ -41,6 +57,24 @@ export function useStationNotes(campaignId: number, stationId: number) {
         notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/stations/${stationId}/notes`)
       );
       if (!res.ok) throw new Error('Failed to fetch station notes');
+      return res.json();
+    },
+    enabled: Boolean(config.basePath),
+  });
+}
+
+/** Every note for this station (station-scoped and measurement-scoped) that
+ * has its own location — for plotting pins on the station coverage map. */
+export function useStationNoteLocations(campaignId: number, stationId: number) {
+  const config = useConfiguration();
+  const apiFetch = useNotesFetch();
+  return useQuery<ListNotesResponse>({
+    queryKey: ['notes', 'station', campaignId, stationId, 'locations'],
+    queryFn: async () => {
+      const res = await apiFetch(
+        notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/stations/${stationId}/notes/locations`)
+      );
+      if (!res.ok) throw new Error('Failed to fetch station note locations');
       return res.json();
     },
     enabled: Boolean(config.basePath),

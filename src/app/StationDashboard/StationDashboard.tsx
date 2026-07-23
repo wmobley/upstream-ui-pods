@@ -397,7 +397,9 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
 
           <section className="h-[400px] grid grid-cols-1 gap-8 mb-8">
             {/* banner removed per user request */}
-            {station && <StatsSection station={station} />}
+            {station && (
+              <StatsSection station={station} campaignId={campaignIdNum} stationId={stationIdNum} />
+            )}
           </section>
 
           <div className="mb-4">

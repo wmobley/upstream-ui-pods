@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useDetail } from '../../../../hooks/campaign/useDetail';
 import { useAuth } from '../../../../contexts/AuthContextState';
-import { useCampaignNotes, useCreateCampaignNote, useDeleteNote, useUpdateNote } from '../../../../hooks/notes/useNotes';
+import { useCampaignNotes, useCampaignNoteLocations, useCreateCampaignNote, useDeleteNote, useUpdateNote } from '../../../../hooks/notes/useNotes';
 import { NotesList } from '../../../common/Notes/NotesList';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDelete } from '../../../../hooks/campaign/useDelete';
@@ -38,6 +38,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   const { username } = useAuth();
   const campaignIdNum = parseInt(campaignId);
   const { data: notesData, isLoading: notesLoading } = useCampaignNotes(campaignIdNum);
+  const { data: noteLocationsData } = useCampaignNoteLocations(campaignIdNum);
   const createNote = useCreateCampaignNote(campaignIdNum);
   const deleteNote = useDeleteNote(['notes', 'campaign', campaignIdNum]);
   const updateNote = useUpdateNote(['notes', 'campaign', campaignIdNum]);
@@ -354,6 +355,13 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
                 <div className="h-3/4 w-full">
                   <GeometryMap
                     geoJSON={campaign.geometry as GeoJSON.Geometry}
+                    markers={(noteLocationsData?.items ?? [])
+                      .filter((note) => note.location)
+                      .map((note) => ({
+                        position: note.location as GeoJSON.Point,
+                        color: '#ea580c',
+                        label: note.content,
+                      }))}
                   />
                 </div>
               </div>
