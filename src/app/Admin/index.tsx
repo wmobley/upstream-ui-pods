@@ -4,6 +4,8 @@ import { Pods } from '@tapis/tapis-typescript';
 import usePodsList from '../../hooks/pods/usePodsList';
 import usePodsConfig from '../../hooks/pods/usePodsConfig';
 import usePodPermissions from '../../hooks/pods/usePodPermissions';
+import useAddPodPermission from '../../hooks/pods/useAddPodPermission';
+import useRemovePodPermission from '../../hooks/pods/useRemovePodPermission';
 import useDeletePod from '../../hooks/pods/useDeletePod';
 import useDeleteVolume from '../../hooks/pods/useDeleteVolume';
 import useVolumesList from '../../hooks/pods/useVolumesList';
@@ -148,6 +150,10 @@ const Admin = () => {
   const [newUser, setNewUser] = useState('');
   const [newLevel, setNewLevel] = useState<UserRoleValue>('ADMIN');
   const [savingUserRole, setSavingUserRole] = useState(false);
+  const [visibilityUser, setVisibilityUser] = useState('');
+  const [visibilityLevel, setVisibilityLevel] = useState<'READ' | 'USER' | 'ADMIN'>('READ');
+  const [savingVisibility, setSavingVisibility] = useState(false);
+  const [revokingVisibilityUser, setRevokingVisibilityUser] = useState<string | null>(null);
   const [bundleBase, setBundleBase] = useState('');
   const [bundleDisplayName, setBundleDisplayName] = useState('');
   const [pgUser, setPgUser] = useState('fastapi_traefik');
@@ -445,6 +451,32 @@ const Admin = () => {
   });
   const saveUserRole = useSaveUserRole({ basePath: selectedRolesBasePath });
   const userRoles = userRolesQuery.data ?? [];
+
+  // Tapis pod-level permission on the *specific* {base}api pod — this, not the
+  // application role above, is what controls whether the project even shows up
+  // in another user's project selector (see InstanceContext.tsx / GET v3/pods).
+  const selectedApiPodId = useMemo(() => {
+    if (!selectedGroupEntry) return null;
+    const [base, podsForBase] = selectedGroupEntry;
+    return classifyPodsForBase(base, podsForBase).api?.pod_id ?? null;
+  }, [selectedGroupEntry]);
+  const apiPodPermissionsQuery = usePodPermissions(selectedApiPodId);
+  const apiPodPermissions = useMemo(
+    () => parsePermissions(apiPodPermissionsQuery.data?.result?.permissions),
+    [apiPodPermissionsQuery.data?.result?.permissions],
+  );
+  const hasApiPodAdminRole = useMemo(() => {
+    if (!usernameVariants.length) return false;
+    const variantSet = new Set(usernameVariants);
+    return apiPodPermissions.some(
+      (perm) =>
+        perm.level === 'ADMIN' &&
+        buildUserIdentifierVariants(perm.user).some((variant) => variantSet.has(variant)),
+    );
+  }, [apiPodPermissions, usernameVariants]);
+  const canManagePodVisibility = isApplicationAdmin || hasApiPodAdminRole;
+  const addPodPermission = useAddPodPermission();
+  const removePodPermission = useRemovePodPermission();
 
   const hasAnyUiPods = useMemo(
     () => visibleGroupedPodEntries.some(([base, podsForBase]) => Boolean(classifyPodsForBase(base, podsForBase).ui)),
@@ -761,6 +793,67 @@ const Admin = () => {
       alert(message);
     } finally {
       setSavingUserRole(false);
+    }
+  };
+
+  const handleGrantPodVisibility = async () => {
+    if (!canManagePodVisibility) {
+      alert('Admin permissions on this pod group are required to manage project visibility.');
+      return;
+    }
+    if (!selectedApiPodId) {
+      alert('Select a pod group with an API pod to manage project visibility.');
+      return;
+    }
+    const trimmedUser = visibilityUser.trim().toLowerCase();
+    if (!trimmedUser) {
+      alert('Enter a username to grant access to.');
+      return;
+    }
+    if (
+      visibilityLevel === 'ADMIN' &&
+      !window.confirm(
+        `Grant ${trimmedUser} ADMIN-level Tapis access to ${selectedApiPodId}? This lets them manage pods and permissions for this project.`,
+      )
+    ) {
+      return;
+    }
+    setSavingVisibility(true);
+    try {
+      await addPodPermission.mutateAsync({ podId: selectedApiPodId, user: trimmedUser, level: visibilityLevel });
+      console.info('[Admin] Granted Tapis pod permission', {
+        podId: selectedApiPodId,
+        user: trimmedUser,
+        level: visibilityLevel,
+        grantedBy: username,
+      });
+      setVisibilityUser('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to grant project visibility';
+      alert(message);
+    } finally {
+      setSavingVisibility(false);
+    }
+  };
+
+  const handleRevokePodVisibility = async (user: string) => {
+    if (!canManagePodVisibility || !selectedApiPodId) return;
+    if (!window.confirm(`Remove ${user}'s Tapis access to ${selectedApiPodId}? They will lose access to this project.`)) {
+      return;
+    }
+    setRevokingVisibilityUser(user);
+    try {
+      await removePodPermission.mutateAsync({ podId: selectedApiPodId, user });
+      console.info('[Admin] Revoked Tapis pod permission', {
+        podId: selectedApiPodId,
+        user,
+        revokedBy: username,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to revoke project visibility';
+      alert(message);
+    } finally {
+      setRevokingVisibilityUser(null);
     }
   };
 
@@ -1254,6 +1347,114 @@ const Admin = () => {
             </div>
           )}
         </section>
+
+        <section id="admin-pod-visibility-section" className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div id="admin-pod-visibility-header" className="border-b border-gray-200 px-4 py-3">
+            <h3 className="text-lg font-semibold text-gray-900">Project visibility (Tapis pod access)</h3>
+            <p className="text-sm text-gray-600">
+              Controls whether this project appears at all in a user&apos;s project selector. This is separate
+              from Application roles above — a user needs a Tapis pod permission here to see the project, and
+              an Application role to do anything once inside it.
+            </p>
+            {selectedApiPodId && (
+              <p className="text-xs text-gray-500">Scope: {selectedApiPodId}</p>
+            )}
+          </div>
+
+          {!selectedApiPodId && (
+            <div className="p-4 text-sm text-yellow-800 bg-yellow-50 border-b border-yellow-100">
+              Select a pod group with an API pod to view or edit project visibility.
+            </div>
+          )}
+
+          {selectedApiPodId && !canManagePodVisibility && (
+            <div className="p-4 text-sm text-yellow-800 bg-yellow-50 border-b border-yellow-100">
+              ADMIN-level Tapis access to {selectedApiPodId} is required to view or edit project visibility.
+            </div>
+          )}
+
+          {selectedApiPodId && canManagePodVisibility && apiPodPermissionsQuery.isLoading && (
+            <div className="p-4 text-sm text-gray-700">Loading pod permissions…</div>
+          )}
+
+          {selectedApiPodId && canManagePodVisibility && apiPodPermissionsQuery.isError && (
+            <div className="p-4 text-sm text-red-600">
+              {(apiPodPermissionsQuery.error as Error)?.message || 'Unable to load pod permissions'}
+            </div>
+          )}
+
+          {selectedApiPodId && canManagePodVisibility && !apiPodPermissionsQuery.isLoading && !apiPodPermissionsQuery.isError && (
+            apiPodPermissions.length > 0 ? (
+              <div id="admin-pod-visibility-list" className="divide-y divide-gray-100">
+                {apiPodPermissions.map((entry) => (
+                  <div key={entry.raw} className="flex items-center justify-between px-4 py-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{entry.user}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                        {entry.level}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRevokePodVisibility(entry.user)}
+                        disabled={revokingVisibilityUser === entry.user || removePodPermission.isPending}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-60"
+                      >
+                        {revokingVisibilityUser === entry.user ? 'Revoking…' : 'Revoke'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 text-sm text-gray-700">No users currently have Tapis access to this pod.</div>
+            )
+          )}
+
+          {selectedApiPodId && canManagePodVisibility && (
+            <div id="admin-pod-visibility-form" className="border-t border-gray-200 px-4 py-3 space-y-3">
+              <h4 className="text-sm font-semibold text-gray-900">Grant project access</h4>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={visibilityUser}
+                  onChange={(e) => setVisibilityUser(e.target.value)}
+                  placeholder="Username"
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+                  disabled={savingVisibility || addPodPermission.isPending}
+                />
+                <select
+                  value={visibilityLevel}
+                  onChange={(e) => setVisibilityLevel(e.target.value as 'READ' | 'USER' | 'ADMIN')}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-blue-500"
+                  disabled={savingVisibility || addPodPermission.isPending}
+                >
+                  <option value="READ">READ</option>
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={handleGrantPodVisibility}
+                  className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                  disabled={savingVisibility || addPodPermission.isPending || !visibilityUser.trim()}
+                >
+                  {savingVisibility || addPodPermission.isPending ? 'Saving…' : 'Grant access'}
+                </button>
+                {addPodPermission.isError && (
+                  <div className="text-xs text-red-600">
+                    {(addPodPermission.error as Error)?.message || 'Failed to grant project visibility'}
+                  </div>
+                )}
+                {addPodPermission.isSuccess && (
+                  <div className="text-xs text-green-700">Access granted.</div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+
         <section
           id="admin-metadata-section"
           className="rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-3"
