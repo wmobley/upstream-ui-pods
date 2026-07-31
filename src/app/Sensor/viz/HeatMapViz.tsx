@@ -1,11 +1,14 @@
 import HeatMap from '../../HeatMap/HeatMap';
 import { useList } from '../../../hooks/measurements/useList';
 import QueryWrapper from '../../common/QueryWrapper';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {useDetail as campaignInfo} from '../../../hooks/campaign/useDetail';
 import { useDetail as stationInfo } from '../../../hooks/station/useDetail';
 import { useDetail } from '../../../hooks/sensor/useDetail';
 import { renderChm } from '../../../utils/helpers';
+import { NotesList } from '../../common/Notes/NotesList';
+import { useMeasurementNotes, useCreateMeasurementNote, useDeleteNote, useUpdateNote } from '../../../hooks/notes/useNotes';
+import { useAuth } from '../../../contexts/AuthContextState';
 
 const HeatMapViz = ({
   campaignId,
@@ -27,6 +30,20 @@ const HeatMapViz = ({
   const { campaign } = campaignInfo(campaignId);
   const { station } = stationInfo(campaignId, stationId);
   const { data:sensor } = useDetail(campaignId, stationId, sensorId);
+  const { username } = useAuth();
+  const [selectedMeasurementId, setSelectedMeasurementId] = useState<number | null>(null);
+  const campaignIdNum = parseInt(campaignId);
+  const stationIdNum = parseInt(stationId);
+  const sensorIdNum = parseInt(sensorId);
+  const noteQueryKey = selectedMeasurementId
+    ? ['notes', 'measurement', campaignIdNum, stationIdNum, selectedMeasurementId]
+    : [];
+  const { data: notesData, isLoading: notesLoading } = useMeasurementNotes(
+    campaignIdNum, stationIdNum, sensorIdNum, selectedMeasurementId ?? 0
+  );
+  const createNote = useCreateMeasurementNote(campaignIdNum, stationIdNum, sensorIdNum, selectedMeasurementId ?? 0);
+  const deleteNote = useDeleteNote(noteQueryKey);
+  const updateNote = useUpdateNote(noteQueryKey);
 
   const intervals = useMemo(() => {
     if (!data?.items || data.items.length === 0) return [];
@@ -60,9 +77,43 @@ const HeatMapViz = ({
   }, [data]);
 
   return (
+    <div className="relative">
     <QueryWrapper isLoading={isLoading} error={error}>
       {data && intervals && (
-        <HeatMap measurements={data?.items || []} intervals={intervals} />
+        <HeatMap
+          measurements={data?.items || []}
+          intervals={intervals}
+          onSelectMeasurement={setSelectedMeasurementId}
+        />
+      )}
+      {selectedMeasurementId !== null && (
+        <div className="absolute bottom-0 left-0 right-0 z-[1001] bg-white shadow-lg p-4 max-h-72 overflow-y-auto">
+          <p className="mb-2 text-xs text-gray-500">
+            Notes for measurement #{selectedMeasurementId}
+          </p>
+          <NotesList
+            notes={notesData?.items ?? []}
+            isLoading={notesLoading}
+            currentUsername={username ?? undefined}
+            canWrite={Boolean(username)}
+            onAdd={(content) => createNote.mutate({ content })}
+            onDelete={(noteId) =>
+              deleteNote.mutate({
+                noteId,
+                deletePath: `/campaigns/${campaignIdNum}/stations/${stationIdNum}/sensors/${sensorIdNum}/measurements/${selectedMeasurementId}/notes/${noteId}`,
+              })
+            }
+            onUpdate={(noteId, content) =>
+              updateNote.mutate({
+                updatePath: `/campaigns/${campaignIdNum}/stations/${stationIdNum}/sensors/${sensorIdNum}/measurements/${selectedMeasurementId}/notes/${noteId}`,
+                content,
+              })
+            }
+            isAdding={createNote.isPending}
+            isDeleting={deleteNote.isPending}
+            isUpdating={updateNote.isPending}
+          />
+        </div>
       )}
 
       <div className="absolute top-[110px] left-12 z-[1000] bg-white py-1 px-3 rounded-md shadow-lg">
@@ -81,6 +132,7 @@ const HeatMapViz = ({
         </div>
       </div>
     </QueryWrapper>
+    </div>
   );
 };
 

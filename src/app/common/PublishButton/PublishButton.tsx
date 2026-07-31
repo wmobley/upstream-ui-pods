@@ -82,7 +82,7 @@ const PublishButton: React.FC<PublishButtonProps> = ({
   // Unpublished state
   if (showCascadeOption) {
     return (
-      <div className="relative inline-flex items-center">
+      <div className="relative inline-flex items-stretch">
         <button
           onClick={() => handleAction('publish', false)}
           disabled={disabled}
@@ -95,7 +95,7 @@ const PublishButton: React.FC<PublishButtonProps> = ({
         <button
           onClick={() => setShowCascadeMenu((s) => !s)}
           disabled={disabled}
-          className={`flex items-center justify-center bg-green-600 text-white rounded-r-lg px-2 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${iconSizeClasses[size]}`}
+          className={`flex items-center justify-center bg-green-500 text-white rounded-r-lg px-2 hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${iconSizeClasses[size]}`}
           title="More publish options"
         >
           ▼

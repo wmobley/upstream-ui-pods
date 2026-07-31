@@ -9,6 +9,8 @@ import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import {useDetail as stationInfo} from '../../hooks/station/useDetail';
 import { renderChm } from '../../utils/helpers';
 import { useAuth } from '../../contexts/AuthContextState';
+import { NotesList } from '../common/Notes/NotesList';
+import { useSensorNotes, useCreateSensorNote, useDeleteNote, useUpdateNote } from '../../hooks/notes/useNotes';
 
 interface SensorDashboardProps {
   campaignId: string;
@@ -24,9 +26,16 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
   const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
   const { campaign } = campaignInfo(campaignId);
   const { station } = stationInfo(campaignId, stationId );
-  const { role } = useAuth();
+  const { role, username } = useAuth();
   const roleUpper = (role || '').toUpperCase();
   const canManageData = roleUpper === 'USER' || roleUpper === 'ADMIN' || roleUpper === 'APPROVEDADMIN';
+  const campaignIdNum = parseInt(campaignId);
+  const stationIdNum = parseInt(stationId);
+  const sensorIdNum = parseInt(sensorId);
+  const { data: notesData, isLoading: notesLoading } = useSensorNotes(campaignIdNum, stationIdNum, sensorIdNum);
+  const createNote = useCreateSensorNote(campaignIdNum, stationIdNum, sensorIdNum);
+  const deleteNote = useDeleteNote(['notes', 'sensor', campaignIdNum, stationIdNum, sensorIdNum]);
+  const updateNote = useUpdateNote(['notes', 'sensor', campaignIdNum, stationIdNum, sensorIdNum]);
   const canDeleteData = canManageData;
   const publishSensor = usePublish();
   const unpublishSensor = useUnpublish();
@@ -157,6 +166,31 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
               sensorId={sensorId}
             />
           </section>
+
+          <div className="mb-4">
+            <NotesList
+              notes={notesData?.items ?? []}
+              isLoading={notesLoading}
+              currentUsername={username ?? undefined}
+              canWrite={Boolean(username)}
+              onAdd={(content) => createNote.mutate(content)}
+              onDelete={(noteId) =>
+                deleteNote.mutate({
+                  noteId,
+                  deletePath: `/campaigns/${campaignIdNum}/stations/${stationIdNum}/sensors/${sensorIdNum}/notes/${noteId}`,
+                })
+              }
+              onUpdate={(noteId, content) =>
+                updateNote.mutate({
+                  updatePath: `/campaigns/${campaignIdNum}/stations/${stationIdNum}/sensors/${sensorIdNum}/notes/${noteId}`,
+                  content,
+                })
+              }
+              isAdding={createNote.isPending}
+              isDeleting={deleteNote.isPending}
+              isUpdating={updateNote.isPending}
+            />
+          </div>
 
           <section className="flex flex-col gap-10 bg-white rounded-lg p-4 shadow-md">
             <QueryWrapper isLoading={isLoading} error={error}>

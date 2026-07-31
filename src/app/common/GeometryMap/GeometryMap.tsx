@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
 import { LatLng, LatLngBounds } from 'leaflet';
-import { TileLayer } from 'react-leaflet';
+import { TileLayer, CircleMarker, Popup, useMapEvents } from 'react-leaflet';
 import { GeoJSON } from 'react-leaflet';
 import { MapContainer } from 'react-leaflet';
 import '../../../utils/leaflet';
@@ -8,7 +8,33 @@ import '../../../utils/leaflet';
 type Position = GeoJSON.Position;
 type Coordinates = Position | Position[] | Position[][] | Position[][][];
 
-const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
+export interface GeometryMapMarker {
+  position: GeoJSON.Point;
+  color?: string;
+  label?: string;
+}
+
+interface GeometryMapProps {
+  geoJSON: GeoJSON.Geometry;
+  /** Extra pins rendered on top of the base geometry, e.g. a note's own
+   * location alongside the measurement's location. Optional, backward
+   * compatible with existing read-only usages. */
+  markers?: GeometryMapMarker[];
+  /** When provided, clicking the map reports the picked point instead of
+   * being purely read-only. Used only by the note-location picker. */
+  onPick?: (point: GeoJSON.Point) => void;
+}
+
+const ClickHandler = ({ onPick }: { onPick: (point: GeoJSON.Point) => void }) => {
+  useMapEvents({
+    click(e) {
+      onPick({ type: 'Point', coordinates: [e.latlng.lng, e.latlng.lat] });
+    },
+  });
+  return null;
+};
+
+const GeometryMap = ({ geoJSON, markers, onPick }: GeometryMapProps) => {
   if (!geoJSON || Object.keys(geoJSON).length === 0) {
     console.log('no geoJSON');
     return null;
@@ -25,8 +51,14 @@ const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
   };
   console.log(data);
 
-  // Calculate bounds from GeoJSON coordinates
-  const calculateBounds = (geometry: GeoJSON.Geometry): LatLngBounds => {
+  // Calculate bounds from GeoJSON coordinates (+ any extra markers, since a
+  // marker's whole purpose can be to sit *offset* from the base geometry —
+  // e.g. a note's own location vs. the measurement's — so it must be folded
+  // into the viewport calculation or it can render off-screen).
+  const calculateBounds = (
+    geometry: GeoJSON.Geometry,
+    extraPoints?: GeometryMapMarker[],
+  ): LatLngBounds => {
     let minLat = 90,
       maxLat = -90,
       minLng = 180,
@@ -80,13 +112,15 @@ const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
       traverseCoordinates(geometry.coordinates, geometry);
     }
 
+    extraPoints?.forEach((marker) => processCoordinates(marker.position.coordinates));
+
     return new LatLngBounds(
       new LatLng(minLat, minLng),
       new LatLng(maxLat, maxLng),
     );
   };
 
-  const bounds = calculateBounds(geoJSON);
+  const bounds = calculateBounds(geoJSON, markers);
 
   // Calculate appropriate zoom level based on bounds
   const calculateZoom = (bounds: LatLngBounds): number => {
@@ -119,6 +153,17 @@ const GeometryMap = ({ geoJSON }: { geoJSON: GeoJSON.Geometry }) => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <GeoJSON data={data} />
+      {markers?.map((marker, i) => (
+        <CircleMarker
+          key={`marker-${i}`}
+          center={[marker.position.coordinates[1], marker.position.coordinates[0]]}
+          radius={7}
+          pathOptions={{ color: marker.color ?? '#ea580c', fillColor: marker.color ?? '#ea580c', fillOpacity: 0.9 }}
+        >
+          {marker.label && <Popup>{marker.label}</Popup>}
+        </CircleMarker>
+      ))}
+      {onPick && <ClickHandler onPick={onPick} />}
     </MapContainer>
   );
 };

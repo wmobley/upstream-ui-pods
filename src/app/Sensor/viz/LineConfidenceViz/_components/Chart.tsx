@@ -17,6 +17,8 @@ export const Chart = () => {
     renderDataPoints,
     addingSensor,
     data,
+    campaignId,
+    stationId,
     sensorId,
     maxValueChart,
     minValueChart,
@@ -120,6 +122,8 @@ export const Chart = () => {
             colorPalette={colorPalette}
             renderDataPoints={renderDataPoints}
             selectedSensorId={sensorId}
+            campaignId={campaignId}
+            stationId={stationId}
           />
         </div>
       )}

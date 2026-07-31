@@ -66,6 +66,8 @@ const LineConfidenceContent = () => {
           <MeasurementSummary data={data} />
           <Controls />
           <AdditionalSensorsList />
+          {/* Click a point on the chart to view/add a note at the nearest
+              measurement — the note callout is rendered by the chart itself. */}
           <Chart />
           {addSensorModalOpen && <SensorFilteringModal />}
         </div>
