@@ -15,6 +15,7 @@ interface UploadProgress {
   currentChunk: number;
   status: 'idle' | 'uploading' | 'complete' | 'error';
   error?: string;
+  warnings?: string[];
 }
 
 const UploadDataModal: React.FC<UploadDataModalProps> = ({
@@ -126,6 +127,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
             currentChunk: progress.currentChunk,
             status: progress.status,
             error: progress.error,
+            warnings: progress.warnings,
           }));
         },
       });
@@ -153,7 +155,11 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   const getProgressMessage = () => {
     if (progress.status === 'idle') return null;
     if (progress.status === 'error') return `Error: ${progress.error}`;
-    if (progress.status === 'complete') return 'Upload complete!';
+    if (progress.status === 'complete') {
+      return progress.warnings && progress.warnings.length > 0
+        ? `Upload complete with ${progress.warnings.length} row warning${progress.warnings.length === 1 ? '' : 's'} — see below.`
+        : 'Upload complete!';
+    }
 
     const percentage =
       progress.totalChunks > 0
@@ -505,6 +511,19 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
             >
               {getProgressMessage()}
             </p>
+          </div>
+        )}
+
+        {progress.status === 'complete' && progress.warnings && progress.warnings.length > 0 && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <p className="font-medium">
+              {progress.warnings.length} row{progress.warnings.length === 1 ? '' : 's'} were skipped:
+            </p>
+            <ul className="mt-2 max-h-40 list-disc overflow-y-auto pl-5">
+              {progress.warnings.map((warning, index) => (
+                <li key={`${index}-${warning}`}>{warning}</li>
+              ))}
+            </ul>
           </div>
         )}
 

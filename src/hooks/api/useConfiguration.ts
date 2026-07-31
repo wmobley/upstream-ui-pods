@@ -5,18 +5,23 @@ import { getTapisHeaders } from '../../utils/tapisAuth';
 const useConfiguration = () => {
   const { selectedInstance, discoveryEnabled } = useInstance();
 
-  // --- Mode 1: Any instance selected (from discovery or fixed config) ---
+  // --- Mode 1: An instance is selected (from discovery or fixed config) ---
+  // Always target its API directly once known, even if the Tapis token is
+  // momentarily unavailable (e.g. mid-refresh). Previously a missing token
+  // here fell through to the "no instance" branch below, which returns an
+  // empty basePath — that silently sends requests to the same origin (the
+  // UI's own nginx) instead of the real API, and nginx has no route for
+  // them, so it serves back the SPA shell with a 200 instead of a real
+  // error. Keeping basePath pinned to the instance surfaces a genuine 401
+  // from the backend instead.
   if (selectedInstance) {
     const tapisToken = sessionStorage.getItem('Tapis-Access-Token');
-    if (tapisToken) {
-      return new Configuration({
-        basePath: selectedInstance.apiUrl,
-        headers: {
-          Authorization: `Bearer ${tapisToken}`,
-          Accept: 'application/json',
-        },
-      });
-    }
+    return new Configuration({
+      basePath: selectedInstance.apiUrl,
+      headers: tapisToken
+        ? { Authorization: `Bearer ${tapisToken}`, Accept: 'application/json' }
+        : { Accept: 'application/json' },
+    });
   }
 
   // --- Discovery mode with no instance yet: return empty config so API hooks

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UploadfileCsvApi } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
+import { describeApiError } from '../../utils/apiError';
 
 interface UploadDataParams {
   campaignId: number;
@@ -14,6 +15,17 @@ interface UploadProgress {
   currentChunk: number;
   status: 'uploading' | 'complete' | 'error';
   error?: string;
+  warnings?: string[];
+}
+
+/** The upload endpoint returns 200 with a body of per-row problems (bad
+ * dates, unknown aliases, etc.) rather than failing the whole request —
+ * pull those out so they aren't silently dropped on an otherwise-"successful"
+ * upload. */
+function extractRowWarnings(result: unknown): string[] {
+  const errors = (result as { errors?: Array<{ message?: string } | string> } | undefined)?.errors;
+  if (!Array.isArray(errors)) return [];
+  return errors.map((e) => (typeof e === 'string' ? e : e?.message ?? JSON.stringify(e)));
 }
 
 export const LINES_PER_CHUNK = 100; // Number of lines per chunk
@@ -57,6 +69,8 @@ export const useUploadData = () => {
         throw new Error('At least one file must be provided');
       }
 
+      const warnings: string[] = [];
+
       // If we have a measurement file, split it into chunks and upload sequentially
       if (measurementFile) {
         const chunks = await splitCSVIntoChunks(measurementFile);
@@ -68,27 +82,31 @@ export const useUploadData = () => {
           });
 
           try {
-            await uploadfileCsvApi.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(
-              {
-                campaignId,
-                stationId,
-                uploadFileSensors: (sensorFile as Blob) || createEmptyBlob(),
-                uploadFileMeasurements: chunks[i],
-              },
-            );
+            const result =
+              await uploadfileCsvApi.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(
+                {
+                  campaignId,
+                  stationId,
+                  uploadFileSensors: (sensorFile as Blob) || createEmptyBlob(),
+                  uploadFileMeasurements: chunks[i],
+                },
+              );
+            warnings.push(...extractRowWarnings(result));
           } catch (error) {
+            const message = await describeApiError(error);
             onProgress?.({
               currentChunk: i,
               status: 'error',
-              error: error instanceof Error ? error.message : 'Upload failed',
+              error: message,
             });
-            throw error;
+            throw new Error(message);
           }
         }
 
         onProgress?.({
           currentChunk: chunks.length,
           status: 'complete',
+          warnings,
         });
       } else if (sensorFile) {
         // If we only have a sensor file, upload it with an empty measurement file
@@ -98,30 +116,34 @@ export const useUploadData = () => {
         });
 
         try {
-          await uploadfileCsvApi.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(
-            {
-              campaignId,
-              stationId,
-              uploadFileSensors: sensorFile as Blob,
-              uploadFileMeasurements: createEmptyBlob(),
-            },
-          );
+          const result =
+            await uploadfileCsvApi.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(
+              {
+                campaignId,
+                stationId,
+                uploadFileSensors: sensorFile as Blob,
+                uploadFileMeasurements: createEmptyBlob(),
+              },
+            );
+          warnings.push(...extractRowWarnings(result));
 
           onProgress?.({
             currentChunk: 1,
             status: 'complete',
+            warnings,
           });
         } catch (error) {
+          const message = await describeApiError(error);
           onProgress?.({
             currentChunk: 0,
             status: 'error',
-            error: error instanceof Error ? error.message : 'Upload failed',
+            error: message,
           });
-          throw error;
+          throw new Error(message);
         }
       }
 
-      return { success: true };
+      return { success: true, warnings };
     },
     onSuccess: (_, variables) => {
       // Invalidate station detail query
