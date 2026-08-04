@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "bugs": [
+    {
+      "id": "bug-001",
+      "timestamp": "2026-07-17",
+      "error_message": "Every project in the ProjectDropdown shows under 'Owner' regardless of the user's real access level (ADMIN/USER/READ users all see 'Owner')",
+      "file": "src/contexts/InstanceContext.tsx",
+      "root_cause": "fetchInstances() hardcoded permission: 'ADMIN' for every Tapis-discovered project pod instead of resolving the user's real per-project role. Root confusion: Tapis pod/stack permission (infra/ops control) and the app's own per-project DB user_roles (data-access control) are two distinct systems that share similar level names (ADMIN/USER/READ) \u2014 the original design (docs/design/2026-07-09-unified-ui-tapis-auth-multi-instance.md) intended to read Tapis's own stack-level permission, but that was never completed, and the hardcoded ADMIN was a stopgap that was never revisited.",
+      "fix": "Added GET /api/v1/user-roles/me on the backend (self-lookup of the caller's own DB role, no admin gate). fetchInstances() now calls it per discovered project (Promise.allSettled, concurrency-capped at 6) and maps the real role to Permission. NONE/401/403 drops the instance (real no-access); network/5xx/timeout keeps it tagged 'UNKNOWN' (new Permission value, rendered as an 'Unverified' group in ProjectDropdown.tsx) instead of conflating a down/restarting pod with no-access.",
+      "tags": [
+        "permissions",
+        "project-dropdown",
+        "instance-context",
+        "tapis",
+        "auth"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-17"
+    },
+    {
+      "id": "bug-059",
+      "timestamp": "2026-07-31T00:00:00.000Z",
+      "error_message": "nginx access logs full of bot/scanner noise (Bytespider, GoogleOther, GPTBot, OAI-SearchBot, /.env probes, wp-login.php probes, etc.)",
+      "file": "upstream-ui/nginx.conf, upstream-ui/public/robots.txt",
+      "root_cause": "robots.txt had 'Disallow:' (empty) i.e. allow-all, so every well-behaved crawler indexed deep SPA routes (/campaigns/*/stations/*/sensors/*). nginx.conf had no blocking for user agents that ignore robots.txt (Bytespider) or for common vulnerability-scanner probe paths (/.env, /wp-login.php, etc.) \u2014 those fell through to the SPA catch-all and got a 200 response.",
+      "fix": "robots.txt now sets 'Disallow: /' for all user agents. nginx.conf adds a $blocked_ua map (Bytespider, SemrushBot, AhrefsBot, MJ12bot, DotBot, PetalBot, ZoominfoBot) returning 403, plus explicit 403 location blocks for /.env, /.git, /.htpasswd, /.htaccess, /.aws, wp-login.php, wp-admin, xmlrpc.php, phpmyadmin, .vscode, .idea.",
+      "tags": [
+        "nginx",
+        "robots.txt",
+        "bots",
+        "security",
+        "deployment",
+        "upstream-ui"
+      ],
+      "related_bugs": [
+        "bug-058"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-07-31T00:00:00.000Z"
+    },
+    {
+      "id": "bug-060",
+      "timestamp": "2026-07-31T00:00:00.000Z",
+      "error_message": "Upload UI always shows the generic 'Response returned an error code' regardless of what actually failed (auth, validation, server error, size limit)",
+      "file": "upstream-ui/src/utils/apiError.ts, upstream-ui/src/hooks/station/useUploadData.ts, upstream-ui/src/app/StationDashboard/_components/UploadDataModal.tsx",
+      "root_cause": "The generated OpenAPI TS client's BaseAPI.request() (packages/upstream-api/runtime.ts) throws `new ResponseError(response, 'Response returned an error code')` for ANY non-2xx status, with the real detail only reachable via error.response (unread). Call sites only ever read error.message, which is always that hardcoded string, so FastAPI's actual `detail` (e.g. 413 batch-too-large message with upload_event_id, 500 upload_event_id for log correlation) never reached the user. Separately, the upload endpoint can return 200 with a body {errors: [...]} listing skipped/bad measurement rows, which useUploadData discarded entirely, silently treating a partial upload as a full success.",
+      "fix": "Added src/utils/apiError.ts#describeApiError() which reads the ResponseError's wrapped Response body (JSON `detail`/`message`, else text, ignoring HTML) and returns a real 'status: detail' string. Wired into useUploadData.ts's catch blocks (rethrows `new Error(message)` so the message survives to the UI) and into the success path, which now extracts any `errors[]` in the response body as `warnings` and surfaces them via onProgress. UploadDataModal.tsx now shows the descriptive error text and, on a partial success, an amber warnings list of skipped rows instead of a bare 'Upload complete!'.",
+      "tags": [
+        "upload",
+        "error-handling",
+        "ux",
+        "upstream-ui",
+        "openapi-client"
+      ],
+      "related_bugs": [
+        "bug-058"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-07-31T00:00:00.000Z"
+    },
+    {
+      "id": "bug-061",
+      "timestamp": "2026-08-04T00:00:00.000Z",
+      "error_message": "No user-visible error yet reported — found by cross-checking exchangeOAuthCode() against Tapis's authoritative OpenAPI schema (tapipy 25.4.0's openapi_v3-authenticator.yml TokenResponse) while designing silent token refresh. The pure-frontend OAuth2 authorization_code callback flow likely never captured a usable refresh token or expiry.",
+      "file": "src/utils/tapisAuth.ts",
+      "root_cause": "exchangeOAuthCode() read `refreshTokenObj.access_token` instead of `.refresh_token` (Tapis's refresh_token response object exposes the JWT string under `.refresh_token`, not `.access_token`), so the refresh token was always undefined via this path. It also passed `accessTokenObj.expires_at` straight into storeTapisTokens()'s `expiresAt` field, but Tapis returns `expires_at` as a UTC string, not a number — storeTapisTokens() only persists `Tapis-Expires-At` when `typeof expiresAt === 'number'`, so it silently never got stored either. Confirmed via tapipy's bundled OpenAPI spec and its refresh_user_tokens() reference implementation, not guesswork.",
+      "fix": "refreshTokenObj.refresh_token used instead of .access_token. expiresAt now computed from accessTokenObj.expires_in (integer seconds) as Math.floor(Date.now()/1000) + expiresIn, matching how the rest of the app already stores Tapis-Expires-At as a numeric epoch seconds value.",
+      "tags": ["auth", "tapis", "oauth2", "token-refresh", "upstream-ui"],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-08-04T00:00:00.000Z"
+    }
+  ]
+}
