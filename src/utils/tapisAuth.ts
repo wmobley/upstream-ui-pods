@@ -284,10 +284,16 @@ export const exchangeOAuthCode = async (code: string): Promise<void> => {
   const accessTokenObj = result.access_token ?? {};
   const refreshTokenObj = result.refresh_token ?? {};
 
+  // Tapis's TokenResponse schema (confirmed against tapipy's OpenAPI spec) returns
+  // expires_at as a UTC string, not a number, and refresh_token's own JWT string
+  // lives under `.refresh_token`, not `.access_token`. Compute a numeric epoch
+  // expiry from expires_in (seconds) instead of trying to parse expires_at.
+  const expiresIn = typeof accessTokenObj === 'string' ? undefined : accessTokenObj.expires_in;
+
   storeTapisTokens({
     accessToken: typeof accessTokenObj === 'string' ? accessTokenObj : accessTokenObj.access_token,
-    refreshToken: typeof refreshTokenObj === 'string' ? refreshTokenObj : refreshTokenObj.access_token,
-    expiresAt: accessTokenObj.expires_at ?? null,
+    refreshToken: typeof refreshTokenObj === 'string' ? refreshTokenObj : refreshTokenObj.refresh_token,
+    expiresAt: typeof expiresIn === 'number' ? Math.floor(Date.now() / 1000) + expiresIn : null,
   });
 };
 
