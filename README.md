@@ -35,7 +35,7 @@ A modern visualization platform for environmental sensor data. This application 
 - **Routing**: React Router
 - **Bundling**: Vite
 - **API Integration**: Generated TypeScript client from OpenAPI specification
-- **Python SDK**: [upstream-sdk](../upstream-sdk/) - High-level Python interface for researchers
+- **Python SDK**: [upstream-sdk](https://github.com/In-For-Disaster-Analytics/upstream-sdk) - High-level Python interface for researchers
 - **Data Publishing**: CKAN integration via upstream-sdk for data discoverability
 
 ## Ecosystem Integration
@@ -43,8 +43,8 @@ A modern visualization platform for environmental sensor data. This application 
 The upstream-ui is part of a comprehensive environmental data platform ecosystem:
 
 - **[upstream-ui](.)** - Interactive web visualization platform (this repository)
-- **[upstream-sdk](../upstream-sdk/)** - Python SDK for programmatic data management and research automation
-- **[upstream-docker](../upstream-docker/)** - FastAPI backend services and infrastructure
+- **[upstream-sdk](https://github.com/In-For-Disaster-Analytics/upstream-sdk)** - Python SDK for programmatic data management and research automation
+- **[upstream-docker](https://github.com/wmobley/upstream-docker-pods)** - FastAPI backend services and infrastructure
 - **CKAN Data Portal** - Public data discovery and sharing platform
 
 ### Multi-Interface Access
@@ -380,8 +380,8 @@ graph LR
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-org/upstream-viz.git
-   cd upstream-viz
+   git clone https://github.com/wmobley/upstream-ui-pods.git
+   cd upstream-ui-pods
    ```
 
 2. Install dependencies:
