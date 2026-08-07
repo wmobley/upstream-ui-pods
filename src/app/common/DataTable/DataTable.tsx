@@ -6,7 +6,7 @@ import {
 } from '@upstream/upstream-api';
 import { PageButtons } from './PageButtons';
 import { ItemsPerPage } from './ItemsPerPage';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import { renderChm } from '../../../utils/helpers';
@@ -87,6 +87,7 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
   const [hideItemsPerPage] = useState(false);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const history = useHistory();
 
   const handleSort = (column: string) => {
     let newDirection: SortDirection = 'asc';
@@ -157,7 +158,19 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedData.length > 0 ? (
               paginatedData.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr
+                  key={index}
+                  className={
+                    getRowLink
+                      ? 'cursor-pointer hover:bg-gray-100 transition-colors'
+                      : 'hover:bg-gray-50'
+                  }
+                  onClick={
+                    getRowLink
+                      ? () => history.push(getRowLink(item))
+                      : undefined
+                  }
+                >
                   {columns.map((column) => (
                     <DataCell
                       key={column.key}
@@ -167,7 +180,10 @@ const DataTable = <T extends Record<string, string | number | boolean | null>>({
                     />
                   ))}
                   {actions && (
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td
+                      className="px-6 py-4 whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {actions(item)}
                     </td>
                   )}
