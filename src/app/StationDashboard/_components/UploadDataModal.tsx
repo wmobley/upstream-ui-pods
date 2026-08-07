@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '../../common/Modal/Modal';
 import { useUploadData } from '../../../hooks/station/useUploadData';
-import { LINES_PER_CHUNK } from '../../../hooks/station/useUploadData';
 
 interface UploadDataModalProps {
   isOpen: boolean;
@@ -98,15 +97,10 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
       const file = e.target.files[0];
       setMeasurementFile(file);
       void readMeasurementHeader(file);
-      // Calculate total chunks based on file size and lines per chunk
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        const lines = text.split('\n').length - 1; // Subtract header
-        const totalChunks = Math.ceil(lines / LINES_PER_CHUNK);
-        setProgress((prev) => ({ ...prev, totalChunks }));
-      };
-      reader.readAsText(file);
+      // totalChunks is reported by useUploadData once upload starts, since it
+      // already reads the file once to build the chunks — no need to read it
+      // again here just to estimate a count.
+      setProgress((prev) => ({ ...prev, totalChunks: 0 }));
     }
   };
 
@@ -125,6 +119,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
           setProgress((prev) => ({
             ...prev,
             currentChunk: progress.currentChunk,
+            totalChunks: progress.totalChunks,
             status: progress.status,
             error: progress.error,
             warnings: progress.warnings,
