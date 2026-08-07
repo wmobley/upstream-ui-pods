@@ -308,10 +308,21 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
   const fetchedRef = useRef(false);
   const prevStackIdRef = useRef<string | null>(null);
 
+  // Writes the URL synchronously with the state change, rather than leaving
+  // it to the reconciliation effect below — that effect treats a URL/state
+  // mismatch as "the URL changed externally, catch state up to it", which
+  // would otherwise see the still-stale URL right after a user-driven
+  // selection change and incorrectly snap the selection back to it.
   const setSelectedInstance = useCallback((instance: ProjectInstance) => {
     setSelectedInstanceState(instance);
     persistInstance(instance);
-  }, []);
+    if (discoveryEnabled) {
+      history.replace({
+        pathname: location.pathname,
+        search: withProjectId(location.search, instance.stackId),
+      });
+    }
+  }, [discoveryEnabled, history, location.pathname, location.search]);
 
   // Invalidate all cached data after the render in which selectedInstance
   // changes — this way useConfiguration() already returns the new basePath
