@@ -13,6 +13,7 @@ interface UploadDataParams {
 
 interface UploadProgress {
   currentChunk: number;
+  totalChunks: number;
   status: 'uploading' | 'complete' | 'error';
   error?: string;
   warnings?: string[];
@@ -28,22 +29,38 @@ function extractRowWarnings(result: unknown): string[] {
   return errors.map((e) => (typeof e === 'string' ? e : e?.message ?? JSON.stringify(e)));
 }
 
-export const LINES_PER_CHUNK = 100; // Number of lines per chunk
+// Target size per uploaded chunk. Byte-based rather than a fixed line count
+// so chunk size stays predictable regardless of how many columns a CSV has.
+export const TARGET_CHUNK_BYTES = 1_000_000; // ~1MB of CSV data per chunk
 
 const splitCSVIntoChunks = async (file: File): Promise<Blob[]> => {
   const text = await file.text();
   const lines = text.split('\n');
   const header = lines[0];
-  const dataLines = lines.slice(1);
+  const dataLines = lines.slice(1).filter((line) => line.length > 0);
   const chunks: Blob[] = [];
+  const encoder = new TextEncoder();
 
-  // Split data lines into chunks
-  for (let i = 0; i < dataLines.length; i += LINES_PER_CHUNK) {
-    const chunkLines = dataLines.slice(i, i + LINES_PER_CHUNK);
-    // Include header in each chunk
-    const chunkContent = [header, ...chunkLines].join('\n');
+  let currentLines: string[] = [];
+  let currentBytes = 0;
+
+  const flush = () => {
+    if (currentLines.length === 0) return;
+    const chunkContent = [header, ...currentLines].join('\n');
     chunks.push(new Blob([chunkContent], { type: 'text/csv' }));
+    currentLines = [];
+    currentBytes = 0;
+  };
+
+  for (const line of dataLines) {
+    const lineBytes = encoder.encode(line).length + 1; // +1 for the joining newline
+    if (currentLines.length > 0 && currentBytes + lineBytes > TARGET_CHUNK_BYTES) {
+      flush();
+    }
+    currentLines.push(line);
+    currentBytes += lineBytes;
   }
+  flush();
 
   return chunks;
 };
@@ -78,6 +95,7 @@ export const useUploadData = () => {
         for (let i = 0; i < chunks.length; i++) {
           onProgress?.({
             currentChunk: i,
+            totalChunks: chunks.length,
             status: 'uploading',
           });
 
@@ -96,6 +114,7 @@ export const useUploadData = () => {
             const message = await describeApiError(error);
             onProgress?.({
               currentChunk: i,
+              totalChunks: chunks.length,
               status: 'error',
               error: message,
             });
@@ -105,6 +124,7 @@ export const useUploadData = () => {
 
         onProgress?.({
           currentChunk: chunks.length,
+          totalChunks: chunks.length,
           status: 'complete',
           warnings,
         });
@@ -112,6 +132,7 @@ export const useUploadData = () => {
         // If we only have a sensor file, upload it with an empty measurement file
         onProgress?.({
           currentChunk: 0,
+          totalChunks: 1,
           status: 'uploading',
         });
 
@@ -129,6 +150,7 @@ export const useUploadData = () => {
 
           onProgress?.({
             currentChunk: 1,
+            totalChunks: 1,
             status: 'complete',
             warnings,
           });
@@ -136,6 +158,7 @@ export const useUploadData = () => {
           const message = await describeApiError(error);
           onProgress?.({
             currentChunk: 0,
+            totalChunks: 1,
             status: 'error',
             error: message,
           });
