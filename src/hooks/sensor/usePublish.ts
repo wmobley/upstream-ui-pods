@@ -72,7 +72,7 @@ export const usePublish = () => {
             : parsed;
           if (detail && String(detail).toLowerCase().includes('already published')) {
             try {
-              queryClient.setQueryData(['sensor', String(variables.campaignId), String(variables.stationId), String(variables.sensorId)], (old: unknown) => {
+              queryClient.setQueryData(['sensor', String(variables.campaignId), String(variables.stationId), String(variables.sensorId), config.basePath], (old: unknown) => {
                 if (!old) return old;
                 const oldObj = old as Record<string, unknown>;
                 return {

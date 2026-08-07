@@ -7,7 +7,7 @@ export const useList = () => {
   const projectsApi = new ProjectsApi(config);
 
   return useQuery<PyTASProject[], Error>({
-    queryKey: ['projects'],
+    queryKey: ['projects', config.basePath],
     queryFn: async () => {
       const response = await projectsApi.getProjectsApiV1ProjectsGet();
       return response;

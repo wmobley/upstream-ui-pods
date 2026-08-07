@@ -21,7 +21,7 @@ export function useCampaignNotes(campaignId: number) {
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
-    queryKey: ['notes', 'campaign', campaignId],
+    queryKey: ['notes', 'campaign', campaignId, config.basePath],
     queryFn: async () => {
       const res = await apiFetch(notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/notes`));
       if (!res.ok) throw new Error('Failed to fetch campaign notes');
@@ -37,7 +37,7 @@ export function useCampaignNoteLocations(campaignId: number) {
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
-    queryKey: ['notes', 'campaign', campaignId, 'locations'],
+    queryKey: ['notes', 'campaign', campaignId, 'locations', config.basePath],
     queryFn: async () => {
       const res = await apiFetch(notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/notes/locations`));
       if (!res.ok) throw new Error('Failed to fetch campaign note locations');
@@ -51,7 +51,7 @@ export function useStationNotes(campaignId: number, stationId: number) {
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
-    queryKey: ['notes', 'station', campaignId, stationId],
+    queryKey: ['notes', 'station', campaignId, stationId, config.basePath],
     queryFn: async () => {
       const res = await apiFetch(
         notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/stations/${stationId}/notes`)
@@ -69,7 +69,7 @@ export function useStationNoteLocations(campaignId: number, stationId: number) {
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
-    queryKey: ['notes', 'station', campaignId, stationId, 'locations'],
+    queryKey: ['notes', 'station', campaignId, stationId, 'locations', config.basePath],
     queryFn: async () => {
       const res = await apiFetch(
         notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/stations/${stationId}/notes/locations`)
@@ -85,7 +85,7 @@ export function useSensorNotes(campaignId: number, stationId: number, sensorId: 
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
-    queryKey: ['notes', 'sensor', campaignId, stationId, sensorId],
+    queryKey: ['notes', 'sensor', campaignId, stationId, sensorId, config.basePath],
     queryFn: async () => {
       const res = await apiFetch(
         notesUrl(config.basePath ?? '', `/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/notes`)
@@ -124,7 +124,7 @@ export function useMeasurementNotes(
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
-    queryKey: ['notes', 'measurement', campaignId, stationId, measurementId],
+    queryKey: ['notes', 'measurement', campaignId, stationId, measurementId, config.basePath],
     queryFn: async () => {
       const res = await apiFetch(
         notesUrl(

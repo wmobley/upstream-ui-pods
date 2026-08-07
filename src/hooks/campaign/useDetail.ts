@@ -11,7 +11,10 @@ export const useDetail = (campaignId: string) => {
     isLoading,
     error,
   } = useQuery<GetCampaignResponse, Error>({
-    queryKey: ['campaign', campaignId],
+    // config.basePath disambiguates cache entries across projects — the
+    // same numeric campaign id can exist under a different project instance
+    // with different data.
+    queryKey: ['campaign', campaignId, config.basePath],
     queryFn: async () => {
       // Use the generated client to build headers/auth, but fetch raw JSON to
       // ensure we capture snake_case fields like is_published/published_at.

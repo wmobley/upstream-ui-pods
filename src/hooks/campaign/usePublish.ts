@@ -120,7 +120,7 @@ export const usePublish = () => {
           if (detail && String(detail).toLowerCase().includes('already published')) {
             // mark campaign as published in cache
             try {
-              queryClient.setQueryData(['campaign', String(variables.campaignId)], (old: unknown) => {
+              queryClient.setQueryData(['campaign', String(variables.campaignId), config.basePath], (old: unknown) => {
                 if (!old) return old;
                 const oldObj = old as Record<string, unknown>;
                 return {
@@ -141,7 +141,7 @@ export const usePublish = () => {
     onSuccess: (data, variables) => {
       // Immediately update the campaign detail cache so the UI reflects published state
       try {
-        queryClient.setQueryData(['campaign', String(variables.campaignId)], (old: unknown) => {
+        queryClient.setQueryData(['campaign', String(variables.campaignId), config.basePath], (old: unknown) => {
           if (!old) return old;
           const oldObj = old as Record<string, unknown>;
           const publishedAt = (data as unknown as { publishedAt?: string }).publishedAt;
@@ -220,7 +220,7 @@ export const useUnpublish = () => {
     onSuccess: (data, campaignId) => {
       // Update campaign detail cache if possible
       try {
-        queryClient.setQueryData(['campaign', String(campaignId)], (old: unknown) => {
+        queryClient.setQueryData(['campaign', String(campaignId), config.basePath], (old: unknown) => {
           if (!old) return old;
           const oldObj = old as Record<string, unknown>;
           const publishedAt = (data as unknown as { publishedAt?: string }).publishedAt;

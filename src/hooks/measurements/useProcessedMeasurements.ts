@@ -47,6 +47,7 @@ export function useProcessedMeasurements(
       endTime,
       minMeasurementValue,
       maxMeasurementValue,
+      config.basePath,
     ],
     queryFn: async () => {
       const response =

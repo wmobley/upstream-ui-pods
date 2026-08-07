@@ -21,7 +21,7 @@ export const useList = ({ filters }: UseListProps): UseListReturn => {
   const campaignsApi = new CampaignsApi(config);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['campaigns', filters],
+    queryKey: ['campaigns', filters, config.basePath],
     queryFn: async () => {
       const response =
         await campaignsApi.listCampaignsApiV1CampaignsGet(filters);

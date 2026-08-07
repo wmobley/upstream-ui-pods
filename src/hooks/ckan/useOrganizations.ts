@@ -12,7 +12,7 @@ export const useOrganizations = () => {
   const config = useConfiguration();
 
   const query = useQuery<CkanOrganization[], Error>({
-    queryKey: ['ckan-organizations'],
+    queryKey: ['ckan-organizations', config.basePath],
     queryFn: async () => {
       const url = `${config.basePath}/api/v1/ckan/organizations`;
       const headers: HeadersInit = {

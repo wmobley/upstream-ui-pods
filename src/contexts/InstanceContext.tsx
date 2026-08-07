@@ -252,7 +252,22 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
 function loadPersistedInstance(): ProjectInstance | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as ProjectInstance) : null;
+    const persisted = raw ? (JSON.parse(raw) as ProjectInstance) : null;
+    if (!persisted) return null;
+
+    // If the URL names a different project than the one persisted from a
+    // prior session/tab, don't seed it — every data hook fires as soon as
+    // selectedInstance is non-null, with no request cancellation and no
+    // instance-scoped cache key, so seeding the wrong instance here lets
+    // requests against its API race the correct one and sometimes win
+    // (e.g. a shared `?project=vital` link rendering `upstream`'s data).
+    // Returning null instead leaves hooks disabled until discovery resolves
+    // the URL's project to the right instance.
+    const urlStackId =
+      typeof window !== 'undefined' ? getProjectIdFromSearch(window.location.search) : null;
+    if (urlStackId && urlStackId !== persisted.stackId) return null;
+
+    return persisted;
   } catch {
     return null;
   }

@@ -130,7 +130,7 @@ export const usePublish = () => {
     },
     onSuccess: (data, variables) => {
       try {
-        queryClient.setQueryData(['station', String(variables.campaignId), String(variables.stationId)], (old: unknown) => {
+        queryClient.setQueryData(['station', String(variables.campaignId), String(variables.stationId), config.basePath], (old: unknown) => {
           if (!old) return old;
           const oldObj = old as Record<string, unknown>;
           const publishedAt = (data as unknown as { publishedAt?: string }).publishedAt;
@@ -233,7 +233,7 @@ export const useUnpublish = () => {
     },
     onSuccess: (_, variables) => {
       try {
-        queryClient.setQueryData(['station', String(variables.campaignId), String(variables.stationId)], (old: unknown) => {
+        queryClient.setQueryData(['station', String(variables.campaignId), String(variables.stationId), config.basePath], (old: unknown) => {
           if (!old) return old;
           const oldObj = old as Record<string, unknown>;
           return {
