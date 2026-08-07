@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useDetail } from '../../hooks/sensor/useDetail';
 import { usePublish, useUnpublish } from '../../hooks/sensor/usePublish';
 import QueryWrapper from '../common/QueryWrapper';
@@ -120,11 +121,11 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
       <div className="px-4 md:px-8 lg:px-12 lg:py-12 lg:h-5/6 py-12 bg-secondary-100">
         <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
           <div className='breadcrumbs'>
-            <a href='/'>Campaigns</a>
+            <Link to='/'>Campaigns</Link>
             <span>&gt;</span>
-            <a href={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</a>
+            <Link to={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</Link>
             <span>&gt;</span>
-            <a href={'/campaigns/' + campaignId + "/stations/" + stationId}>{ station?.name || "station " + campaignId + " ..." }</a>
+            <Link to={'/campaigns/' + campaignId + "/stations/" + stationId}>{ station?.name || "station " + campaignId + " ..." }</Link>
             <span>&gt;</span>
             <a href='#' className='active'>{renderChm(data?.variablename || data?.alias || "")}</a>
           </div>

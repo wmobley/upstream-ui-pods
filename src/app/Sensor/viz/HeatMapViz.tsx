@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import HeatMap from '../../HeatMap/HeatMap';
 import { useList } from '../../../hooks/measurements/useList';
 import QueryWrapper from '../../common/QueryWrapper';
@@ -118,15 +119,15 @@ const HeatMapViz = ({
 
       <div className="absolute top-[110px] left-12 z-[1000] bg-white py-1 px-3 rounded-md shadow-lg">
         <div className='breadcrumbs text-xs'>
-          <a href='/'>Campaigns</a>
+          <Link to='/'>Campaigns</Link>
           <span>&gt;</span>
-          <a href={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</a>
+          <Link to={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</Link>
           <span>&gt;</span>
-          <a href={'/campaigns/' + campaignId + "/stations/" + stationId}>{ station?.name || "station " + campaignId + " ..." }</a>
+          <Link to={'/campaigns/' + campaignId + "/stations/" + stationId}>{ station?.name || "station " + campaignId + " ..." }</Link>
           <span>&gt;</span>
-          <a href={'/campaigns/' + campaignId + "/stations/" + stationId + '/sensors/' + sensorId}>
+          <Link to={'/campaigns/' + campaignId + "/stations/" + stationId + '/sensors/' + sensorId}>
             {renderChm(sensor?.variablename || sensor?.alias || 'sensor ' + sensorId)}
-          </a>
+          </Link>
           <span>&gt;</span>
           <a href='#' className='active'>Heat Map</a>
         </div>
