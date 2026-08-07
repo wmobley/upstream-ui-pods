@@ -17,7 +17,7 @@ export const useList = (): UseVariablesReturn => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['sensorVariables'],
+    queryKey: ['sensorVariables', config.basePath],
     queryFn: async () => {
       const response =
         await sensorVariablesApi.listSensorVariablesApiV1SensorVariablesGet();

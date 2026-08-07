@@ -37,6 +37,7 @@ export const useListFilterDate = (
       endDate,
       minMeasurementValue,
       maxMeasurementValue,
+      config.basePath,
     ],
     queryFn: async () => {
         const response =

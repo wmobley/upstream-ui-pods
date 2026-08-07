@@ -25,6 +25,9 @@ export const useList = (
 
   const { data, isLoading, error } =
     useQuery<ListMeasurementsResponsePagination>({
+      // config.basePath disambiguates cache entries across projects — the
+      // same numeric campaign/station/sensor id can exist under a different
+      // project instance with different data.
       queryKey: [
         'measurements',
         campaignId,
@@ -34,6 +37,7 @@ export const useList = (
         downsampleThreshold,
         minMeasurementValue,
         maxMeasurementValue,
+        config.basePath,
       ],
       queryFn: async () => {
         const response =

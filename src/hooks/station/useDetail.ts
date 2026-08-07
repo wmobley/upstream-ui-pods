@@ -10,7 +10,10 @@ export const useDetail = (campaignId: string, stationId: string) => {
     isLoading,
     error,
   } = useQuery<GetStationResponse>({
-    queryKey: ['station', campaignId, stationId],
+    // config.basePath disambiguates cache entries across projects — the
+    // same numeric campaign/station id can exist under a different project
+    // instance with different data.
+    queryKey: ['station', campaignId, stationId, config.basePath],
     queryFn: async () => {
       // Use raw fetch to ensure we capture snake_case fields like is_published/published_at
       const url = `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}`;

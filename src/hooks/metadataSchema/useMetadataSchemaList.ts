@@ -22,7 +22,7 @@ export const useMetadataSchemaList = ({ scope, activeOnly = true }: UseMetadataS
   const headers = buildHeaders(config.headers);
 
   return useQuery<MetadataSchemaListResponse, Error>({
-    queryKey: ['metadata-schema', scope ?? 'all', activeOnly],
+    queryKey: ['metadata-schema', scope ?? 'all', activeOnly, basePath],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (scope) params.set('scope', scope);

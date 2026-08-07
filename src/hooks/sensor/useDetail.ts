@@ -10,7 +10,10 @@ export const useDetail = (
   const config = useConfiguration();
 
   return useQuery<GetSensorResponse>({
-    queryKey: ['sensor', campaignId, stationId, sensorId],
+    // config.basePath disambiguates cache entries across projects — the
+    // same numeric campaign/station/sensor id can exist under a different
+    // project instance with different data.
+    queryKey: ['sensor', campaignId, stationId, sensorId, config.basePath],
     queryFn: async () => {
       const url = `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}`;
       const headers: HeadersInit = {

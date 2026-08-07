@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { useDetail } from '../../../../hooks/campaign/useDetail';
+import useConfiguration from '../../../../hooks/api/useConfiguration';
 import { useAuth } from '../../../../contexts/AuthContextState';
 import { useCampaignNotes, useCampaignNoteLocations, useCreateCampaignNote, useDeleteNote, useUpdateNote } from '../../../../hooks/notes/useNotes';
 import { NotesList } from '../../../common/Notes/NotesList';
@@ -34,6 +35,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   campaignId,
 }) => {
   const history = useHistory();
+  const config = useConfiguration();
   const { campaign, isLoading, error } = useDetail(campaignId);
   const { username } = useAuth();
   const campaignIdNum = parseInt(campaignId);
@@ -88,7 +90,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       });
       // Optimistically update campaign cache so UI shows the unpublish state immediately
       try {
-        queryClient.setQueryData(['campaign', campaignId], (old: unknown) => {
+        queryClient.setQueryData(['campaign', campaignId, config.basePath], (old: unknown) => {
           if (!old) return old;
           const oldObj = old as Record<string, unknown>;
           return {

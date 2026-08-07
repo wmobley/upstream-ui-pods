@@ -15,7 +15,7 @@ export const useList = ({ filters }: UseListProps) => {
   const stationsApi = new StationsApi(config);
 
   return useQuery<ListStationsResponsePagination>({
-    queryKey: ['stations', filters],
+    queryKey: ['stations', filters, config.basePath],
     queryFn: async () => {
       const response =
         await stationsApi.listStationsApiV1CampaignsCampaignIdStationsGet(

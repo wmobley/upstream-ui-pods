@@ -34,6 +34,7 @@ export const useListConfidenceValues = (
       intervalValue,
       minValue,
       maxValue,
+      config.basePath,
     ],
     queryFn: async () => {
       const requestParams: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest =
