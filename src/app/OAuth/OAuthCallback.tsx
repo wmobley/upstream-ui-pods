@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { exchangeOAuthCode } from '../../utils/tapisAuth';
+import { consumeOAuthReturnTo, exchangeOAuthCode } from '../../utils/tapisAuth';
 
 const OAuthCallback: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -9,6 +9,7 @@ const OAuthCallback: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
+    const callbackState = params.get('state');
     const oauthError = params.get('error');
 
     if (oauthError) {
@@ -20,11 +21,22 @@ const OAuthCallback: React.FC = () => {
       return;
     }
 
+    // Validate state (and recover the original destination) before
+    // exchanging the code at all, so a mismatched/replayed callback never
+    // reaches the token exchange.
+    let returnTo: string;
+    try {
+      returnTo = consumeOAuthReturnTo(callbackState);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login could not be verified.');
+      return;
+    }
+
     exchangeOAuthCode(code)
       .then(() => {
         // Full page navigation so AuthContext re-runs its mount check with the
         // newly stored Tapis token.
-        window.location.href = '/';
+        window.location.href = returnTo;
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : 'Token exchange failed.');
