@@ -244,16 +244,65 @@ function getOAuthClientKey(): string | undefined {
   );
 }
 
-/** Redirect to Tapis OAuth2 authorization endpoint. */
-export const initiateOAuthLogin = (): void => {
+const OAUTH_STATE_KEY = 'Tapis-OAuth-State';
+const OAUTH_RETURN_TO_KEY = 'Tapis-OAuth-Return-To';
+
+function generateOAuthState(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+}
+
+/** Redirect to Tapis OAuth2 authorization endpoint.
+ *  `returnTo` (pathname + search of the page the user was trying to reach,
+ *  e.g. from ProtectedRoute's redirect state) is stashed and restored after
+ *  login completes, so a deep link (including a shared ?project= link)
+ *  survives the login round-trip instead of always landing on `/`.
+ *  A random `state` value is stashed alongside it and verified in the
+ *  callback as CSRF protection on the redirect. */
+export const initiateOAuthLogin = (returnTo?: string): void => {
   const base = getTapisOAuthBaseUrl();
   const redirectUri = `${window.location.origin}/callback`;
+  const state = generateOAuthState();
+
+  try {
+    sessionStorage.setItem(OAUTH_STATE_KEY, state);
+    sessionStorage.setItem(OAUTH_RETURN_TO_KEY, returnTo?.startsWith('/') ? returnTo : '/');
+  } catch {
+    // sessionStorage unavailable — login still works, just without a return path.
+  }
+
   const params = new URLSearchParams({
     client_id: getOAuthClientId(),
     redirect_uri: redirectUri,
     response_type: 'code',
+    state,
   });
   window.location.href = `${base}/v3/oauth2/authorize?${params}`;
+};
+
+/** Validates the callback's `state` against what initiateOAuthLogin stashed,
+ *  and returns the original destination to redirect to. Always clears the
+ *  stashed values (one-time use). Throws on a missing/mismatched state,
+ *  since that means this callback wasn't the direct result of our own
+ *  redirect. */
+export const consumeOAuthReturnTo = (callbackState: string | null): string => {
+  let expectedState: string | null = null;
+  let returnTo = '/';
+  try {
+    expectedState = sessionStorage.getItem(OAUTH_STATE_KEY);
+    returnTo = sessionStorage.getItem(OAUTH_RETURN_TO_KEY) || '/';
+    sessionStorage.removeItem(OAUTH_STATE_KEY);
+    sessionStorage.removeItem(OAUTH_RETURN_TO_KEY);
+  } catch {
+    // sessionStorage unavailable — fall through to the mismatch error below.
+  }
+
+  if (!expectedState || callbackState !== expectedState) {
+    throw new Error('Login could not be verified (state mismatch) — please try logging in again.');
+  }
+  return returnTo;
 };
 
 /** Exchange an authorization code for Tapis tokens and store them. */
