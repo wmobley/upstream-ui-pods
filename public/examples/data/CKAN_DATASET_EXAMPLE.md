@@ -110,8 +110,6 @@ For API upload compatibility:
 - If `variablename` is missing, the API defaults it to `No BestGuess Formula`
 - `description` is accepted by the schema, but this CSV importer does not currently persist it during upload
 - `metadata` is accepted by the schema, but this CSV importer does not currently persist it during upload
-- `BestGuessFormula` is not the API field name; use `variablename` instead
-- `datatype` is not used by the current CSV upload importer
 
 **Format**  
 CSV
