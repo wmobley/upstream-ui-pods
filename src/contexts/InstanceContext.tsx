@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContextState';
 
 export type Permission = 'ADMIN' | 'USER' | 'READ' | 'UNKNOWN';
@@ -51,6 +52,27 @@ interface TapisPod {
 
 const SESSION_KEY = 'upstream_selected_instance';
 const ROLE_LOOKUP_CONCURRENCY = 6;
+
+// Selected project is mirrored into this query param so URLs (shared links,
+// reloads, back/forward) always identify which project's data is shown,
+// rather than relying solely on sessionStorage (which is per-tab and not
+// carried by a shared/reloaded URL).
+const PROJECT_QUERY_KEY = 'project';
+
+function getProjectIdFromSearch(search: string): string | null {
+  return new URLSearchParams(search).get(PROJECT_QUERY_KEY);
+}
+
+function withProjectId(search: string, stackId: string | null): string {
+  const params = new URLSearchParams(search);
+  if (stackId) {
+    params.set(PROJECT_QUERY_KEY, stackId);
+  } else {
+    params.delete(PROJECT_QUERY_KEY);
+  }
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
 
 /** Runs `fn` over `items` with at most `limit` in flight; never throws — each
  *  outcome is captured like Promise.allSettled, so one failure can't affect
@@ -273,6 +295,8 @@ function isDiscoveryEnabled(): boolean {
 export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { isAuthenticated, logout } = useAuth();
   const queryClient = useQueryClient();
+  const history = useHistory();
+  const location = useLocation();
   const discoveryEnabled = isDiscoveryEnabled();
 
   const [instances, setInstances] = useState<ProjectInstance[]>([]);
@@ -302,6 +326,29 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [selectedInstance, queryClient]);
 
+  // Keep the `project` URL query param and selectedInstance reconciled:
+  // - if in-app navigation (history.push) dropped the param, or it's simply
+  //   absent, re-add it so the current URL always identifies the project;
+  // - if the param names a different, known project (pasted link, back/forward
+  // navigation to a different project's URL), switch to that project instead.
+  useEffect(() => {
+    if (!discoveryEnabled || !selectedInstance || instances.length === 0) return;
+
+    const urlStackId = getProjectIdFromSearch(location.search);
+    if (urlStackId === selectedInstance.stackId) return;
+
+    const matched = urlStackId ? instances.find((i) => i.stackId === urlStackId) : undefined;
+    if (matched) {
+      setSelectedInstanceState(matched);
+      persistInstance(matched);
+    } else {
+      history.replace({
+        pathname: location.pathname,
+        search: withProjectId(location.search, selectedInstance.stackId),
+      });
+    }
+  }, [discoveryEnabled, selectedInstance, instances, location.pathname, location.search, history]);
+
   const load = useCallback(async () => {
     if (!discoveryEnabled || !isAuthenticated) return;
 
@@ -314,9 +361,16 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
       const list = await fetchInstances(tapisToken);
       setInstances(list);
 
-      // Auto-select: restore persisted selection if still in list, otherwise
-      // prefer the 'upstream' base system, then fall back to first in list.
+      // Auto-select: prefer the project named in the URL (so a shared link or
+      // reload lands on the right project), then the persisted selection if
+      // still in list, otherwise the 'upstream' base system, then first in list.
       setSelectedInstanceState((prev) => {
+        const urlStackId = getProjectIdFromSearch(window.location.search);
+        const fromUrl = urlStackId ? list.find((i) => i.stackId === urlStackId) : undefined;
+        if (fromUrl) {
+          persistInstance(fromUrl);
+          return fromUrl;
+        }
         const stillValid = prev && list.some((i) => i.stackId === prev.stackId);
         if (stillValid) return prev;
         const auto = list.find((i) => i.stackId === 'upstream') ?? list[0] ?? null;
