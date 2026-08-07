@@ -442,6 +442,55 @@ src/
 - `npm run lint` - Run linter
 - `npm run preview` - Preview production build
 
+## Uploading Sensor Data
+
+Stations accept data as two paired CSV files uploaded together in the Station Dashboard: a **sensors** file (defines the variables) and a **measurements** file (the time-series values). Example templates are available in `public/examples/data/` (downloadable from the upload dialog):
+
+- [`sensors.csv`](public/examples/data/sensors.csv)
+- [`measurements.csv`](public/examples/data/measurements.csv)
+- [`CKAN_DATASET_EXAMPLE.md`](public/examples/data/CKAN_DATASET_EXAMPLE.md) - full field-by-field notes
+
+### Sensors CSV
+
+One row per variable/sensor at the station.
+
+| Column | Required | Notes |
+| --- | --- | --- |
+| `alias` | Yes | Unique name for this variable at the station. Must exactly match a column name in the measurements CSV. |
+| `variablename` | No | Human-readable variable name. Defaults to `No BestGuess Formula` if omitted. |
+| `units` | No | Unit label, e.g. `ft`, `cfs`, `inches`. |
+| `postprocess` | No | `True`/`False` flag. |
+| `postprocessscript` | No | Post-processing script reference. |
+
+Example:
+
+```csv
+alias,variablename,postprocess,units
+Rain Increment,Rain Increment,False,inches
+Flow Volume,Flow Volume,False,cfs
+River Stage,River Stage,False,ft
+```
+
+### Measurements CSV
+
+One row per reading, with one column per sensor `alias`.
+
+| Column | Required | Notes |
+| --- | --- | --- |
+| `collectiontime` | Yes | ISO date or timestamp (`YYYY-MM-DD` or full timestamp). |
+| `Lat_deg` / `Lon_deg` | Yes | Location of the reading, in decimal degrees. |
+| One column per sensor `alias` | Yes (one or more) | Column name must exactly match an `alias` from the sensors CSV. Leave a cell blank for a missing reading. |
+
+Example (using the sensors above):
+
+```csv
+collectiontime,Lat_deg,Lon_deg,River Stage,Rain Increment,Flow Volume
+2025-06-02 11:00:00,30.18611,-93.90833,4.6,0.0,10.3
+2025-06-02 10:45:00,30.18611,-93.90833,4.6,0.0,10.3
+```
+
+Any other columns in either file are ignored by the importer. The upload dialog validates both files client-side before submitting and reports missing/unmatched columns.
+
 ## Deployment
 
 The application can be deployed as a static site or using Docker:
