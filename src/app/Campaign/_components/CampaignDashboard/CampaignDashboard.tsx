@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { useDetail } from '../../../../hooks/campaign/useDetail';
 import { useAuth } from '../../../../contexts/AuthContextState';
 import { useCampaignNotes, useCampaignNoteLocations, useCreateCampaignNote, useDeleteNote, useUpdateNote } from '../../../../hooks/notes/useNotes';
@@ -218,7 +218,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       <div className="px-4 md:px-8 lg:px-12 lg:py-12 lg:h-5/6 py-12 bg-secondary-100">
         <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
           <div className='breadcrumbs'>
-            <a href='/'>Explore campaigns</a>
+            <Link to='/'>Explore campaigns</Link>
             <span>&gt;</span>
             <a href='#' className='active'>{campaign?.name}</a>
           </div>

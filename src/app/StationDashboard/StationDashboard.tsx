@@ -9,7 +9,7 @@ import ConfirmDialog from '../common/ConfirmDialog';
 import PublishErrorModal from '../common/PublishErrorModal';
 import PublishSuccessModal from '../common/PublishSuccessModal';
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import StatsSection from './_components/StatsSection';
 import { SensorTable } from './_components/SensorTable';
 import UploadDataModal from './_components/UploadDataModal';
@@ -242,9 +242,9 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
       <div className="px-4 md:px-8 lg:px-12 lg:py-12 lg:h-5/6 py-12 bg-secondary-100">
         <div className="mx-auto max-w-screen-xl px-4 lg:px-8">
           <div className='breadcrumbs'>
-            <a href='/'>Explore campaigns</a>
+            <Link to='/'>Explore campaigns</Link>
             <span>&gt;</span>
-            <a href={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</a>
+            <Link to={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</Link>
             <span>&gt;</span>
             <a href='#' className='active'>{station?.name}</a>
           </div>

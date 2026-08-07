@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import QueryWrapper from '../../../common/QueryWrapper';
 import MeasurementSummary from '../../../SensorDashboard/_components/MeasurementSummary';
 import { Chart } from './_components/Chart';
@@ -31,15 +32,15 @@ const LineConfidenceViz = ({
     <div className="px-4 md:px-8 lg:px-12 lg:py-12 lg:h-5/6 py-12">
       <div className="mx-auto max-w-screen-xl px-4 lg:px-8 mb-6">
         <div className='breadcrumbs text-xs'>
-          <a href='/'>Campaigns</a>
+          <Link to='/'>Campaigns</Link>
           <span>&gt;</span>
-          <a href={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</a>
+          <Link to={'/campaigns/' + campaignId}>{ campaign?.name || "campaign " + campaignId + " ..." }</Link>
           <span>&gt;</span>
-          <a href={'/campaigns/' + campaignId + "/stations/" + stationId}>{ station?.name || "station " + campaignId + " ..." }</a>
+          <Link to={'/campaigns/' + campaignId + "/stations/" + stationId}>{ station?.name || "station " + campaignId + " ..." }</Link>
           <span>&gt;</span>
-          <a href={'/campaigns/' + campaignId + "/stations/" + stationId + '/sensors/' + sensorId}>
+          <Link to={'/campaigns/' + campaignId + "/stations/" + stationId + '/sensors/' + sensorId}>
             {renderChm(sensor?.variablename || sensor?.alias || 'sensor ' + sensorId)}
-          </a>
+          </Link>
           <span>&gt;</span>
           <a href='#' className='active'>Confidence</a>
         </div>
