@@ -22,6 +22,7 @@ const useSensorData = (
   sampleSize: number,
   minFilterValue?: number,
   maxFilterValue?: number,
+  selectedTimeRange?: [number, number] | null,
 ): SensorData => {
   const {
     data: sensorAggregatedData,
@@ -45,6 +46,8 @@ const useSensorData = (
     sampleSize,
     minFilterValue,
     maxFilterValue,
+    selectedTimeRange ? new Date(selectedTimeRange[0]) : undefined,
+    selectedTimeRange ? new Date(selectedTimeRange[1]) : undefined,
   );
 
   return {
@@ -70,6 +73,7 @@ const AdditionalSensor: React.FC<{
   aggregationValue: number;
   minFilterValue?: number;
   maxFilterValue?: number;
+  selectedTimeRange?: [number, number] | null;
   onDataReady: (sensorData: SensorData) => void;
 }> = ({
   sensorInfo,
@@ -77,6 +81,7 @@ const AdditionalSensor: React.FC<{
   aggregationValue,
   minFilterValue,
   maxFilterValue,
+  selectedTimeRange,
   onDataReady,
 }) => {
   const { sampleSize } = useLineConfidence();
@@ -87,6 +92,7 @@ const AdditionalSensor: React.FC<{
     sampleSize,
     minFilterValue,
     maxFilterValue,
+    selectedTimeRange,
   );
 
   useEffect(() => {
@@ -193,6 +199,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     sampleSize,
     minFilterValue,
     maxFilterValue,
+    selectedTimeRange ? new Date(selectedTimeRange[0]) : undefined,
+    selectedTimeRange ? new Date(selectedTimeRange[1]) : undefined,
   );
 
   // Update sampleSizeLoading when allPointsLoading changes
@@ -353,6 +361,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
           aggregationValue={aggregationValue}
           minFilterValue={minFilterValue}
           maxFilterValue={maxFilterValue}
+          selectedTimeRange={selectedTimeRange}
           onDataReady={handleSensorDataUpdate}
         />
       ))}

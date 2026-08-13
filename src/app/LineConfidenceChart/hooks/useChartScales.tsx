@@ -10,6 +10,7 @@ import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/Li
 interface ChartDimensions {
   innerWidth: number;
   mainInnerHeight: number;
+  overviewInnerHeight: number;
 }
 
 interface UseChartScalesProps {
@@ -90,7 +91,7 @@ export function useChartScales({
 
     const overviewYScale = scaleLinear()
       .domain(yExtent)
-      .range([chartDimensions.mainInnerHeight, 0]);
+      .range([chartDimensions.overviewInnerHeight, 0]);
 
     return { xScale, yScale, overviewXScale, overviewYScale };
   }, [

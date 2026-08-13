@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import MainChart from './components/MainChart';
+import OverviewChart from './components/OverviewChart';
 import MeasurementNoteCallout, {
   SelectedPointPayload,
 } from './components/MeasurementNoteCallout';
@@ -65,6 +66,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   width,
   height,
   margin = defaultChartStyles.margin,
+  showAreaOverview = defaultChartStyles.showAreaOverview,
   showLineOverview = defaultChartStyles.showLineOverview,
   pointRadius = defaultChartStyles.pointRadius,
   colors = defaultChartStyles.colors,
@@ -127,12 +129,11 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     yFormatter,
   });
 
-  // Set up brush
-  useChartBrush({
+  const { resetZoom } = useChartBrush({
     overviewRef,
     innerWidth: chartDimensions.innerWidth,
     overviewXScale: scales?.overviewXScale,
-    overviewInnerHeight: chartDimensions.mainInnerHeight,
+    overviewInnerHeight: chartDimensions.overviewInnerHeight,
     setViewDomain,
     onBrush,
   });
@@ -188,12 +189,25 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           selectedSensorId={sensorId}
           campaignId={campaignId}
           stationId={stationId}
-          overviewRef={overviewRef}
-          setViewDomain={setViewDomain}
-          onBrush={onBrush}
-          showLineOverview={showLineOverview}
+          onResetView={resetZoom}
           onPointSelect={setSelectedPoint}
         />
+
+        {/* Overview chart */}
+        {showLineOverview && (
+          <OverviewChart
+            showAreaOverview={showAreaOverview}
+            showLineOverview={showLineOverview}
+            paths={paths}
+            chartDimensions={chartDimensions}
+            scales={scales}
+            margin={margin}
+            colors={colors}
+            colorPalette={colorPalette}
+            xFormatterOverview={xFormatterOverview}
+            overviewRef={overviewRef}
+          />
+        )}
 
         {/* Right margin background */}
         <rect

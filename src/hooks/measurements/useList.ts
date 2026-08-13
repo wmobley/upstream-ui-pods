@@ -19,9 +19,13 @@ export const useList = (
   downsampleThreshold: number | undefined = undefined,
   minMeasurementValue: number | undefined = undefined,
   maxMeasurementValue: number | undefined = undefined,
+  startDate: Date | null | undefined = undefined,
+  endDate: Date | null | undefined = undefined,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
+  const startDateKey = startDate?.toISOString() ?? null;
+  const endDateKey = endDate?.toISOString() ?? null;
 
   const { data, isLoading, error } =
     useQuery<ListMeasurementsResponsePagination>({
@@ -34,6 +38,8 @@ export const useList = (
         downsampleThreshold,
         minMeasurementValue,
         maxMeasurementValue,
+        startDateKey,
+        endDateKey,
       ],
       queryFn: async () => {
         const response =
@@ -45,6 +51,8 @@ export const useList = (
               downsampleThreshold,
               minMeasurementValue,
               maxMeasurementValue,
+              startDate,
+              endDate,
               limit,
             },
           );

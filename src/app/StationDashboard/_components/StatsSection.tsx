@@ -1,10 +1,7 @@
-import { GetStationResponse, StationType } from '@upstream/upstream-api';
+import { GetStationResponse } from '@upstream/upstream-api';
 import GeometryMap from '../../common/GeometryMap/GeometryMap';
 import { hasValidGeometry } from '../../../utils/geometryValidation';
 import { useStationNoteLocations } from '../../../hooks/notes/useNotes';
-
-const isMobile = (station: GetStationResponse) =>
-  station.stationType == null || station.stationType === StationType.Mobile;
 
 interface StatsSectionProps {
   station: GetStationResponse;
@@ -14,8 +11,6 @@ interface StatsSectionProps {
 
 const StatsSection = ({ station, campaignId, stationId }: StatsSectionProps) => {
   const { data: noteLocationsData } = useStationNoteLocations(campaignId, stationId);
-
-  if (!isMobile(station)) return null;
 
   const markers = (noteLocationsData?.items ?? [])
     .filter((note) => note.location)

@@ -260,6 +260,17 @@ const Controls = () => {
               />
             </label>
           </div>
+          {allPoints && (
+            <div className="ml-auto text-xs text-gray-600 whitespace-nowrap">
+              Current range: {allPoints.total.toLocaleString()} total points
+              {allPoints.downsampled && (
+                <span>
+                  {' '}
+                  ({allPoints.items.length.toLocaleString()} shown)
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-row justify-between gap-4 w-full">
