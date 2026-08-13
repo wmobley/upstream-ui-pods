@@ -2,7 +2,6 @@ import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
 import { AdditionalSensor } from '../LineConfidenceChart';
-import { useChartBrush } from '../hooks/useChartBrush';
 import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
 import { SelectedPointPayload } from './MeasurementNoteCallout';
 
@@ -69,10 +68,7 @@ interface MainChartProps {
   selectedSensorId: string;
   campaignId: string;
   stationId: string;
-  overviewRef: React.RefObject<SVGGElement>;
-  setViewDomain: React.Dispatch<React.SetStateAction<[number, number] | null>>;
-  onBrush?: (domain: [number, number]) => void;
-  showLineOverview?: boolean;
+  onResetView: () => void;
   onPointSelect?: (payload: SelectedPointPayload) => void;
 }
 
@@ -185,22 +181,9 @@ const MainChart: React.FC<MainChartProps> = ({
   selectedSensorId,
   campaignId,
   stationId,
-  overviewRef,
-  setViewDomain,
-  onBrush,
-  showLineOverview,
+  onResetView,
   onPointSelect,
 }) => {
-  // Get resetZoom function from useChartBrush
-  const { resetZoom } = useChartBrush({
-    overviewRef,
-    innerWidth: chartDimensions.innerWidth,
-    overviewInnerHeight: chartDimensions.mainInnerHeight,
-    overviewXScale: scales.xScale,
-    setViewDomain,
-    onBrush,
-  });
-
   // Helper function to handle tooltip positioning
   const handleTooltipPosition = React.useCallback(
     (
@@ -612,27 +595,6 @@ const MainChart: React.FC<MainChartProps> = ({
           </g>
         ))}
 
-      {/* Zoom container - rendered first to handle wheel events */}
-      {showLineOverview && (
-        <g
-          ref={overviewRef}
-          className="zoom-container"
-          style={{
-            pointerEvents: 'all',
-            cursor: 'grab',
-          }}
-        >
-          <rect
-            x={0}
-            y={0}
-            width={chartDimensions.innerWidth}
-            height={chartDimensions.mainInnerHeight}
-            fill="transparent"
-            style={{ pointerEvents: 'all' }}
-          />
-        </g>
-      )}
-
       {/* Data visualization layer - rendered on top of zoom container */}
       <g
         className="data-layer"
@@ -662,7 +624,7 @@ const MainChart: React.FC<MainChartProps> = ({
       <ResetButton
         x={chartDimensions.innerWidth - 90}
         y={-30}
-        onClick={resetZoom}
+        onClick={onResetView}
       />
     </g>
   );

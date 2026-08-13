@@ -90,14 +90,20 @@ export const calculateChartDimensions = (
   height: number,
   margin: { top: number; right: number; bottom: number; left: number },
 ) => {
-  const mainHeight = height;
+  const overviewHeight = Math.max(height * 0.18, 90);
+  const spacing = Math.max(height * 0.04, 24);
+  const mainHeight = Math.max(height - overviewHeight - spacing, 240);
 
   const innerWidth = width - margin.left - margin.right;
   const mainInnerHeight = mainHeight - margin.top - margin.bottom;
+  const overviewInnerHeight = Math.max(overviewHeight - margin.bottom, 40);
 
   return {
     innerWidth,
     mainHeight,
     mainInnerHeight,
+    overviewHeight,
+    overviewInnerHeight,
+    spacing,
   };
 };
