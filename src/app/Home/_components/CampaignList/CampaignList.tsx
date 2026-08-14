@@ -38,7 +38,7 @@ const CampaignList: React.FC = () => {
     [startDate, endDate, bounds, sensorVariables],
   );
 
-  const { data: campaigns, isLoading, error } = useList({ filters });
+  const { data: campaigns, isLoading, error, refetch } = useList({ filters });
 
   // Define filter configurations with proper typing
   const filterConfigs = [
@@ -108,7 +108,7 @@ const CampaignList: React.FC = () => {
 
         <FilterToolbar title="Campaign Filters" filters={filterConfigs} />
 
-        <QueryWrapper isLoading={isLoading} error={error}>
+        <QueryWrapper isLoading={isLoading} error={error} onRetry={refetch}>
           {campaigns && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {campaigns.map((campaign) => (

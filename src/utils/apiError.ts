@@ -1,5 +1,44 @@
 import { ResponseError } from '@upstream/upstream-api';
 
+/** Browser message for `res.json()` failing because the body is not JSON
+ *  (e.g. an HTML page served by a proxy/SPA fallback while the API is
+ *  still starting up). */
+const NON_JSON_PARSE_PATTERN = /Unexpected token .+ is not valid JSON/;
+/** Browser message when the network request itself failed. */
+const NETWORK_FAILURE_PATTERN = /Failed to fetch|NetworkError|network error/i;
+
+const API_NOT_READY_MESSAGE =
+  'The API server is not responding yet — it may still be starting up or restarting. Please try again in a moment.';
+
+const NETWORK_ERROR_MESSAGE =
+  "Couldn't reach the API server. Check that it is running, then try again.";
+
+/** True when the error is a JSON parse failure on an HTML/non-JSON body —
+ *  the signature of hitting a proxy/SPA page instead of the live API. */
+export function isNonJsonResponseError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.name === 'SyntaxError' &&
+    NON_JSON_PARSE_PATTERN.test(error.message)
+  );
+}
+
+/** Maps common failure modes to messages a user can act on, instead of
+ *  leaking raw browser/JSON errors ("Unexpected token '<', \"<!doctype ...\"")
+ *  onto the screen. */
+export function friendlyErrorMessage(error: unknown): string {
+  if (isNonJsonResponseError(error)) {
+    return API_NOT_READY_MESSAGE;
+  }
+  if (error instanceof Error && NETWORK_FAILURE_PATTERN.test(error.message)) {
+    return NETWORK_ERROR_MESSAGE;
+  }
+  if (typeof error === 'string' && error.trim()) {
+    return error;
+  }
+  return error instanceof Error ? error.message : 'An unknown error occurred';
+}
+
 /**
  * Turns a thrown API/network error into a message worth showing a user.
  * The generated client's ResponseError always carries the generic message

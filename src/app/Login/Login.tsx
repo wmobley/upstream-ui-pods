@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContextState';
 import { initiateOAuthLogin } from '../../utils/tapisAuth';
+import { friendlyErrorMessage } from '../../utils/apiError';
 
 interface LoginLocationState {
   from?: { pathname: string; search?: string };
@@ -32,7 +33,7 @@ const Login: React.FC = () => {
     return (
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-login">
         <div className="max-w-md w-full p-8 bg-white shadow-lg text-center">
-          <p className="text-red-600 mb-6">{error.message}</p>
+          <p className="text-red-600 mb-6">{friendlyErrorMessage(error)}</p>
           <button
             type="button"
             onClick={() => initiateOAuthLogin(returnTo)}

@@ -10,6 +10,7 @@ interface UseListReturn {
   data: ListCampaignsResponseItem[];
   isLoading: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 interface UseListProps {
@@ -20,7 +21,7 @@ export const useList = ({ filters }: UseListProps): UseListReturn => {
   const config = useConfiguration();
   const campaignsApi = new CampaignsApi(config);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['campaigns', filters],
     queryFn: async () => {
       const response =
@@ -36,5 +37,6 @@ export const useList = ({ filters }: UseListProps): UseListReturn => {
     data: data ?? [],
     isLoading,
     error: error as Error | null,
+    refetch,
   };
 };

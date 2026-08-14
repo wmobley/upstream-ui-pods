@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { consumeOAuthReturnTo, exchangeOAuthCode } from '../../utils/tapisAuth';
+import { friendlyErrorMessage } from '../../utils/apiError';
 
 const OAuthCallback: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,7 @@ const OAuthCallback: React.FC = () => {
         window.location.href = returnTo;
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Token exchange failed.');
+        setError(friendlyErrorMessage(err));
       });
   }, [location.search]);
 

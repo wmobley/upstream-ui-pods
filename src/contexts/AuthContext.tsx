@@ -7,6 +7,7 @@ import {
   storeTapisTokens,
   clearTapisTokens,
 } from '../utils/tapisAuth';
+import { friendlyErrorMessage } from '../utils/apiError';
 import { AuthContext } from './AuthContextState';
 
 interface AuthProviderProps {
@@ -230,7 +231,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (err) {
       let errorMessage = 'Invalid username or password';
       if (err instanceof Error) {
-        errorMessage = err.message;
+        errorMessage = friendlyErrorMessage(err);
       } else if (typeof err === 'object' && err !== null) {
         const apiError = err as { body?: { detail?: string; message?: string }; status?: number };
         if (apiError.status === 401) {
