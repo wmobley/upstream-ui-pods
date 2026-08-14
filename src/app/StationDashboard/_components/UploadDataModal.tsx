@@ -15,6 +15,9 @@ interface UploadProgress {
   status: 'idle' | 'uploading' | 'complete' | 'error';
   error?: string;
   warnings?: string[];
+  finalized?: boolean;
+  skippedDuplicates?: number;
+  insertedValues?: number;
 }
 
 const UploadDataModal: React.FC<UploadDataModalProps> = ({
@@ -110,7 +113,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
     setProgress((prev) => ({ ...prev, status: 'uploading', currentChunk: 0 }));
 
     try {
-      await uploadMutation.mutateAsync({
+      const result = await uploadMutation.mutateAsync({
         campaignId: parseInt(campaignId, 10),
         stationId: parseInt(stationId, 10),
         sensorFile: sensorFile || undefined,
@@ -126,6 +129,13 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
           }));
         },
       });
+
+      setProgress((prev) => ({
+        ...prev,
+        finalized: result.finalized,
+        skippedDuplicates: result.audit?.measurement_values_skipped_duplicate ?? 0,
+        insertedValues: result.audit?.measurement_values_inserted ?? 0,
+      }));
 
       // Reset form after successful upload but keep modal open
       setSensorFile(null);
@@ -151,9 +161,16 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
     if (progress.status === 'idle') return null;
     if (progress.status === 'error') return `Error: ${progress.error}`;
     if (progress.status === 'complete') {
+      if (progress.finalized === false) {
+        return 'Upload stored, but not finalized: some measurement chunks did not complete. Re-upload the missing chunk(s).';
+      }
+      const skipMessage =
+        progress.skippedDuplicates && progress.skippedDuplicates > 0
+          ? ` ${progress.skippedDuplicates} duplicate value${progress.skippedDuplicates === 1 ? '' : 's'} skipped.`
+          : '';
       return progress.warnings && progress.warnings.length > 0
-        ? `Upload complete with ${progress.warnings.length} row warning${progress.warnings.length === 1 ? '' : 's'} — see below.`
-        : 'Upload complete!';
+        ? `Upload complete with ${progress.warnings.length} row warning${progress.warnings.length === 1 ? '' : 's'} — see below.${skipMessage}`
+        : `Upload complete!${skipMessage}`;
     }
 
     const percentage =
