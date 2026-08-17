@@ -27,9 +27,6 @@ export interface TimeSeriesChartProps {
   showArea?: boolean;
   showLine?: boolean;
   showPoints?: boolean;
-  showAreaOverview?: boolean;
-  showLineOverview?: boolean;
-  showPointsOverview?: boolean;
   pointRadius?: number;
   colors?: {
     line?: string;
@@ -44,6 +41,8 @@ export interface TimeSeriesChartProps {
   onBrush?: (domain: [number, number]) => void;
   minMeasurementValue?: number;
   maxMeasurementValue?: number;
+  yMinValue?: number;
+  yMaxValue?: number;
 }
 
 // Default props
@@ -52,8 +51,6 @@ const defaultProps: Partial<TimeSeriesChartProps> = {
   showArea: true,
   showLine: true,
   showPoints: false,
-  showAreaOverview: true,
-  showLineOverview: true,
   pointRadius: 3,
   colors: {
     line: '#9a6fb0',
@@ -84,8 +81,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   showArea = defaultProps.showArea!,
   showLine = defaultProps.showLine!,
   showPoints = defaultProps.showPoints!,
-  showAreaOverview = defaultProps.showAreaOverview!,
-  showLineOverview = defaultProps.showLineOverview!,
   pointRadius = defaultProps.pointRadius!,
   colors = defaultProps.colors!,
   xAxisTitle = defaultProps.xAxisTitle!,
@@ -97,6 +92,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   onBrush,
   minMeasurementValue,
   maxMeasurementValue,
+  yMinValue,
+  yMaxValue,
 }) => {
   // Add refs for container
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -109,6 +106,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   // Add state for view domain
   const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
+    null,
+  );
+
+  // Add state for y-axis view domain (from y-brush interaction)
+  const [yViewDomain, setYViewDomain] = React.useState<[number, number] | null>(
     null,
   );
 
@@ -135,9 +137,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   // Calculate dimensions for main and overview charts
   const chartDimensions = React.useMemo(() => {
-    const mainHeight = dimensions.height * 0.7; // Main chart takes 70% of total height
+    const mainHeight = dimensions.height * 0.75; // Main chart takes 75% of total height
     const overviewHeight = dimensions.height * 0.2; // Overview takes 20% of total height
-    const spacing = dimensions.height * 0.1; // 10% spacing between charts
+    const spacing = dimensions.height * 0.05; // 5% spacing between charts
 
     return {
       mainHeight,
@@ -152,6 +154,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     onBrush?.(domain);
   };
 
+  // Handle y-axis brush updates
+  const handleYBrush = (domain: [number, number]) => {
+    setYViewDomain(domain);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -160,44 +167,50 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       <svg width={dimensions.width} height={dimensions.height}>
         {/* Main chart */}
         {viewDomain && (
-          <MainChart
-            campaignId={campaignId}
-            stationId={stationId}
-            sensorId={sensorId}
-            width={dimensions.width}
-            height={chartDimensions.mainHeight}
-            margin={margin}
-            showArea={showArea}
-            showLine={showLine}
-            showPoints={showPoints}
-            pointRadius={pointRadius}
-            colors={colors}
-            xAxisTitle={xAxisTitle}
-            yAxisTitle={yAxisTitle}
-            xFormatter={xFormatter}
-            yFormatter={yFormatter}
-            viewDomain={viewDomain}
-            minMeasurementValue={minMeasurementValue}
-            maxMeasurementValue={maxMeasurementValue}
-            setTooltip={setTooltip}
-          />
+           <MainChart
+             campaignId={campaignId}
+             stationId={stationId}
+             sensorId={sensorId}
+             width={dimensions.width}
+             height={chartDimensions.mainHeight}
+             margin={margin}
+             showArea={showArea}
+             showLine={showLine}
+             showPoints={showPoints}
+             pointRadius={pointRadius}
+             colors={colors}
+             xAxisTitle={xAxisTitle}
+             yAxisTitle={yAxisTitle}
+             xFormatter={xFormatter}
+             yFormatter={yFormatter}
+             viewDomain={viewDomain}
+             minMeasurementValue={minMeasurementValue}
+             maxMeasurementValue={maxMeasurementValue}
+             yViewDomain={yViewDomain}
+             onYBrush={handleYBrush}
+             yMinValue={yMinValue}
+             yMaxValue={yMaxValue}
+             setTooltip={setTooltip}
+           />
         )}
 
         {/* Overview chart */}
         <g
           transform={`translate(0,${chartDimensions.mainHeight + chartDimensions.spacing})`}
         >
-          <OverviewChart
-            data={data}
-            width={dimensions.width}
-            height={chartDimensions.overviewHeight}
-            margin={margin}
-            showAreaOverview={showAreaOverview}
-            showLineOverview={showLineOverview}
-            colors={colors}
-            xFormatterOverview={xFormatterOverview}
-            onBrush={handleBrush}
-          />
+           <OverviewChart
+             data={data}
+             width={dimensions.width}
+             height={chartDimensions.overviewHeight}
+             margin={margin}
+             showArea={showArea}
+             showLine={showLine}
+             showPoints={showPoints}
+             pointRadius={pointRadius}
+             colors={colors}
+             xFormatterOverview={xFormatterOverview}
+             onBrush={handleBrush}
+           />
         </g>
       </svg>
 

@@ -11,8 +11,10 @@ export interface OverviewChartProps {
   width: number;
   height: number;
   margin: { top: number; right: number; bottom: number; left: number };
-  showAreaOverview?: boolean;
-  showLineOverview?: boolean;
+  showArea?: boolean;
+  showLine?: boolean;
+  showPoints?: boolean;
+  pointRadius?: number;
   colors: {
     line?: string;
     area?: string;
@@ -27,8 +29,10 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
   width,
   height,
   margin,
-  showAreaOverview = true,
-  showLineOverview = true,
+  showArea = true,
+  showLine = true,
+  showPoints = false,
+  pointRadius = 3,
   colors,
   xFormatterOverview,
   onBrush,
@@ -60,7 +64,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
       .domain([yExtent[0], yExtent[1]])
       .range([innerHeight, 0]);
 
-    return { xScale, yScale };
+    return { xScale, yScale, yExtent };
   }, [data, innerWidth, innerHeight]);
 
   // Memoize path generators
@@ -74,7 +78,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
 
     const areaGenerator = area<DataPoint>()
       .x((d) => scales.xScale(d.timestamp.getTime()))
-      .y0(() => scales.yScale(0))
+      .y0(() => scales.yScale(scales.yExtent[0]))
       .y1((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
@@ -124,16 +128,23 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
     // Add explicit styles to make the brush visible
     brushGroup
       .selectAll('.selection')
-      .attr('fill', '#f0f0f0')
-      .attr('fill-opacity', 0.3)
-      .attr('stroke', '#888')
-      .attr('stroke-width', 1);
+      .attr('fill', '#3b82f6')
+      .attr('fill-opacity', 0.15)
+      .attr('stroke', '#3b82f6')
+      .attr('stroke-width', 1.5);
 
     brushGroup
       .selectAll('.handle')
-      .attr('fill', '#fff')
-      .attr('stroke', '#666')
-      .attr('stroke-width', 1);
+      .attr('fill', '#ffffff')
+      .attr('stroke', '#3b82f6')
+      .attr('stroke-width', 1.5);
+
+    // Increase handle size for better visibility
+    brushGroup
+      .selectAll('.handle')
+      .select('rect')
+      .attr('width', 12)
+      .attr('height', innerHeight);
 
     // Set initial selection if not already set
     if (!initialSelectionRef.current) {
@@ -162,6 +173,9 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
     };
   }, [scales, innerWidth, innerHeight, onBrush, data]);
 
+  // Dynamic tick count based on chart width
+  const xTickCount = Math.max(3, Math.min(5, Math.floor(innerWidth / 60)));
+
   if (!scales || !paths) {
     return null;
   }
@@ -171,7 +185,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
       transform={`translate(${margin.left},${margin.top})`}
       className="overview-chart"
     >
-      {showAreaOverview && (
+      {showArea && (
         <path
           d={paths.areaPath || ''}
           fill={colors.area}
@@ -179,7 +193,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
           stroke="none"
         />
       )}
-      {showLineOverview && (
+      {showLine && (
         <path
           d={paths.linePath || ''}
           fill="none"
@@ -187,10 +201,23 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
           strokeWidth={1}
         />
       )}
+      {showPoints && data && (
+        <g>
+          {data.map((d) => (
+            <circle
+              key={d.timestamp.getTime()}
+              cx={scales.xScale(d.timestamp.getTime())}
+              cy={scales.yScale(d.value)}
+              r={pointRadius}
+              fill={colors.point}
+            />
+          ))}
+        </g>
+      )}
       {/* Overview chart x-axis */}
       <g transform={`translate(0,${innerHeight})`} className="overview-x-axis">
         <line x1={0} x2={innerWidth} y1={0} y2={0} stroke="var(--gray-400)" />
-        {scales.xScale.ticks(5).map((tick) => (
+        {scales.xScale.ticks(xTickCount).map((tick) => (
           <g key={tick} transform={`translate(${scales.xScale(tick)},0)`}>
             <line y1={0} y2={6} stroke="var(--gray-300)" />
             <text
@@ -205,7 +232,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
         ))}
         <text
           x={innerWidth / 2}
-          y={40}
+          y={innerHeight + margin.bottom - 10}
           textAnchor="middle"
           fill="var(--gray-600)"
           className="text-xs"

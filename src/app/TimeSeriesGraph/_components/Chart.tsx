@@ -13,10 +13,16 @@ interface TimeSeriesGraphProps {
 const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
   const [minValueInput, setMinValueInput] = useState<string>('');
   const [maxValueInput, setMaxValueInput] = useState<string>('');
+  const [yMinInput, setYMinInput] = useState<string>('');
+  const [yMaxInput, setYMaxInput] = useState<string>('');
   const minMeasurementValue =
     minValueInput.trim() === '' ? undefined : Number(minValueInput);
   const maxMeasurementValue =
     maxValueInput.trim() === '' ? undefined : Number(maxValueInput);
+  const yMinValue =
+    yMinInput.trim() === '' ? undefined : Number(yMinInput);
+  const yMaxValue =
+    yMaxInput.trim() === '' ? undefined : Number(yMaxInput);
 
   const { data, isLoading, error } = useListDownsampled(
     campaignId,
@@ -79,6 +85,36 @@ const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
             />
           </label>
         </div>
+        <div className="mb-4 flex flex-wrap items-end gap-3 border-t pt-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Y-Axis Min</span>
+            <input
+              className="w-36 rounded border border-gray-300 px-3 py-2"
+              inputMode="decimal"
+              type="number"
+              value={yMinInput}
+              onChange={(event) => setYMinInput(event.target.value)}
+              placeholder="Auto"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Y-Axis Max</span>
+            <input
+              className="w-36 rounded border border-gray-300 px-3 py-2"
+              inputMode="decimal"
+              type="number"
+              value={yMaxInput}
+              onChange={(event) => setYMaxInput(event.target.value)}
+              placeholder="Auto"
+            />
+          </label>
+          <button
+            onClick={() => { setYMinInput(''); setYMaxInput(''); }}
+            className="text-sm text-blue-600 hover:underline self-end mb-2"
+          >
+            Reset Y-Axis
+          </button>
+        </div>
         <TimeSeriesChart
           campaignId={campaignId}
           stationId={stationId}
@@ -90,7 +126,7 @@ const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
           maxMeasurementValue={
             Number.isFinite(maxMeasurementValue) ? maxMeasurementValue : undefined
           }
-          margin={{ top: 10, right: 100, bottom: 100, left: 100 }}
+          margin={{ top: 20, right: 60, bottom: 60, left: 60 }}
           showArea={false}
           showLine={false}
           showPoints={true}
@@ -114,6 +150,8 @@ const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
             const dateObj = date instanceof Date ? date : new Date(date);
             return dateObj.toLocaleDateString();
           }}
+          yMinValue={yMinValue}
+          yMaxValue={yMaxValue}
           yFormatter={(value: number) => formatNumber(value)}
           onBrush={(domain) => {
             setSelectedTimeRange(domain);

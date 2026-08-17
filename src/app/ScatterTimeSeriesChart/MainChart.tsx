@@ -2,6 +2,8 @@ import * as React from 'react';
 import { extent } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
+import { brushY } from 'd3-brush';
+import { select } from 'd3-selection';
 import { DataPoint } from '../../utils/dataProcessing';
 import { useList } from '../../hooks/measurements/useList';
 
@@ -34,6 +36,10 @@ export interface MainChartProps {
   viewDomain: [number, number];
   minMeasurementValue?: number;
   maxMeasurementValue?: number;
+  yViewDomain?: [number, number] | null;
+  onYBrush?: (domain: [number, number]) => void;
+  yMinValue?: number;
+  yMaxValue?: number;
   setTooltip: (tooltip: TooltipData | null) => void;
 }
 
@@ -56,6 +62,10 @@ const MainChart: React.FC<MainChartProps> = ({
   viewDomain,
   minMeasurementValue,
   maxMeasurementValue,
+  yViewDomain,
+  onYBrush,
+  yMinValue,
+  yMaxValue,
   setTooltip,
 }) => {
   const {
@@ -77,9 +87,16 @@ const MainChart: React.FC<MainChartProps> = ({
     geometry: item.geometry,
   })) as DataPoint[] | undefined;
 
+  // Add ref for y-axis brush
+  const yBrushRef = React.useRef<SVGGElement>(null);
+
   // Calculate chart dimensions
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
+
+  // Dynamic tick counts based on chart dimensions
+  const xTickCount = Math.max(3, Math.min(8, Math.floor(innerWidth / 80)));
+  const yTickCount = Math.max(3, Math.min(6, Math.floor(innerHeight / 50)));
 
   // Calculate scales
   const scales = React.useMemo(() => {
@@ -96,12 +113,26 @@ const MainChart: React.FC<MainChartProps> = ({
       .domain(viewDomain || [xExtent[0], xExtent[1]])
       .range([0, innerWidth]);
 
+    // Add 5% padding to y-axis extent
+    const yPadding = (yExtent[1] - yExtent[0]) * 0.05;
+    let yDomainMin = yExtent[0] - yPadding;
+    let yDomainMax = yExtent[1] + yPadding;
+
+    // Apply yMinValue/yMaxValue as domain constraints if provided
+    if (yMinValue !== undefined && yMinValue < yDomainMin) {
+      yDomainMin = yMinValue;
+    }
+    if (yMaxValue !== undefined && yMaxValue > yDomainMax) {
+      yDomainMax = yMaxValue;
+    }
+
+    // Use yViewDomain if provided, otherwise use padded extent with constraints
     const yScale = scaleLinear()
-      .domain([yExtent[0], yExtent[1]])
+      .domain(yViewDomain || [yDomainMin, yDomainMax])
       .range([innerHeight, 0]);
 
-    return { xScale, yScale };
-  }, [data, innerWidth, innerHeight, viewDomain]);
+    return { xScale, yScale, yExtent };
+  }, [data, innerWidth, innerHeight, viewDomain, yViewDomain, yMinValue, yMaxValue]);
 
   // Memoize path generators
   const paths = React.useMemo(() => {
@@ -114,7 +145,7 @@ const MainChart: React.FC<MainChartProps> = ({
 
     const areaGenerator = area<DataPoint>()
       .x((d) => scales.xScale(d.timestamp.getTime()))
-      .y0(() => scales.yScale(0))
+      .y0(() => scales.yScale(scales.yExtent[0]))
       .y1((d) => scales.yScale(d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
@@ -129,20 +160,70 @@ const MainChart: React.FC<MainChartProps> = ({
   const axisTicks = React.useMemo(() => {
     if (!scales) return null;
 
-    const xTicks = scales.xScale.ticks(5).map((tick) => ({
+    const xTicks = scales.xScale.ticks(xTickCount).map((tick) => ({
       value: tick,
       label: xFormatter(tick),
       x: scales.xScale(tick),
     }));
 
-    const yTicks = scales.yScale.ticks(5).map((tick) => ({
+    const yTicks = scales.yScale.ticks(yTickCount).map((tick) => ({
       value: tick,
       label: yFormatter(tick),
       y: scales.yScale(tick),
     }));
 
     return { xTicks, yTicks };
-  }, [scales, xFormatter, yFormatter]);
+  }, [scales, xFormatter, yFormatter, xTickCount, yTickCount]);
+
+  // Initialize y-axis brush for vertical drag-zoom
+  React.useLayoutEffect(() => {
+    if (!scales || !yBrushRef.current || !onYBrush) return;
+
+    const brush = brushY<unknown>()
+      .extent([
+        [0, 0],
+        [0, innerHeight],
+      ])
+      .on('brush end', (event) => {
+        if (!event.selection) return;
+        const selection = event.selection as [number, number];
+
+        // Convert pixel coordinates to domain values
+        const domain: [number, number] = [
+          scales.yScale.invert(selection[1]),
+          scales.yScale.invert(selection[0]),
+        ];
+
+        onYBrush(domain);
+      });
+
+    const brushGroup = select(yBrushRef.current);
+
+    // Remove any existing brush before adding a new one
+    brushGroup.selectAll('.brush').remove();
+
+    // Apply the brush
+    brushGroup.call(brush);
+
+    // Style the brush selection
+    brushGroup
+      .selectAll('.selection')
+      .attr('fill', '#3b82f6')
+      .attr('fill-opacity', 0.15)
+      .attr('stroke', '#3b82f6')
+      .attr('stroke-width', 1);
+
+    brushGroup
+      .selectAll('.handle')
+      .attr('fill', '#ffffff')
+      .attr('stroke', '#3b82f6')
+      .attr('stroke-width', 1.5);
+
+    // Cleanup
+    return () => {
+      brushGroup.on('.brush', null);
+    };
+  }, [scales, innerHeight, onYBrush]);
 
   if (isLoading || error) {
     return <p>Loading...</p>;
@@ -292,6 +373,8 @@ const MainChart: React.FC<MainChartProps> = ({
           >
             {yAxisTitle}
           </text>
+          {/* Y-axis brush for vertical drag-zoom */}
+          <g ref={yBrushRef} className="y-brush" />
         </g>
       </g>
     </g>
