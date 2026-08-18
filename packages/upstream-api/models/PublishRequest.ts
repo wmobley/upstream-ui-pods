@@ -12,24 +12,43 @@
  * Do not edit the class manually.
  */
 
+import { mapValues } from '../runtime';
 /**
- *
+ * Request schema for publishing campaigns, stations, or sensors.
  * @export
  * @interface PublishRequest
  */
 export interface PublishRequest {
     /**
-     *
+     * If true, cascade publish to child resources (e.g., sensors when publishing station)
      * @type {boolean}
      * @memberof PublishRequest
      */
     cascade?: boolean;
     /**
-     *
+     * If true, force publish even if already published
      * @type {boolean}
      * @memberof PublishRequest
      */
     force?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishRequest
+     */
+    organization?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishRequest
+     */
+    ckanDatasetName?: string | null;
+    /**
+     * If true, update an existing matching CKAN dataset instead of failing on name conflict
+     * @type {boolean}
+     * @memberof PublishRequest
+     */
+    patchExistingCkanDataset?: boolean;
 }
 
 /**
@@ -48,9 +67,12 @@ export function PublishRequestFromJSONTyped(json: any, ignoreDiscriminator: bool
         return json;
     }
     return {
-
+        
         'cascade': json['cascade'] == null ? undefined : json['cascade'],
         'force': json['force'] == null ? undefined : json['force'],
+        'organization': json['organization'] == null ? undefined : json['organization'],
+        'ckanDatasetName': json['ckan_dataset_name'] == null ? undefined : json['ckan_dataset_name'],
+        'patchExistingCkanDataset': json['patch_existing_ckan_dataset'] == null ? undefined : json['patch_existing_ckan_dataset'],
     };
 }
 
@@ -64,8 +86,12 @@ export function PublishRequestToJSONTyped(value?: PublishRequest | null, ignoreD
     }
 
     return {
-
+        
         'cascade': value['cascade'],
         'force': value['force'],
+        'organization': value['organization'],
+        'ckan_dataset_name': value['ckanDatasetName'],
+        'patch_existing_ckan_dataset': value['patchExistingCkanDataset'],
     };
 }
+

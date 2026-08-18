@@ -13,8 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { StationType } from './StationType';
-import { StationTypeFromJSON, StationTypeToJSON } from './StationType';
 import type { SensorSummaryForStations } from './SensorSummaryForStations';
 import {
     SensorSummaryForStationsFromJSON,
@@ -22,6 +20,13 @@ import {
     SensorSummaryForStationsToJSON,
     SensorSummaryForStationsToJSONTyped,
 } from './SensorSummaryForStations';
+import type { StationType } from './StationType';
+import {
+    StationTypeFromJSON,
+    StationTypeFromJSONTyped,
+    StationTypeToJSON,
+    StationTypeToJSONTyped,
+} from './StationType';
 
 /**
  * 
@@ -72,30 +77,50 @@ export interface StationsListResponseItem {
      */
     startDate: Date;
     /**
-     *
+     * 
      * @type {StationType}
      * @memberof StationsListResponseItem
      */
     stationType?: StationType;
     /**
-     *
-     * @type {object}
+     * 
+     * @type {string}
      * @memberof StationsListResponseItem
      */
-    geometry?: object;
+    timezone: string;
     /**
      * 
-     * @type {Array<SensorSummaryForStations>}
+     * @type {{ [key: string]: any; }}
      * @memberof StationsListResponseItem
      */
-    sensors?: Array<SensorSummaryForStations>;
+    geometry?: { [key: string]: any; };
+    /**
+     * 
+     * @type {boolean}
+     * @memberof StationsListResponseItem
+     */
+    isPublished?: boolean;
+    /**
+     * 
+     * @type {Date}
+     * @memberof StationsListResponseItem
+     */
+    publishedAt?: Date | null;
     /**
      * 
      * @type {{ [key: string]: any; }}
      * @memberof StationsListResponseItem
      */
     metadata?: { [key: string]: any; } | null;
+    /**
+     * 
+     * @type {Array<SensorSummaryForStations>}
+     * @memberof StationsListResponseItem
+     */
+    sensors?: Array<SensorSummaryForStations>;
 }
+
+
 
 /**
  * Check if a given object implements the StationsListResponseItem interface.
@@ -104,6 +129,7 @@ export function instanceOfStationsListResponseItem(value: object): value is Stat
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('startDate' in value) || value['startDate'] === undefined) return false;
+    if (!('timezone' in value) || value['timezone'] === undefined) return false;
     return true;
 }
 
@@ -125,9 +151,12 @@ export function StationsListResponseItemFromJSONTyped(json: any, ignoreDiscrimin
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
+        'timezone': json['timezone'],
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
-        'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorSummaryForStationsFromJSON)),
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
+        'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorSummaryForStationsFromJSON)),
     };
 }
 
@@ -150,8 +179,12 @@ export function StationsListResponseItemToJSONTyped(value?: StationsListResponse
         'active': value['active'],
         'start_date': ((value['startDate']).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
+        'timezone': value['timezone'],
         'geometry': value['geometry'],
-        'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorSummaryForStationsToJSON)),
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
         'metadata': value['metadata'],
+        'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorSummaryForStationsToJSON)),
     };
 }
+

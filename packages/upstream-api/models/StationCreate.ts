@@ -71,6 +71,12 @@ export interface StationCreate {
     stationType?: StationType;
     /**
      * 
+     * @type {string}
+     * @memberof StationCreate
+     */
+    timezone: string;
+    /**
+     * 
      * @type {{ [key: string]: any; }}
      * @memberof StationCreate
      */
@@ -85,6 +91,7 @@ export interface StationCreate {
 export function instanceOfStationCreate(value: object): value is StationCreate {
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('startDate' in value) || value['startDate'] === undefined) return false;
+    if (!('timezone' in value) || value['timezone'] === undefined) return false;
     return true;
 }
 
@@ -105,6 +112,7 @@ export function StationCreateFromJSONTyped(json: any, ignoreDiscriminator: boole
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
+        'timezone': json['timezone'],
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
@@ -127,6 +135,8 @@ export function StationCreateToJSONTyped(value?: StationCreate | null, ignoreDis
         'active': value['active'],
         'start_date': ((value['startDate']).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
+        'timezone': value['timezone'],
         'metadata': value['metadata'],
     };
 }
+

@@ -118,3 +118,4 @@ export function CampaignUpdateToJSONTyped(value?: CampaignUpdate | null, ignoreD
         'metadata': value['metadata'],
     };
 }
+

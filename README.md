@@ -477,7 +477,7 @@ One row per reading, with one column per sensor `alias`.
 
 | Column | Required | Notes |
 | --- | --- | --- |
-| `collectiontime` | Yes | ISO date or timestamp (`YYYY-MM-DD` or full timestamp). |
+| `collectiontime` | Yes | ISO date or timestamp (`YYYY-MM-DD` or full timestamp). Naive timestamps are interpreted in the station's declared timezone; timestamps with a timezone (`Z` or offset) are used as-is. |
 | `Lat_deg` / `Lon_deg` | Yes | Location of the reading, in decimal degrees. |
 | One column per sensor `alias` | Yes (one or more) | Column name must exactly match an `alias` from the sensors CSV. Leave a cell blank for a missing reading. |
 

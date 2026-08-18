@@ -60,7 +60,7 @@ export interface CampaignsIn {
      * @type {string}
      * @memberof CampaignsIn
      */
-    allocation: string;
+    allocation?: string | null;
     /**
      * 
      * @type {{ [key: string]: any; }}
@@ -74,7 +74,6 @@ export interface CampaignsIn {
  */
 export function instanceOfCampaignsIn(value: object): value is CampaignsIn {
     if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('allocation' in value) || value['allocation'] === undefined) return false;
     return true;
 }
 
@@ -94,7 +93,7 @@ export function CampaignsInFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'description': json['description'] == null ? undefined : json['description'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'endDate': json['end_date'] == null ? undefined : (new Date(json['end_date'])),
-        'allocation': json['allocation'],
+        'allocation': json['allocation'] == null ? undefined : json['allocation'],
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
@@ -120,3 +119,4 @@ export function CampaignsInToJSONTyped(value?: CampaignsIn | null, ignoreDiscrim
         'metadata': value['metadata'],
     };
 }
+

@@ -5,6 +5,7 @@ import { useCreate } from '../../../../hooks/station/useCreate';
 import { useMetadataSchemaList } from '../../../../hooks/metadataSchema/useMetadataSchemaList';
 import MetadataFields from '../../../../components/MetadataFields/MetadataFields';
 import { normalizeMetadata } from '../../../../utils/metadata';
+import { TIMEZONES, suggestedTimezoneFor } from '../../../../utils/timezones';
 
 interface CreateStationFormProps {
   campaignId: string;
@@ -12,7 +13,7 @@ interface CreateStationFormProps {
   onCancel?: () => void;
 }
 
-const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCancel }) => {
+const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, campaign, onCancel }) => {
   const history = useHistory();
   const createStation = useCreate(campaignId);
   const { data: metadataSchemaResponse, isLoading: metadataSchemaLoading } = useMetadataSchemaList({
@@ -21,14 +22,18 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
   });
   const metadataSchema = metadataSchemaResponse?.items ?? [];
 
-  const [formData, setFormData] = useState<StationCreate>({
-    name: '',
-    description: '',
-    contactName: '',
-    contactEmail: '',
-    active: true,
-    startDate: new Date(),
-    stationType: StationType.Static,
+  const [formData, setFormData] = useState<StationCreate>(() => {
+    const suggested = suggestedTimezoneFor(campaign);
+    return {
+      name: '',
+      description: '',
+      contactName: '',
+      contactEmail: '',
+      active: true,
+      startDate: new Date(),
+      stationType: StationType.Static,
+      timezone: suggested ?? 'UTC',
+    };
   });
   const [metadataValues, setMetadataValues] = useState<Record<string, any>>({});
 
@@ -62,6 +67,10 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
 
     if (!formData.startDate) {
       newErrors.startDate = 'Start date is required';
+    }
+
+    if (!formData.timezone) {
+      newErrors.timezone = 'Timezone is required';
     }
 
     if (formData.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
@@ -217,6 +226,32 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, onCan
             <option value={StationType.Static}>Static</option>
             <option value={StationType.Mobile}>Mobile</option>
           </select>
+        </div>
+
+        {/* Timezone */}
+        <div>
+          <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-2">
+            Timezone *
+          </label>
+          <select
+            id="timezone"
+            value={formData.timezone || ''}
+            onChange={(e) => handleInputChange('timezone', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.timezone ? 'border-red-500' : 'border-gray-300'
+            }`}
+          >
+            {TIMEZONES.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Naive collection times in uploaded data are interpreted in this timezone. Suggested from
+            the campaign location — verify it matches where the station operates.
+          </p>
+          {errors.timezone && <p className="mt-1 text-sm text-red-600">{errors.timezone}</p>}
         </div>
 
         {/* Active Status */}

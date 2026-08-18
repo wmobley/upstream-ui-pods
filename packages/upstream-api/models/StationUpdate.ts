@@ -71,6 +71,12 @@ export interface StationUpdate {
     stationType?: StationType | null;
     /**
      * 
+     * @type {string}
+     * @memberof StationUpdate
+     */
+    timezone?: string | null;
+    /**
+     * 
      * @type {{ [key: string]: any; }}
      * @memberof StationUpdate
      */
@@ -103,6 +109,7 @@ export function StationUpdateFromJSONTyped(json: any, ignoreDiscriminator: boole
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
+        'timezone': json['timezone'] == null ? undefined : json['timezone'],
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
@@ -125,6 +132,8 @@ export function StationUpdateToJSONTyped(value?: StationUpdate | null, ignoreDis
         'active': value['active'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
+        'timezone': value['timezone'],
         'metadata': value['metadata'],
     };
 }
+

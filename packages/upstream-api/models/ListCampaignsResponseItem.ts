@@ -96,10 +96,22 @@ export interface ListCampaignsResponseItem {
     summary: SummaryListCampaigns;
     /**
      * 
-     * @type {object}
+     * @type {{ [key: string]: any; }}
      * @memberof ListCampaignsResponseItem
      */
-    geometry?: object;
+    geometry?: { [key: string]: any; };
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListCampaignsResponseItem
+     */
+    isPublished?: boolean;
+    /**
+     * 
+     * @type {Date}
+     * @memberof ListCampaignsResponseItem
+     */
+    publishedAt?: Date | null;
     /**
      * 
      * @type {{ [key: string]: any; }}
@@ -139,6 +151,8 @@ export function ListCampaignsResponseItemFromJSONTyped(json: any, ignoreDiscrimi
         'allocation': json['allocation'] == null ? undefined : json['allocation'],
         'summary': SummaryListCampaignsFromJSON(json['summary']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
@@ -165,6 +179,9 @@ export function ListCampaignsResponseItemToJSONTyped(value?: ListCampaignsRespon
         'allocation': value['allocation'],
         'summary': SummaryListCampaignsToJSON(value['summary']),
         'geometry': value['geometry'],
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
         'metadata': value['metadata'],
     };
 }
+

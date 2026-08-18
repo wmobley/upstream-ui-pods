@@ -71,6 +71,18 @@ export interface SensorItem {
     variablename?: string | null;
     /**
      * 
+     * @type {boolean}
+     * @memberof SensorItem
+     */
+    isPublished?: boolean;
+    /**
+     * 
+     * @type {Date}
+     * @memberof SensorItem
+     */
+    publishedAt?: Date | null;
+    /**
+     * 
      * @type {SensorStatistics}
      * @memberof SensorItem
      */
@@ -108,6 +120,8 @@ export function SensorItemFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'postprocessscript': json['postprocessscript'] == null ? undefined : json['postprocessscript'],
         'units': json['units'] == null ? undefined : json['units'],
         'variablename': json['variablename'] == null ? undefined : json['variablename'],
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
         'statistics': json['statistics'] == null ? undefined : SensorStatisticsFromJSON(json['statistics']),
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
@@ -131,7 +145,10 @@ export function SensorItemToJSONTyped(value?: SensorItem | null, ignoreDiscrimin
         'postprocessscript': value['postprocessscript'],
         'units': value['units'],
         'variablename': value['variablename'],
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
         'statistics': SensorStatisticsToJSON(value['statistics']),
         'metadata': value['metadata'],
     };
 }
+

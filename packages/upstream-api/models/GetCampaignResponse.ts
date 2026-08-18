@@ -88,7 +88,7 @@ export interface GetCampaignResponse {
      * @type {string}
      * @memberof GetCampaignResponse
      */
-    allocation: string;
+    allocation?: string | null;
     /**
      * 
      * @type {Location}
@@ -103,16 +103,28 @@ export interface GetCampaignResponse {
     summary: SummaryGetCampaign;
     /**
      * 
-     * @type {object}
+     * @type {{ [key: string]: any; }}
      * @memberof GetCampaignResponse
      */
-    geometry?: object;
+    geometry?: { [key: string]: any; };
     /**
      * 
      * @type {Array<StationsListResponseItem>}
      * @memberof GetCampaignResponse
      */
     stations?: Array<StationsListResponseItem>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof GetCampaignResponse
+     */
+    isPublished?: boolean;
+    /**
+     * 
+     * @type {Date}
+     * @memberof GetCampaignResponse
+     */
+    publishedAt?: Date | null;
     /**
      * 
      * @type {{ [key: string]: any; }}
@@ -127,7 +139,6 @@ export interface GetCampaignResponse {
 export function instanceOfGetCampaignResponse(value: object): value is GetCampaignResponse {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('allocation' in value) || value['allocation'] === undefined) return false;
     if (!('summary' in value) || value['summary'] === undefined) return false;
     return true;
 }
@@ -149,11 +160,13 @@ export function GetCampaignResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'contactEmail': json['contact_email'] == null ? undefined : json['contact_email'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'endDate': json['end_date'] == null ? undefined : (new Date(json['end_date'])),
-        'allocation': json['allocation'],
+        'allocation': json['allocation'] == null ? undefined : json['allocation'],
         'location': json['location'] == null ? undefined : LocationFromJSON(json['location']),
         'summary': SummaryGetCampaignFromJSON(json['summary']),
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
         'stations': json['stations'] == null ? undefined : ((json['stations'] as Array<any>).map(StationsListResponseItemFromJSON)),
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
@@ -181,6 +194,9 @@ export function GetCampaignResponseToJSONTyped(value?: GetCampaignResponse | nul
         'summary': SummaryGetCampaignToJSON(value['summary']),
         'geometry': value['geometry'],
         'stations': value['stations'] == null ? undefined : ((value['stations'] as Array<any>).map(StationsListResponseItemToJSON)),
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
         'metadata': value['metadata'],
     };
 }
+

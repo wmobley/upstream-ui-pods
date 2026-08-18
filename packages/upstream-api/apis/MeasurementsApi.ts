@@ -42,12 +42,16 @@ export interface CreateMeasurementApiV1CampaignsCampaignIdStationsStationIdSenso
     sensorId: number;
     campaignId: number;
     measurementIn: MeasurementIn;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface DeleteSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsDeleteRequest {
     campaignId: number;
     stationId: number;
     sensorId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest {
@@ -60,6 +64,8 @@ export interface GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdS
     endDate?: Date | null;
     minValue?: number | null;
     maxValue?: number | null;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest {
@@ -73,6 +79,23 @@ export interface GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdS
     limit?: number;
     page?: number;
     downsampleThreshold?: number | null;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+}
+
+export interface GetSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGetRequest {
+    campaignId: number;
+    stationId: number;
+    sensorId: number;
+    startDate?: Date | null;
+    endDate?: Date | null;
+    minMeasurementValue?: number | null;
+    maxMeasurementValue?: number | null;
+    limit?: number;
+    page?: number;
+    downsampleThreshold?: number | null;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface PartialUpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsMeasurementIdPatchRequest {
@@ -81,6 +104,8 @@ export interface PartialUpdateSensorApiV1CampaignsCampaignIdStationsStationIdSen
     sensorId: number;
     measurementId: number;
     measurementUpdate: MeasurementUpdate;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsMeasurementIdPutRequest {
@@ -89,6 +114,8 @@ export interface UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSen
     sensorId: number;
     campaignId: number;
     measurementUpdate: MeasurementUpdate;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 /**
@@ -133,6 +160,14 @@ export class MeasurementsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
@@ -186,6 +221,14 @@ export class MeasurementsApi extends runtime.BaseAPI {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
@@ -263,6 +306,14 @@ export class MeasurementsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         const response = await this.request({
             path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}/measurements/confidence-intervals`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
             method: 'GET',
@@ -339,9 +390,12 @@ export class MeasurementsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        if (this.configuration && this.configuration.accessToken) {
-            // oauth required
-            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
         }
 
         const response = await this.request({
@@ -359,6 +413,93 @@ export class MeasurementsApi extends runtime.BaseAPI {
      */
     async getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(requestParameters: GetSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListMeasurementsResponsePagination> {
         const response = await this.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get Sensor Measurements Geojson
+     */
+    async getSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGetRaw(requestParameters: GetSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling getSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGet().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling getSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGet().'
+            );
+        }
+
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling getSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['startDate'] != null) {
+            queryParameters['start_date'] = (requestParameters['startDate'] as any).toISOString();
+        }
+
+        if (requestParameters['endDate'] != null) {
+            queryParameters['end_date'] = (requestParameters['endDate'] as any).toISOString();
+        }
+
+        if (requestParameters['minMeasurementValue'] != null) {
+            queryParameters['min_measurement_value'] = requestParameters['minMeasurementValue'];
+        }
+
+        if (requestParameters['maxMeasurementValue'] != null) {
+            queryParameters['max_measurement_value'] = requestParameters['maxMeasurementValue'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['downsampleThreshold'] != null) {
+            queryParameters['downsample_threshold'] = requestParameters['downsampleThreshold'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}/measurements.geojson`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<any>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Get Sensor Measurements Geojson
+     */
+    async getSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGet(requestParameters: GetSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+        const response = await this.getSensorMeasurementsGeojsonApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGeojsonGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -406,6 +547,14 @@ export class MeasurementsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
@@ -475,6 +624,14 @@ export class MeasurementsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required

@@ -16,10 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   HTTPValidationError,
+  UploadFileCsvResponse,
 } from '../models/index';
 import {
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
+    UploadFileCsvResponseFromJSON,
+    UploadFileCsvResponseToJSON,
 } from '../models/index';
 
 export interface PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest {
@@ -27,6 +30,12 @@ export interface PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdSta
     stationId: number;
     uploadFileSensors: Blob;
     uploadFileMeasurements: Blob;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+    uploadSessionId?: string | null;
+    finalizeUpload?: boolean;
+    chunkIndex?: number | null;
+    totalChunks?: number | null;
 }
 
 /**
@@ -35,10 +44,10 @@ export interface PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdSta
 export class UploadfileCsvApi extends runtime.BaseAPI {
 
     /**
-     * Process sensor and measurement files and store data in the database.
+     * Process sensor and measurement files and store data in the database.  Chunked uploads share a client-generated ``upload_session_id``. The measurements are inserted for every chunk; expensive post-processing (sensor statistics, station geometry, CKAN sync) runs only once when the upload session is verified complete.
      * Post Sensor And Measurement
      */
-    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRaw(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRaw(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UploadFileCsvResponse>> {
         if (requestParameters['campaignId'] == null) {
             throw new runtime.RequiredError(
                 'campaignId',
@@ -71,6 +80,14 @@ export class UploadfileCsvApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -102,6 +119,22 @@ export class UploadfileCsvApi extends runtime.BaseAPI {
             formParams.append('upload_file_measurements', requestParameters['uploadFileMeasurements'] as any);
         }
 
+        if (requestParameters['uploadSessionId'] != null) {
+            formParams.append('upload_session_id', requestParameters['uploadSessionId'] as any);
+        }
+
+        if (requestParameters['finalizeUpload'] != null) {
+            formParams.append('finalize_upload', requestParameters['finalizeUpload'] as any);
+        }
+
+        if (requestParameters['chunkIndex'] != null) {
+            formParams.append('chunk_index', requestParameters['chunkIndex'] as any);
+        }
+
+        if (requestParameters['totalChunks'] != null) {
+            formParams.append('total_chunks', requestParameters['totalChunks'] as any);
+        }
+
         const response = await this.request({
             path: `/api/v1/uploadfile_csv/campaign/{campaign_id}/station/{station_id}/sensor`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))),
             method: 'POST',
@@ -110,14 +143,14 @@ export class UploadfileCsvApi extends runtime.BaseAPI {
             body: formParams,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => UploadFileCsvResponseFromJSON(jsonValue));
     }
 
     /**
-     * Process sensor and measurement files and store data in the database.
+     * Process sensor and measurement files and store data in the database.  Chunked uploads share a client-generated ``upload_session_id``. The measurements are inserted for every chunk; expensive post-processing (sensor statistics, station geometry, CKAN sync) runs only once when the upload session is verified complete.
      * Post Sensor And Measurement
      */
-    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+    async postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPost(requestParameters: PostSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UploadFileCsvResponse> {
         const response = await this.postSensorAndMeasurementApiV1UploadfileCsvCampaignCampaignIdStationStationIdSensorPostRaw(requestParameters, initOverrides);
         return await response.value();
     }

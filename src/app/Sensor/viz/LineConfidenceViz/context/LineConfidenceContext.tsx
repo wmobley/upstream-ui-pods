@@ -1,11 +1,13 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { useDetail } from '../../../../../hooks/sensor/useDetail';
+import { useDetail as useStationDetail } from '../../../../../hooks/station/useDetail';
 import { useList } from '../../../../../hooks/measurements/useList';
 import { useListConfidenceValues } from '../../../../../hooks/measurements/useListConfidenceValues';
 import {
   AggregationInterval,
   AGGREGATION_INTERVALS,
   LineConfidenceContext,
+  parseAggregationOptionValue,
   SensorData,
   SensorInfo,
   useLineConfidence,
@@ -109,11 +111,19 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   sensorId,
 }) => {
   const { data, isLoading, error } = useDetail(campaignId, stationId, sensorId);
+  // Station timezone: measurements are stored as UTC instants; the chart
+  // renders times in the station's IANA timezone. (React Query dedupes this
+  // against the station fetch in LineConfidenceViz via the shared query key.)
+  const { station } = useStationDetail(campaignId, stationId);
+  const stationTimezone = station?.timezone ?? 'UTC';
   const [selectedTimeRange, setSelectedTimeRange] = useState<
     [number, number] | null
   >(null);
   const [aggregationInterval, setAggregationInterval] =
     useState<AggregationInterval>('minute');
+  // Window size paired with aggregationInterval; sub-minute options (2s/5s/10s)
+  // use values > 1 with interval 'second', whole-unit options use 1.
+  const [aggregationValue, setAggregationValue] = useState<number>(1);
   const [hasUserSelectedAggregation, setHasUserSelectedAggregation] =
     useState(false);
   const [additionalSensorInfos, setAdditionalSensorInfos] = useState<
@@ -165,6 +175,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
 
   useEffect(() => {
     setAggregationInterval('minute');
+    setAggregationValue(1);
     setHasUserSelectedAggregation(false);
   }, [campaignId, stationId, sensorId]);
 
@@ -172,10 +183,13 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setHasUserSelectedAggregation(true);
-    setAggregationInterval(event.target.value as AggregationInterval);
+    const option = parseAggregationOptionValue(event.target.value);
+    if (option) {
+      setAggregationInterval(option.interval);
+      setAggregationValue(option.value);
+    }
   };
 
-  const aggregationValue = 1;
   const effectiveInterval = aggregationInterval;
 
   const {
@@ -224,6 +238,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
 
     if (nextInterval) {
       setAggregationInterval(nextInterval);
+      // Whole-unit intervals always use window size 1.
+      setAggregationValue(1);
     }
   }, [
     aggregationInterval,
@@ -317,10 +333,13 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     data,
     isLoading,
     error,
+    stationTimezone,
     selectedTimeRange,
     setSelectedTimeRange,
     aggregationInterval,
     setAggregationInterval,
+    aggregationValue,
+    setAggregationValue,
     handleAggregationIntervalChange,
     aggregatedData,
     aggregatedLoading,

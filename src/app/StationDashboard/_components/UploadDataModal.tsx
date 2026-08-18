@@ -7,6 +7,7 @@ interface UploadDataModalProps {
   onClose: () => void;
   campaignId: string;
   stationId: string;
+  stationTimezone?: string;
 }
 
 interface UploadProgress {
@@ -25,6 +26,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   onClose,
   campaignId,
   stationId,
+  stationTimezone,
 }) => {
   const [sensorFile, setSensorFile] = useState<File | null>(null);
   const [measurementFile, setMeasurementFile] = useState<File | null>(null);
@@ -314,10 +316,24 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
           <p className="mt-1 text-xs text-gray-500">
             Measurement CSV must include <code>collectiontime</code>,{' '}
             <code>Lat_deg</code>, <code>Lon_deg</code>, and one column per
-            sensor <code>alias</code>. Dates should be ISO (YYYY-MM-DD or full
-            timestamp). Numbers should not include commas; leave blanks for
-            missing values.
+            sensor <code>alias</code>.
           </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-gray-500">
+            <li>
+              Timestamps are ISO-8601: <code>YYYY-MM-DD</code> or{' '}
+              <code>YYYY-MM-DD HH:MM:SS</code>, optionally with <code>Z</code>{' '}
+              or <code>+HH:MM</code>.
+            </li>
+            <li>
+              Naive timestamps are interpreted in the station's timezone
+              ({stationTimezone || 'UTC'}); timestamps that include a timezone
+              are used as-is.
+            </li>
+            <li>
+              Numbers should not include commas; leave blanks for missing
+              values.
+            </li>
+          </ul>
         </div>
 
         <div className="rounded-md border border-gray-200 bg-gray-50 p-3">

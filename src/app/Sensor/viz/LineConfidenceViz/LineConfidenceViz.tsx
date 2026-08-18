@@ -58,13 +58,13 @@ const LineConfidenceViz = ({
 
 // Inner component that uses the context
 const LineConfidenceContent = () => {
-  const { data, isLoading, error, addSensorModalOpen } = useLineConfidence();
+  const { data, isLoading, error, addSensorModalOpen, stationTimezone } = useLineConfidence();
 
   return (
     <QueryWrapper isLoading={isLoading} error={error}>
       {data && (
         <div className="mx-auto flex flex-col max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <MeasurementSummary data={data} />
+          <MeasurementSummary data={data} timezone={stationTimezone} />
           <Controls />
           <AdditionalSensorsList />
           {/* Click a point on the chart to view/add a note at the nearest

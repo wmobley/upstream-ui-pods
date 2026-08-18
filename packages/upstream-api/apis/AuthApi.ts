@@ -17,12 +17,15 @@ import * as runtime from '../runtime';
 import type {
   HTTPValidationError,
   LoginResponse,
+  MeResponse,
 } from '../models/index';
 import {
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
     LoginResponseFromJSON,
     LoginResponseToJSON,
+    MeResponseFromJSON,
+    MeResponseToJSON,
 } from '../models/index';
 
 export interface LoginApiV1TokenPostRequest {
@@ -38,6 +41,39 @@ export interface LoginApiV1TokenPostRequest {
  * 
  */
 export class AuthApi extends runtime.BaseAPI {
+
+    /**
+     * Return the authenticated user\'s username and role. Accepts both internal HS256 JWTs and raw Tapis RS256 JWTs, so Tapis-authenticated sessions can fetch their role.
+     * Get Me
+     */
+    async getMeApiV1UsersMeGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MeResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/users/me`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MeResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Return the authenticated user\'s username and role. Accepts both internal HS256 JWTs and raw Tapis RS256 JWTs, so Tapis-authenticated sessions can fetch their role.
+     * Get Me
+     */
+    async getMeApiV1UsersMeGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MeResponse> {
+        const response = await this.getMeApiV1UsersMeGetRaw(initOverrides);
+        return await response.value();
+    }
 
     /**
      * Login

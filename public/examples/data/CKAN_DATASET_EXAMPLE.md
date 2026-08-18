@@ -85,6 +85,13 @@ For API upload compatibility:
 - Empty measurement cells are allowed and skipped
 - `Lon_deg` and `Lat_deg` are used to build the geometry stored for each measurement
 
+#### Time zones
+
+- `collectiontime` values are ISO-8601 strings: `YYYY-MM-DD` (treated as midnight) or `YYYY-MM-DD HH:MM:SS`, optionally ending with a timezone indicator (`Z` or `+HH:MM`).
+- **Naive** values (no `Z` or offset) are interpreted in the station's declared IANA timezone, shown in the upload dialog (e.g. `America/Chicago`). Daylight saving is applied automatically based on the date and the zone's rules.
+- **Aware** values (with `Z` or an offset) are used as-is and converted to UTC for storage.
+- The example `collectiontime` values in this file are naive local times — they will be interpreted in the destination station's timezone on upload.
+
 **Format**  
 CSV
 

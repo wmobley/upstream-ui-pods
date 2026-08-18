@@ -1,4 +1,9 @@
 import { useLineConfidence } from '../context/LineConfidenceContextState';
+import {
+  AGGREGATION_OPTIONS,
+  aggregationOptionValue,
+  aggregationSelectionValue,
+} from '../context/LineConfidenceContextState';
 import { Link } from 'react-router-dom';
 import { AddSensorButton } from './AddSensorButton';
 import { useState } from 'react';
@@ -7,6 +12,7 @@ import { MeasurementItem } from '@upstream/upstream-api';
 const Controls = () => {
   const {
     aggregationInterval,
+    aggregationValue,
     renderDataPoints,
     setRenderDataPoints,
     aggregatedData,
@@ -190,15 +196,21 @@ const Controls = () => {
             </label>
             <select
               id="aggregationInterval"
-              value={aggregationInterval}
+              value={aggregationSelectionValue(
+                aggregationInterval,
+                aggregationValue,
+              )}
               onChange={handleAggregationIntervalChange}
               className="form-select text-sm border rounded px-2 py-1"
             >
-              <option value="minute">Minute</option>
-              <option value="hour">Hour</option>
-              <option value="day">Day</option>
-              <option value="week">Week</option>
-              <option value="month">Month</option>
+              {AGGREGATION_OPTIONS.map((option) => (
+                <option
+                  key={aggregationOptionValue(option)}
+                  value={aggregationOptionValue(option)}
+                >
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 

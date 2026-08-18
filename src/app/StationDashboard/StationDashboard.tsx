@@ -17,6 +17,7 @@ import {useDetail as campaignInfo} from '../../hooks/campaign/useDetail';
 import { useAuth } from '../../contexts/AuthContextState';
 import EditMetadataModal from '../../components/MetadataFields/EditMetadataModal';
 import { useUpdate as useUpdateStation } from '../../hooks/station/useUpdate';
+import { TIMEZONES } from '../../utils/timezones';
 import {
   formatPublishError,
   formatPublishSuccess,
@@ -183,6 +184,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
     description?: string | null;
     contactName?: string | null;
     contactEmail?: string | null;
+    timezone?: string | null;
     metadata?: Record<string, unknown> | null;
   }) => {
     await updateStation.mutateAsync({
@@ -193,6 +195,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
         description: payload.description ?? null,
         contactName: payload.contactName ?? null,
         contactEmail: payload.contactEmail ?? null,
+        timezone: payload.timezone ?? null,
         metadata: payload.metadata ?? {},
       },
     });
@@ -434,6 +437,7 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
             onClose={() => setIsUploadModalOpen(false)}
             campaignId={campaignId}
             stationId={stationId}
+            stationTimezone={station?.timezone ?? 'UTC'}
           />
 
           <ConfirmDialog
@@ -540,12 +544,22 @@ const StationDashboard: React.FC<StationDashboardProps> = ({
                 type: 'email',
                 helpText: 'Maps to the CKAN author/maintainer email when configured.',
               },
+              {
+                key: 'timezone',
+                label: 'Timezone',
+                type: 'select',
+                required: true,
+                helpText:
+                  'Naive collection times in uploaded data are interpreted in this IANA timezone.',
+                options: TIMEZONES.map((tz) => ({ label: tz, value: tz })),
+              },
             ]}
             initialValues={{
               name: station?.name ?? '',
               description: station?.description ?? '',
               contactName: station?.contactName ?? '',
               contactEmail: station?.contactEmail ?? '',
+              timezone: station?.timezone ?? 'UTC',
             }}
             initialMetadata={station?.metadata as
               | Record<string, unknown>

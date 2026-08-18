@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ForceUpdateSensorStatisticsResponse,
   GetSensorResponse,
   HTTPValidationError,
   ListSensorsResponsePagination,
@@ -23,8 +24,11 @@ import type {
   SensorCreateResponse,
   SensorUpdate,
   SortField,
+  UpdateSensorStatisticsResponse,
 } from '../models/index';
 import {
+    ForceUpdateSensorStatisticsResponseFromJSON,
+    ForceUpdateSensorStatisticsResponseToJSON,
     GetSensorResponseFromJSON,
     GetSensorResponseToJSON,
     HTTPValidationErrorFromJSON,
@@ -41,17 +45,46 @@ import {
     SensorUpdateToJSON,
     SortFieldFromJSON,
     SortFieldToJSON,
+    UpdateSensorStatisticsResponseFromJSON,
+    UpdateSensorStatisticsResponseToJSON,
 } from '../models/index';
 
 export interface DeleteSensorApiV1CampaignsCampaignIdStationsStationIdSensorsDeleteRequest {
     campaignId: number;
     stationId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+}
+
+export interface DeleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDeleteRequest {
+    campaignId: number;
+    stationId: number;
+    sensorId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+}
+
+export interface ForceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPostRequest {
+    campaignId: number;
+    stationId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+}
+
+export interface ForceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPostRequest {
+    campaignId: number;
+    stationId: number;
+    sensorId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface GetSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdGetRequest {
     stationId: number;
     sensorId: number;
     campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetRequest {
@@ -66,6 +99,8 @@ export interface ListSensorsApiV1CampaignsCampaignIdStationsStationIdSensorsGetR
     postprocess?: boolean | null;
     sortBy?: SortField | null;
     sortOrder?: string;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface PartialUpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPatchRequest {
@@ -73,19 +108,16 @@ export interface PartialUpdateSensorApiV1CampaignsCampaignIdStationsStationIdSen
     stationId: number;
     sensorId: number;
     sensorUpdate: SensorUpdate;
-}
-
-export interface UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRequest {
-    sensorId: number;
-    stationId: number;
-    campaignId: number;
-    sensorUpdate: SensorUpdate;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface PublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPublishPostRequest {
     campaignId: number;
     stationId: number;
     sensorId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
     publishRequest?: PublishRequest;
 }
 
@@ -93,6 +125,18 @@ export interface UnpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensors
     campaignId: number;
     stationId: number;
     sensorId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+    publishRequest?: PublishRequest;
+}
+
+export interface UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRequest {
+    sensorId: number;
+    stationId: number;
+    campaignId: number;
+    sensorUpdate: SensorUpdate;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 /**
@@ -122,6 +166,14 @@ export class SensorsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -142,6 +194,182 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async deleteSensorApiV1CampaignsCampaignIdStationsStationIdSensorsDelete(requestParameters: DeleteSensorApiV1CampaignsCampaignIdStationsStationIdSensorsDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteSensorApiV1CampaignsCampaignIdStationsStationIdSensorsDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Delete Sensor Sensor Id
+     */
+    async deleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDeleteRaw(requestParameters: DeleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling deleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDelete().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling deleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDelete().'
+            );
+        }
+
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling deleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete Sensor Sensor Id
+     */
+    async deleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDelete(requestParameters: DeleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteSensorSensorIdApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Force update sensor statistics for all sensors in the station
+     * Force Update Sensor Statistics
+     */
+    async forceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPostRaw(requestParameters: ForceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ForceUpdateSensorStatisticsResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling forceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPost().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling forceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/statistics`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ForceUpdateSensorStatisticsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Force update sensor statistics for all sensors in the station
+     * Force Update Sensor Statistics
+     */
+    async forceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPost(requestParameters: ForceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ForceUpdateSensorStatisticsResponse> {
+        const response = await this.forceUpdateSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsStatisticsPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Force update sensor statistics for a single sensor
+     * Force Update Single Sensor Statistics
+     */
+    async forceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPostRaw(requestParameters: ForceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UpdateSensorStatisticsResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling forceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPost().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling forceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPost().'
+            );
+        }
+
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling forceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}/statistics`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UpdateSensorStatisticsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Force update sensor statistics for a single sensor
+     * Force Update Single Sensor Statistics
+     */
+    async forceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPost(requestParameters: ForceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UpdateSensorStatisticsResponse> {
+        const response = await this.forceUpdateSingleSensorStatisticsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdStatisticsPostRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
@@ -172,6 +400,14 @@ export class SensorsApi extends runtime.BaseAPI {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
@@ -254,6 +490,14 @@ export class SensorsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -315,6 +559,14 @@ export class SensorsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -336,68 +588,6 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async partialUpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPatch(requestParameters: PartialUpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorCreateResponse> {
         const response = await this.partialUpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPatchRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Update Sensor
-     */
-    async updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRaw(requestParameters: UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorCreateResponse>> {
-        if (requestParameters['sensorId'] == null) {
-            throw new runtime.RequiredError(
-                'sensorId',
-                'Required parameter "sensorId" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
-            );
-        }
-
-        if (requestParameters['stationId'] == null) {
-            throw new runtime.RequiredError(
-                'stationId',
-                'Required parameter "stationId" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
-            );
-        }
-
-        if (requestParameters['campaignId'] == null) {
-            throw new runtime.RequiredError(
-                'campaignId',
-                'Required parameter "campaignId" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
-            );
-        }
-
-        if (requestParameters['sensorUpdate'] == null) {
-            throw new runtime.RequiredError(
-                'sensorUpdate',
-                'Required parameter "sensorUpdate" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            // oauth required
-            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
-        }
-
-        const response = await this.request({
-            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}`.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: SensorUpdateToJSON(requestParameters['sensorUpdate']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => SensorCreateResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Update Sensor
-     */
-    async updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut(requestParameters: UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorCreateResponse> {
-        const response = await this.updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -432,9 +622,17 @@ export class SensorsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
-            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
         }
 
         const response = await this.request({
@@ -485,8 +683,19 @@ export class SensorsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
-            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
         }
 
         const response = await this.request({
@@ -494,6 +703,7 @@ export class SensorsApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: PublishRequestToJSON(requestParameters['publishRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
@@ -504,6 +714,76 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPost(requestParameters: UnpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
         const response = await this.unpublishSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdUnpublishPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update Sensor
+     */
+    async updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRaw(requestParameters: UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorCreateResponse>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
+            );
+        }
+
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
+            );
+        }
+
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
+            );
+        }
+
+        if (requestParameters['sensorUpdate'] == null) {
+            throw new runtime.RequiredError(
+                'sensorUpdate',
+                'Required parameter "sensorUpdate" was null or undefined when calling updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}`.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))).replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SensorUpdateToJSON(requestParameters['sensorUpdate']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorCreateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Update Sensor
+     */
+    async updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPut(requestParameters: UpdateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorCreateResponse> {
+        const response = await this.updateSensorApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdPutRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

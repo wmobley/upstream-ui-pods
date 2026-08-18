@@ -3,6 +3,7 @@ import type { AdditionalSensor } from '../../../../LineConfidenceChart/LineConfi
 import { formatNumber } from '../../../../common/NumberFormatter/NumberFortatterUtils';
 import QueryWrapper from '../../../../common/QueryWrapper';
 import { useLineConfidence } from '../context/LineConfidenceContextState';
+import { formatTimeInZone } from '../../../../../utils/timezones';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 
 export const Chart = () => {
@@ -22,6 +23,7 @@ export const Chart = () => {
     sensorId,
     maxValueChart,
     minValueChart,
+    stationTimezone,
   } = useLineConfidence();
 
   // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
@@ -100,15 +102,13 @@ export const Chart = () => {
             loading={addingSensor}
             margin={{ top: 10, right: 50, bottom: 50, left: 50 }}
             colors={colorPalette[0]}
-            xAxisTitle="Date"
+            xAxisTitle={`Date (${stationTimezone})`}
             yAxisTitle={data?.units ?? 'value'}
             xFormatter={(date: Date | number) => {
-              const dateObj = date instanceof Date ? date : new Date(date);
-              return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
+              return formatTimeInZone(date, stationTimezone);
             }}
             xFormatterOverview={(date: Date | number) => {
-              const dateObj = date instanceof Date ? date : new Date(date);
-              return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
+              return formatTimeInZone(date, stationTimezone);
             }}
             yFormatter={(value: number) => {
               return formatNumber(value);

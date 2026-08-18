@@ -12,52 +12,105 @@
  * Do not edit the class manually.
  */
 
+import { mapValues } from '../runtime';
 /**
- *
+ * Response schema for publish/unpublish operations.
  * @export
  * @interface PublishResponse
  */
 export interface PublishResponse {
     /**
-     *
-     * @type {number}
-     * @memberof PublishResponse
-     */
-    id: number;
-    /**
-     *
-     * @type {string}
-     * @memberof PublishResponse
-     */
-    type: string;
-    /**
-     *
+     * 
      * @type {boolean}
      * @memberof PublishResponse
      */
-    isPublished: boolean;
+    success: boolean;
     /**
-     *
+     * 
+     * @type {string}
+     * @memberof PublishResponse
+     */
+    message: string;
+    /**
+     * Number of items published/unpublished
+     * @type {number}
+     * @memberof PublishResponse
+     */
+    publishedCount?: number;
+    /**
+     * Any errors encountered
+     * @type {Array<string>}
+     * @memberof PublishResponse
+     */
+    errors?: Array<string>;
+    /**
+     * 
+     * @type {number}
+     * @memberof PublishResponse
+     */
+    id?: number | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishResponse
+     */
+    type?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PublishResponse
+     */
+    isPublished?: boolean | null;
+    /**
+     * 
      * @type {Date}
      * @memberof PublishResponse
      */
     publishedAt?: Date | null;
     /**
-     *
+     * 
      * @type {Array<string>}
      * @memberof PublishResponse
      */
-    cascadedItems: Array<string>;
+    cascadedItems?: Array<string> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishResponse
+     */
+    errorCode?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishResponse
+     */
+    errorTitle?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishResponse
+     */
+    errorDetail?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishResponse
+     */
+    ckanDatasetName?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublishResponse
+     */
+    ckanDatasetUrl?: string | null;
 }
 
 /**
  * Check if a given object implements the PublishResponse interface.
  */
 export function instanceOfPublishResponse(value: object): value is PublishResponse {
-    if (!('id' in value) || value['id'] === undefined) return false;
-    if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('isPublished' in value) || value['isPublished'] === undefined) return false;
-    if (!('cascadedItems' in value) || value['cascadedItems'] === undefined) return false;
+    if (!('success' in value) || value['success'] === undefined) return false;
+    if (!('message' in value) || value['message'] === undefined) return false;
     return true;
 }
 
@@ -70,12 +123,21 @@ export function PublishResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         return json;
     }
     return {
-
-        'id': json['id'],
-        'type': json['type'],
-        'isPublished': json['is_published'],
+        
+        'success': json['success'],
+        'message': json['message'],
+        'publishedCount': json['published_count'] == null ? undefined : json['published_count'],
+        'errors': json['errors'] == null ? undefined : json['errors'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'type': json['type'] == null ? undefined : json['type'],
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
         'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
-        'cascadedItems': json['cascaded_items'],
+        'cascadedItems': json['cascaded_items'] == null ? undefined : json['cascaded_items'],
+        'errorCode': json['error_code'] == null ? undefined : json['error_code'],
+        'errorTitle': json['error_title'] == null ? undefined : json['error_title'],
+        'errorDetail': json['error_detail'] == null ? undefined : json['error_detail'],
+        'ckanDatasetName': json['ckan_dataset_name'] == null ? undefined : json['ckan_dataset_name'],
+        'ckanDatasetUrl': json['ckan_dataset_url'] == null ? undefined : json['ckan_dataset_url'],
     };
 }
 
@@ -89,11 +151,21 @@ export function PublishResponseToJSONTyped(value?: PublishResponse | null, ignor
     }
 
     return {
-
+        
+        'success': value['success'],
+        'message': value['message'],
+        'published_count': value['publishedCount'],
+        'errors': value['errors'],
         'id': value['id'],
         'type': value['type'],
         'is_published': value['isPublished'],
         'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
         'cascaded_items': value['cascadedItems'],
+        'error_code': value['errorCode'],
+        'error_title': value['errorTitle'],
+        'error_detail': value['errorDetail'],
+        'ckan_dataset_name': value['ckanDatasetName'],
+        'ckan_dataset_url': value['ckanDatasetUrl'],
     };
 }
+

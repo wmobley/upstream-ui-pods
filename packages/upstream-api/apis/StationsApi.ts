@@ -46,10 +46,21 @@ import {
 export interface CreateStationApiV1CampaignsCampaignIdStationsPostRequest {
     campaignId: number;
     stationCreate: StationCreate;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface DeleteSensorApiV1CampaignsCampaignIdStationsDeleteRequest {
     campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+}
+
+export interface DeleteStationApiV1CampaignsCampaignIdStationsStationIdDeleteRequest {
+    stationId: number;
+    campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface ExportMeasurementsCsvApiV1CampaignsCampaignIdStationsStationIdMeasurementsExportGetRequest {
@@ -57,45 +68,61 @@ export interface ExportMeasurementsCsvApiV1CampaignsCampaignIdStationsStationIdM
     stationId: number;
     startDate?: Date | null;
     endDate?: Date | null;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface ExportSensorsCsvApiV1CampaignsCampaignIdStationsStationIdSensorsExportGetRequest {
     campaignId: number;
     stationId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface GetStationApiV1CampaignsCampaignIdStationsStationIdGetRequest {
     stationId: number;
     campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface ListStationsApiV1CampaignsCampaignIdStationsGetRequest {
     campaignId: number;
     page?: number;
     limit?: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface PartialUpdateStationApiV1CampaignsCampaignIdStationsStationIdPatchRequest {
     campaignId: number;
     stationId: number;
     stationUpdate: StationUpdate;
-}
-
-export interface UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutRequest {
-    stationId: number;
-    campaignId: number;
-    stationUpdate: StationUpdate;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface PublishStationApiV1CampaignsCampaignIdStationsStationIdPublishPostRequest {
     campaignId: number;
     stationId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
     publishRequest?: PublishRequest;
 }
 
 export interface UnpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRequest {
     campaignId: number;
     stationId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+}
+
+export interface UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutRequest {
+    stationId: number;
+    campaignId: number;
+    stationUpdate: StationUpdate;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 /**
@@ -126,6 +153,14 @@ export class StationsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
@@ -166,6 +201,14 @@ export class StationsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -186,6 +229,58 @@ export class StationsApi extends runtime.BaseAPI {
      */
     async deleteSensorApiV1CampaignsCampaignIdStationsDelete(requestParameters: DeleteSensorApiV1CampaignsCampaignIdStationsDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteSensorApiV1CampaignsCampaignIdStationsDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Delete Station
+     */
+    async deleteStationApiV1CampaignsCampaignIdStationsStationIdDeleteRaw(requestParameters: DeleteStationApiV1CampaignsCampaignIdStationsStationIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling deleteStationApiV1CampaignsCampaignIdStationsStationIdDelete().'
+            );
+        }
+
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling deleteStationApiV1CampaignsCampaignIdStationsStationIdDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}`.replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete Station
+     */
+    async deleteStationApiV1CampaignsCampaignIdStationsStationIdDelete(requestParameters: DeleteStationApiV1CampaignsCampaignIdStationsStationIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteStationApiV1CampaignsCampaignIdStationsStationIdDeleteRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -218,6 +313,14 @@ export class StationsApi extends runtime.BaseAPI {
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
@@ -270,6 +373,14 @@ export class StationsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -320,6 +431,14 @@ export class StationsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -365,6 +484,14 @@ export class StationsApi extends runtime.BaseAPI {
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
@@ -420,6 +547,14 @@ export class StationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -441,61 +576,6 @@ export class StationsApi extends runtime.BaseAPI {
      */
     async partialUpdateStationApiV1CampaignsCampaignIdStationsStationIdPatch(requestParameters: PartialUpdateStationApiV1CampaignsCampaignIdStationsStationIdPatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StationCreateResponse> {
         const response = await this.partialUpdateStationApiV1CampaignsCampaignIdStationsStationIdPatchRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Update Station
-     */
-    async updateStationApiV1CampaignsCampaignIdStationsStationIdPutRaw(requestParameters: UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StationCreateResponse>> {
-        if (requestParameters['stationId'] == null) {
-            throw new runtime.RequiredError(
-                'stationId',
-                'Required parameter "stationId" was null or undefined when calling updateStationApiV1CampaignsCampaignIdStationsStationIdPut().'
-            );
-        }
-
-        if (requestParameters['campaignId'] == null) {
-            throw new runtime.RequiredError(
-                'campaignId',
-                'Required parameter "campaignId" was null or undefined when calling updateStationApiV1CampaignsCampaignIdStationsStationIdPut().'
-            );
-        }
-
-        if (requestParameters['stationUpdate'] == null) {
-            throw new runtime.RequiredError(
-                'stationUpdate',
-                'Required parameter "stationUpdate" was null or undefined when calling updateStationApiV1CampaignsCampaignIdStationsStationIdPut().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            // oauth required
-            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
-        }
-
-        const response = await this.request({
-            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}`.replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: StationUpdateToJSON(requestParameters['stationUpdate']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => StationCreateResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Update Station
-     */
-    async updateStationApiV1CampaignsCampaignIdStationsStationIdPut(requestParameters: UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StationCreateResponse> {
-        const response = await this.updateStationApiV1CampaignsCampaignIdStationsStationIdPutRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -523,9 +603,17 @@ export class StationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
-            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
         }
 
         const response = await this.request({
@@ -569,8 +657,17 @@ export class StationsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
-            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
         }
 
         const response = await this.request({
@@ -588,6 +685,69 @@ export class StationsApi extends runtime.BaseAPI {
      */
     async unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPost(requestParameters: UnpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
         const response = await this.unpublishStationApiV1CampaignsCampaignIdStationsStationIdUnpublishPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update Station
+     */
+    async updateStationApiV1CampaignsCampaignIdStationsStationIdPutRaw(requestParameters: UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StationCreateResponse>> {
+        if (requestParameters['stationId'] == null) {
+            throw new runtime.RequiredError(
+                'stationId',
+                'Required parameter "stationId" was null or undefined when calling updateStationApiV1CampaignsCampaignIdStationsStationIdPut().'
+            );
+        }
+
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling updateStationApiV1CampaignsCampaignIdStationsStationIdPut().'
+            );
+        }
+
+        if (requestParameters['stationUpdate'] == null) {
+            throw new runtime.RequiredError(
+                'stationUpdate',
+                'Required parameter "stationUpdate" was null or undefined when calling updateStationApiV1CampaignsCampaignIdStationsStationIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/stations/{station_id}`.replace(`{${"station_id"}}`, encodeURIComponent(String(requestParameters['stationId']))).replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: StationUpdateToJSON(requestParameters['stationUpdate']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => StationCreateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Update Station
+     */
+    async updateStationApiV1CampaignsCampaignIdStationsStationIdPut(requestParameters: UpdateStationApiV1CampaignsCampaignIdStationsStationIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StationCreateResponse> {
+        const response = await this.updateStationApiV1CampaignsCampaignIdStationsStationIdPutRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

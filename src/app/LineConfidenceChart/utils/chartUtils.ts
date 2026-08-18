@@ -11,13 +11,14 @@ import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils'
 export const getDataSegments = (
   data: AggregatedMeasurement[],
   gapThresholdMinutes: number = 120, // 2 hours default
-  aggregationInterval?: 'minute' | 'hour' | 'day' | 'week' | 'month',
+  aggregationInterval?: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month',
 ): AggregatedMeasurement[][] => {
   if (data.length === 0) return [];
   // Calculate dynamic gap threshold based on aggregation interval
   let dynamicGapThreshold = gapThresholdMinutes;
   if (aggregationInterval) {
     const intervals = {
+      second: 0.5, // 30 seconds (2s/5s/10s windows)
       minute: 5, // 5 minutes
       hour: 120, // 2 hours
       day: 2880, // 2 days

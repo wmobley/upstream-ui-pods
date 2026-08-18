@@ -50,17 +50,17 @@ export interface LoginResponse {
      */
     tapisExpiresAt?: number | null;
     /**
-     * Application role assigned to the authenticated user.
-     * @type {string}
-     * @memberof LoginResponse
-     */
-    role?: string | null;
-    /**
-     * Username returned from the API.
+     * 
      * @type {string}
      * @memberof LoginResponse
      */
     username?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof LoginResponse
+     */
+    role?: string | null;
 }
 
 /**
@@ -84,11 +84,11 @@ export function LoginResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         
         'accessToken': json['access_token'],
         'tokenType': json['token_type'],
-        'tapisAccessToken': json['tapis_access_token'] ?? undefined,
-        'tapisRefreshToken': json['tapis_refresh_token'] ?? undefined,
-        'tapisExpiresAt': json['tapis_expires_at'] ?? undefined,
-        'role': json['role'] ?? undefined,
-        'username': json['username'] ?? undefined,
+        'tapisAccessToken': json['tapis_access_token'] == null ? undefined : json['tapis_access_token'],
+        'tapisRefreshToken': json['tapis_refresh_token'] == null ? undefined : json['tapis_refresh_token'],
+        'tapisExpiresAt': json['tapis_expires_at'] == null ? undefined : json['tapis_expires_at'],
+        'username': json['username'] == null ? undefined : json['username'],
+        'role': json['role'] == null ? undefined : json['role'],
     };
 }
 
@@ -105,10 +105,11 @@ export function LoginResponseToJSONTyped(value?: LoginResponse | null, ignoreDis
         
         'access_token': value['accessToken'],
         'token_type': value['tokenType'],
-        'tapis_access_token': value['tapisAccessToken'] ?? undefined,
-        'tapis_refresh_token': value['tapisRefreshToken'] ?? undefined,
-        'tapis_expires_at': value['tapisExpiresAt'] ?? undefined,
-        'role': value['role'] ?? undefined,
-        'username': value['username'] ?? undefined,
+        'tapis_access_token': value['tapisAccessToken'],
+        'tapis_refresh_token': value['tapisRefreshToken'],
+        'tapis_expires_at': value['tapisExpiresAt'],
+        'username': value['username'],
+        'role': value['role'],
     };
 }
+

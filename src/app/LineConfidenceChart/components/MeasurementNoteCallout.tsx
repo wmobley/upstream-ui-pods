@@ -4,6 +4,8 @@ import { NotesList } from '../../common/Notes/NotesList';
 import GeometryMap from '../../common/GeometryMap/GeometryMap';
 import { hasValidGeometry } from '../../../utils/geometryValidation';
 import { useAuth } from '../../../contexts/AuthContextState';
+import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
+import { formatTimeInZone } from '../../../utils/timezones';
 import {
   useMeasurementNotes,
   useCreateMeasurementNote,
@@ -34,6 +36,7 @@ const MeasurementNoteCallout: React.FC<MeasurementNoteCalloutProps> = ({
   onClose,
 }) => {
   const { username } = useAuth();
+  const { stationTimezone } = useLineConfidence();
   const campaignIdNum = parseInt(point.campaignId);
   const stationIdNum = parseInt(point.stationId);
   const sensorIdNum = parseInt(point.sensorId);
@@ -78,7 +81,7 @@ const MeasurementNoteCallout: React.FC<MeasurementNoteCalloutProps> = ({
       <div className="flex items-start justify-between gap-2 p-3 border-b border-gray-100">
         <div>
           <div className="font-semibold text-gray-900">
-            {point.timestamp.toLocaleString()}
+            {formatTimeInZone(point.timestamp, stationTimezone)}
           </div>
           <div className="text-xs text-gray-500">
             <NumberFormatter value={point.value} /> {point.bucketContext && (

@@ -21,6 +21,7 @@ import type {
   GetCampaignResponse,
   HTTPValidationError,
   ListCampaignsResponsePagination,
+  PermissionResponse,
   PublishRequest,
   PublishResponse,
 } from '../models/index';
@@ -37,6 +38,8 @@ import {
     HTTPValidationErrorToJSON,
     ListCampaignsResponsePaginationFromJSON,
     ListCampaignsResponsePaginationToJSON,
+    PermissionResponseFromJSON,
+    PermissionResponseToJSON,
     PublishRequestFromJSON,
     PublishRequestToJSON,
     PublishResponseFromJSON,
@@ -49,10 +52,18 @@ export interface CreateCampaignApiV1CampaignsPostRequest {
 
 export interface DeleteSensorApiV1CampaignsCampaignIdDeleteRequest {
     campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface GetCampaignApiV1CampaignsCampaignIdGetRequest {
     campaignId: number;
+}
+
+export interface GetCampaignPermissionsApiV1CampaignsCampaignIdPermissionsGetRequest {
+    campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface ListCampaignsApiV1CampaignsGetRequest {
@@ -67,24 +78,33 @@ export interface ListCampaignsApiV1CampaignsGetRequest {
 export interface PartialUpdateCampaignApiV1CampaignsCampaignIdPatchRequest {
     campaignId: number;
     campaignUpdate: CampaignUpdate;
-}
-
-export interface UpdateCampaignApiV1CampaignsCampaignIdPutRequest {
-    campaignId: number;
-    campaignsIn: CampaignsIn;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 export interface PublishCampaignApiV1CampaignsCampaignIdPublishPostRequest {
     campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
     publishRequest?: PublishRequest;
 }
 
 export interface UnpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRequest {
     campaignId: number;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
+    publishRequest?: PublishRequest;
+}
+
+export interface UpdateCampaignApiV1CampaignsCampaignIdPutRequest {
+    campaignId: number;
+    campaignsIn: CampaignsIn;
+    xTAPISTOKEN?: string | null;
+    authorization?: string | null;
 }
 
 /**
- *
+ * 
  */
 export class CampaignsApi extends runtime.BaseAPI {
 
@@ -144,6 +164,14 @@ export class CampaignsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -201,6 +229,52 @@ export class CampaignsApi extends runtime.BaseAPI {
      */
     async getCampaignApiV1CampaignsCampaignIdGet(requestParameters: GetCampaignApiV1CampaignsCampaignIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetCampaignResponse> {
         const response = await this.getCampaignApiV1CampaignsCampaignIdGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get Campaign Permissions
+     */
+    async getCampaignPermissionsApiV1CampaignsCampaignIdPermissionsGetRaw(requestParameters: GetCampaignPermissionsApiV1CampaignsCampaignIdPermissionsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PermissionResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling getCampaignPermissionsApiV1CampaignsCampaignIdPermissionsGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}/permissions`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PermissionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Get Campaign Permissions
+     */
+    async getCampaignPermissionsApiV1CampaignsCampaignIdPermissionsGet(requestParameters: GetCampaignPermissionsApiV1CampaignsCampaignIdPermissionsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionResponse> {
+        const response = await this.getCampaignPermissionsApiV1CampaignsCampaignIdPermissionsGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -283,6 +357,14 @@ export class CampaignsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             // oauth required
             headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
@@ -308,54 +390,6 @@ export class CampaignsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update Campaign
-     */
-    async updateCampaignApiV1CampaignsCampaignIdPutRaw(requestParameters: UpdateCampaignApiV1CampaignsCampaignIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CampaignCreateResponse>> {
-        if (requestParameters['campaignId'] == null) {
-            throw new runtime.RequiredError(
-                'campaignId',
-                'Required parameter "campaignId" was null or undefined when calling updateCampaignApiV1CampaignsCampaignIdPut().'
-            );
-        }
-
-        if (requestParameters['campaignsIn'] == null) {
-            throw new runtime.RequiredError(
-                'campaignsIn',
-                'Required parameter "campaignsIn" was null or undefined when calling updateCampaignApiV1CampaignsCampaignIdPut().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            // oauth required
-            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
-        }
-
-        const response = await this.request({
-            path: `/api/v1/campaigns/{campaign_id}`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: CampaignsInToJSON(requestParameters['campaignsIn']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => CampaignCreateResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Update Campaign
-     */
-    async updateCampaignApiV1CampaignsCampaignIdPut(requestParameters: UpdateCampaignApiV1CampaignsCampaignIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignCreateResponse> {
-        const response = await this.updateCampaignApiV1CampaignsCampaignIdPutRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Publish Campaign
      */
     async publishCampaignApiV1CampaignsCampaignIdPublishPostRaw(requestParameters: PublishCampaignApiV1CampaignsCampaignIdPublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublishResponse>> {
@@ -372,8 +406,17 @@ export class CampaignsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
-            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
         }
 
         const response = await this.request({
@@ -410,8 +453,19 @@ export class CampaignsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
-            headerParameters["Authorization"] = await this.configuration.accessToken("HTTPBearer", []);
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
         }
 
         const response = await this.request({
@@ -419,6 +473,7 @@ export class CampaignsApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: PublishRequestToJSON(requestParameters['publishRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PublishResponseFromJSON(jsonValue));
@@ -429,6 +484,62 @@ export class CampaignsApi extends runtime.BaseAPI {
      */
     async unpublishCampaignApiV1CampaignsCampaignIdUnpublishPost(requestParameters: UnpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublishResponse> {
         const response = await this.unpublishCampaignApiV1CampaignsCampaignIdUnpublishPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update Campaign
+     */
+    async updateCampaignApiV1CampaignsCampaignIdPutRaw(requestParameters: UpdateCampaignApiV1CampaignsCampaignIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CampaignCreateResponse>> {
+        if (requestParameters['campaignId'] == null) {
+            throw new runtime.RequiredError(
+                'campaignId',
+                'Required parameter "campaignId" was null or undefined when calling updateCampaignApiV1CampaignsCampaignIdPut().'
+            );
+        }
+
+        if (requestParameters['campaignsIn'] == null) {
+            throw new runtime.RequiredError(
+                'campaignsIn',
+                'Required parameter "campaignsIn" was null or undefined when calling updateCampaignApiV1CampaignsCampaignIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTAPISTOKEN'] != null) {
+            headerParameters['X-TAPIS-TOKEN'] = String(requestParameters['xTAPISTOKEN']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("OAuth2PasswordBearer", []);
+        }
+
+        const response = await this.request({
+            path: `/api/v1/campaigns/{campaign_id}`.replace(`{${"campaign_id"}}`, encodeURIComponent(String(requestParameters['campaignId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CampaignsInToJSON(requestParameters['campaignsIn']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CampaignCreateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Update Campaign
+     */
+    async updateCampaignApiV1CampaignsCampaignIdPut(requestParameters: UpdateCampaignApiV1CampaignsCampaignIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignCreateResponse> {
+        const response = await this.updateCampaignApiV1CampaignsCampaignIdPutRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

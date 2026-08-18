@@ -110,3 +110,4 @@ export function SensorUpdateToJSONTyped(value?: SensorUpdate | null, ignoreDiscr
         'metadata': value['metadata'],
     };
 }
+

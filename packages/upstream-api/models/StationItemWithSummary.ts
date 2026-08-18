@@ -14,7 +14,13 @@
 
 import { mapValues } from '../runtime';
 import type { StationType } from './StationType';
-import { StationTypeFromJSON, StationTypeToJSON } from './StationType';
+import {
+    StationTypeFromJSON,
+    StationTypeFromJSONTyped,
+    StationTypeToJSON,
+    StationTypeToJSONTyped,
+} from './StationType';
+
 /**
  * 
  * @export
@@ -64,17 +70,41 @@ export interface StationItemWithSummary {
      */
     startDate?: Date | null;
     /**
-     *
+     * 
      * @type {StationType}
      * @memberof StationItemWithSummary
      */
     stationType?: StationType;
     /**
-     *
-     * @type {object}
+     * 
+     * @type {string}
      * @memberof StationItemWithSummary
      */
-    geometry?: object;
+    timezone: string;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof StationItemWithSummary
+     */
+    geometry?: { [key: string]: any; };
+    /**
+     * 
+     * @type {boolean}
+     * @memberof StationItemWithSummary
+     */
+    isPublished?: boolean;
+    /**
+     * 
+     * @type {Date}
+     * @memberof StationItemWithSummary
+     */
+    publishedAt?: Date | null;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof StationItemWithSummary
+     */
+    metadata?: { [key: string]: any; } | null;
     /**
      * 
      * @type {number}
@@ -93,13 +123,9 @@ export interface StationItemWithSummary {
      * @memberof StationItemWithSummary
      */
     sensorVariables: Array<string>;
-    /**
-     * 
-     * @type {{ [key: string]: any; }}
-     * @memberof StationItemWithSummary
-     */
-    metadata?: { [key: string]: any; } | null;
 }
+
+
 
 /**
  * Check if a given object implements the StationItemWithSummary interface.
@@ -107,6 +133,7 @@ export interface StationItemWithSummary {
 export function instanceOfStationItemWithSummary(value: object): value is StationItemWithSummary {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('timezone' in value) || value['timezone'] === undefined) return false;
     if (!('sensorCount' in value) || value['sensorCount'] === undefined) return false;
     if (!('sensorTypes' in value) || value['sensorTypes'] === undefined) return false;
     if (!('sensorVariables' in value) || value['sensorVariables'] === undefined) return false;
@@ -131,11 +158,14 @@ export function StationItemWithSummaryFromJSONTyped(json: any, ignoreDiscriminat
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
+        'timezone': json['timezone'],
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
         'sensorCount': json['sensor_count'],
         'sensorTypes': json['sensor_types'],
         'sensorVariables': json['sensor_variables'],
-        'metadata': json['metadata'] == null ? undefined : json['metadata'],
     };
 }
 
@@ -158,10 +188,14 @@ export function StationItemWithSummaryToJSONTyped(value?: StationItemWithSummary
         'active': value['active'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
+        'timezone': value['timezone'],
         'geometry': value['geometry'],
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
+        'metadata': value['metadata'],
         'sensor_count': value['sensorCount'],
         'sensor_types': value['sensorTypes'],
         'sensor_variables': value['sensorVariables'],
-        'metadata': value['metadata'],
     };
 }
+

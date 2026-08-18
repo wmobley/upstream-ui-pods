@@ -31,6 +31,18 @@ export interface SummaryListCampaigns {
      * @memberof SummaryListCampaigns
      */
     variableNames?: Array<string> | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof SummaryListCampaigns
+     */
+    isPublished?: boolean | null;
+    /**
+     * 
+     * @type {Date}
+     * @memberof SummaryListCampaigns
+     */
+    publishedAt?: Date | null;
 }
 
 /**
@@ -52,6 +64,8 @@ export function SummaryListCampaignsFromJSONTyped(json: any, ignoreDiscriminator
         
         'sensorTypes': json['sensor_types'] == null ? undefined : json['sensor_types'],
         'variableNames': json['variable_names'] == null ? undefined : json['variable_names'],
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
     };
 }
 
@@ -68,6 +82,8 @@ export function SummaryListCampaignsToJSONTyped(value?: SummaryListCampaigns | n
         
         'sensor_types': value['sensorTypes'],
         'variable_names': value['variableNames'],
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
     };
 }
 

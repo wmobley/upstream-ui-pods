@@ -21,7 +21,12 @@ import {
     SensorItemToJSONTyped,
 } from './SensorItem';
 import type { StationType } from './StationType';
-import { StationTypeFromJSON, StationTypeToJSON } from './StationType';
+import {
+    StationTypeFromJSON,
+    StationTypeFromJSONTyped,
+    StationTypeToJSON,
+    StationTypeToJSONTyped,
+} from './StationType';
 
 /**
  * 
@@ -72,30 +77,50 @@ export interface GetStationResponse {
      */
     startDate?: Date | null;
     /**
-     *
+     * 
      * @type {StationType}
      * @memberof GetStationResponse
      */
     stationType?: StationType;
     /**
-     *
-     * @type {object}
+     * 
+     * @type {string}
      * @memberof GetStationResponse
      */
-    geometry?: object;
+    timezone: string;
     /**
      * 
-     * @type {Array<SensorItem>}
+     * @type {{ [key: string]: any; }}
      * @memberof GetStationResponse
      */
-    sensors?: Array<SensorItem> | null;
+    geometry?: { [key: string]: any; };
+    /**
+     * 
+     * @type {boolean}
+     * @memberof GetStationResponse
+     */
+    isPublished?: boolean;
+    /**
+     * 
+     * @type {Date}
+     * @memberof GetStationResponse
+     */
+    publishedAt?: Date | null;
     /**
      * 
      * @type {{ [key: string]: any; }}
      * @memberof GetStationResponse
      */
     metadata?: { [key: string]: any; } | null;
+    /**
+     * 
+     * @type {Array<SensorItem>}
+     * @memberof GetStationResponse
+     */
+    sensors?: Array<SensorItem> | null;
 }
+
+
 
 /**
  * Check if a given object implements the GetStationResponse interface.
@@ -103,6 +128,7 @@ export interface GetStationResponse {
 export function instanceOfGetStationResponse(value: object): value is GetStationResponse {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('timezone' in value) || value['timezone'] === undefined) return false;
     return true;
 }
 
@@ -124,9 +150,12 @@ export function GetStationResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'active': json['active'] == null ? undefined : json['active'],
         'startDate': json['start_date'] == null ? undefined : (new Date(json['start_date'])),
         'stationType': json['station_type'] == null ? undefined : StationTypeFromJSON(json['station_type']),
+        'timezone': json['timezone'],
         'geometry': json['geometry'] == null ? undefined : json['geometry'],
-        'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorItemFromJSON)),
+        'isPublished': json['is_published'] == null ? undefined : json['is_published'],
+        'publishedAt': json['published_at'] == null ? undefined : (new Date(json['published_at'])),
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
+        'sensors': json['sensors'] == null ? undefined : ((json['sensors'] as Array<any>).map(SensorItemFromJSON)),
     };
 }
 
@@ -149,8 +178,12 @@ export function GetStationResponseToJSONTyped(value?: GetStationResponse | null,
         'active': value['active'],
         'start_date': value['startDate'] == null ? undefined : ((value['startDate'] as any).toISOString()),
         'station_type': StationTypeToJSON(value['stationType']),
+        'timezone': value['timezone'],
         'geometry': value['geometry'],
-        'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorItemToJSON)),
+        'is_published': value['isPublished'],
+        'published_at': value['publishedAt'] == null ? undefined : ((value['publishedAt'] as any).toISOString()),
         'metadata': value['metadata'],
+        'sensors': value['sensors'] == null ? undefined : ((value['sensors'] as Array<any>).map(SensorItemToJSON)),
     };
 }
+

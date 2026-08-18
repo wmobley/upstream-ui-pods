@@ -6,14 +6,41 @@ import {
   FaChartPie,
 } from 'react-icons/fa6';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
+import {
+  formatDateInZone,
+  formatTimeInZone,
+  formatTimeOnlyInZone,
+} from '../../../utils/timezones';
 import { GetSensorResponse } from '@upstream/upstream-api';
 import { FaCalendarAlt } from 'react-icons/fa';
 
 interface MeasurementSummaryProps {
   data: GetSensorResponse;
+  /** IANA timezone to display timestamps in; when omitted, the viewer's
+   * browser-local timezone is used (legacy behavior on other pages). */
+  timezone?: string;
 }
 
-export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
+export const MeasurementSummary = ({ data, timezone }: MeasurementSummaryProps) => {
+  const fmtDate = (d: Date | null | undefined) =>
+    d == null
+      ? 'N/A'
+      : timezone
+        ? formatDateInZone(d, timezone)
+        : d.toLocaleDateString();
+  const fmtTime = (d: Date | null | undefined) =>
+    d == null
+      ? 'N/A'
+      : timezone
+        ? formatTimeOnlyInZone(d, timezone)
+        : d.toLocaleTimeString();
+  const fmtDateTime = (d: Date | null | undefined) =>
+    d == null
+      ? 'N/A'
+      : timezone
+        ? formatTimeInZone(d, timezone)
+        : d.toLocaleString();
+  const timezoneLabel = timezone ? ` (${timezone})` : '';
   return (
     <div className="flex flex-col">
       <h1 className="text-2xl font-bold mb-4">{data.variablename}</h1>
@@ -38,19 +65,19 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
         <div className="bg-white p-4 rounded-lg shadow-md flex items-center">
           <FaCalendarAlt className="text-teal-500 text-2xl mr-3" />
           <div>
-            <p className="text-sm text-gray-500">First Measurement</p>
+            <p className="text-sm text-gray-500">First Measurement{timezoneLabel}</p>
             <p className="font-medium">
               {data.statistics &&
               data.statistics.firstMeasurementCollectiontime !== null &&
               data.statistics.firstMeasurementCollectiontime !== undefined
-                ? data.statistics.firstMeasurementCollectiontime.toLocaleDateString()
+                ? fmtDate(data.statistics.firstMeasurementCollectiontime)
                 : 'N/A'}
             </p>
             <p className="text-sm text-gray-500">
               {data.statistics &&
               data.statistics.firstMeasurementCollectiontime !== null &&
               data.statistics.firstMeasurementCollectiontime !== undefined
-                ? data.statistics.firstMeasurementCollectiontime.toLocaleTimeString()
+                ? fmtTime(data.statistics.firstMeasurementCollectiontime)
                 : 'N/A'}
             </p>
           </div>
@@ -59,12 +86,12 @@ export const MeasurementSummary = ({ data }: MeasurementSummaryProps) => {
         <div className="bg-white p-4 rounded-lg shadow-md flex items-center">
           <FaClock className="text-orange-500 text-2xl mr-3" />
           <div>
-            <p className="text-sm text-gray-500">Last Measurement</p>
+            <p className="text-sm text-gray-500">Last Measurement{timezoneLabel}</p>
             <p className="font-medium">
               {data.statistics &&
               data.statistics.lastMeasurementTime !== null &&
               data.statistics.lastMeasurementTime !== undefined
-                ? data.statistics.lastMeasurementTime.toLocaleString()
+                ? fmtDateTime(data.statistics.lastMeasurementTime)
                 : 'N/A'}
             </p>
           </div>
