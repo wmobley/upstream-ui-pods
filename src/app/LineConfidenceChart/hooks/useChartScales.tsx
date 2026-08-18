@@ -3,7 +3,7 @@ import { extent } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { line, curveCatmullRom, area } from 'd3-shape';
 import { AggregatedMeasurement } from '@upstream/upstream-api';
-import { getDataSegments } from '../utils/chartUtils';
+import { getDataSegments, getAreaSegments } from '../utils/chartUtils';
 import { AdditionalSensor } from '../LineConfidenceChart';
 import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
 
@@ -114,6 +114,12 @@ export function useChartScales({
       aggregationInterval ?? 'minute',
     );
 
+    // Area segments exclude points with null parametric bounds (singleton
+    // buckets) so the confidence band breaks instead of bridging across
+    // null values. Line paths keep all points so the mean line still renders
+    // singleton buckets.
+    const areaSegments = getAreaSegments(segments);
+
     // Main chart paths
     const mainLineGenerator = line<AggregatedMeasurement>()
       .x((d) => scales.xScale(d.measurementTime.getTime()))
@@ -122,8 +128,8 @@ export function useChartScales({
 
     const mainAreaGenerator = area<AggregatedMeasurement>()
       .x((d) => scales.xScale(d.measurementTime.getTime()))
-      .y0((d) => scales.yScale(d.parametricLowerBound))
-      .y1((d) => scales.yScale(d.parametricUpperBound))
+      .y0((d) => scales.yScale(d.parametricLowerBound ?? d.value))
+      .y1((d) => scales.yScale(d.parametricUpperBound ?? d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
     // Overview chart paths
@@ -134,17 +140,19 @@ export function useChartScales({
 
     const overviewAreaGenerator = area<AggregatedMeasurement>()
       .x((d) => scales.overviewXScale(d.measurementTime.getTime()))
-      .y0((d) => scales.overviewYScale(d.parametricLowerBound))
-      .y1((d) => scales.overviewYScale(d.parametricUpperBound))
+      .y0((d) => scales.overviewYScale(d.parametricLowerBound ?? d.value))
+      .y1((d) => scales.overviewYScale(d.parametricUpperBound ?? d.value))
       .curve(curveCatmullRom.alpha(0.5));
 
     // Generate paths for each segment of primary sensor
     const mainLinePaths = segments.map((segment) => mainLineGenerator(segment));
-    const mainAreaPaths = segments.map((segment) => mainAreaGenerator(segment));
+    const mainAreaPaths = areaSegments.map((segment) =>
+      mainAreaGenerator(segment),
+    );
     const overviewLinePaths = segments.map((segment) =>
       overviewLineGenerator(segment),
     );
-    const overviewAreaPaths = segments.map((segment) =>
+    const overviewAreaPaths = areaSegments.map((segment) =>
       overviewAreaGenerator(segment),
     );
 
@@ -164,18 +172,19 @@ export function useChartScales({
         gapThresholdMinutes,
         aggregationInterval ?? 'minute',
       );
+      const sensorAreaSegments = getAreaSegments(sensorSegments);
 
       return {
         mainLinePaths: sensorSegments.map((segment) =>
           mainLineGenerator(segment),
         ),
-        mainAreaPaths: sensorSegments.map((segment) =>
+        mainAreaPaths: sensorAreaSegments.map((segment) =>
           mainAreaGenerator(segment),
         ),
         overviewLinePaths: sensorSegments.map((segment) =>
           overviewLineGenerator(segment),
         ),
-        overviewAreaPaths: sensorSegments.map((segment) =>
+        overviewAreaPaths: sensorAreaSegments.map((segment) =>
           overviewAreaGenerator(segment),
         ),
       };

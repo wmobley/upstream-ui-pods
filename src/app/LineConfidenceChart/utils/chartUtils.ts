@@ -52,6 +52,55 @@ export const getDataSegments = (
 };
 
 /**
+ * Filters segments for area path generation by removing points with null
+ * parametric bounds and splitting segments at those points.
+ *
+ * When a bucket has `point_count === 1`, the backend returns `null` for
+ * `parametricLowerBound`/`parametricUpperBound` (and `stdDev`). Passing null
+ * to a d3 scale produces NaN, which corrupts the SVG area path. This helper
+ * removes such points from the area segments and splits the segment so the
+ * confidence band visually breaks where no CI exists instead of bridging
+ * across the null values.
+ *
+ * The mean line should still render singleton buckets, so callers should use
+ * the original segments from `getDataSegments` for line paths and only use
+ * the output of this function for area paths.
+ *
+ * @param segments - Output of `getDataSegments`
+ * @returns Segments with null-bound points removed and split at those points
+ */
+export const getAreaSegments = (
+  segments: AggregatedMeasurement[][],
+): AggregatedMeasurement[][] => {
+  const areaSegments: AggregatedMeasurement[][] = [];
+
+  for (const segment of segments) {
+    let currentSubSegment: AggregatedMeasurement[] = [];
+
+    for (const point of segment) {
+      if (
+        point.parametricLowerBound == null ||
+        point.parametricUpperBound == null
+      ) {
+        // This point has no CI bounds — close the current sub-segment
+        if (currentSubSegment.length > 0) {
+          areaSegments.push(currentSubSegment);
+          currentSubSegment = [];
+        }
+      } else {
+        currentSubSegment.push(point);
+      }
+    }
+
+    if (currentSubSegment.length > 0) {
+      areaSegments.push(currentSubSegment);
+    }
+  }
+
+  return areaSegments;
+};
+
+/**
  * Default formatters for axes
  */
 export const defaultFormatters = {

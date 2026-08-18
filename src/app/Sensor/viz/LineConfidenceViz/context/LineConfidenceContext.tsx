@@ -38,6 +38,8 @@ const useSensorData = (
     aggregationValue,
     minFilterValue,
     maxFilterValue,
+    selectedTimeRange ? new Date(selectedTimeRange[0]) : undefined,
+    selectedTimeRange ? new Date(selectedTimeRange[1]) : undefined,
   );
 
   const { data: sensorAllPoints } = useList(
@@ -204,6 +206,8 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     aggregationValue,
     minFilterValue,
     maxFilterValue,
+    selectedTimeRange ? new Date(selectedTimeRange[0]) : undefined,
+    selectedTimeRange ? new Date(selectedTimeRange[1]) : undefined,
   );
   const { data: allPoints, isLoading: allPointsLoading } = useList(
     campaignId,
@@ -225,6 +229,10 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   useEffect(() => {
     if (
       hasUserSelectedAggregation ||
+      // Only auto-advance when the full-range query is empty; when the user
+      // has brushed a time range, an empty result means "no data in range"
+      // and must not silently walk the aggregation interval.
+      selectedTimeRange ||
       aggregatedLoading ||
       aggregatedError ||
       aggregatedData === null ||
@@ -247,6 +255,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     aggregatedError,
     aggregatedLoading,
     hasUserSelectedAggregation,
+    selectedTimeRange,
   ]);
 
   // Function to add a new sensor

@@ -91,8 +91,8 @@ const Controls = () => {
             measurement.value,
             measurement.minValue,
             measurement.maxValue,
-            measurement.parametricLowerBound,
-            measurement.parametricUpperBound,
+            measurement.parametricLowerBound ?? '',
+            measurement.parametricUpperBound ?? '',
           ];
           content += rowData.join(',') + '\n';
         });

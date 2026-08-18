@@ -65,8 +65,8 @@ export const Chart = () => {
     const max = Math.max(
       ...allData.map((item) =>
         optionOnlyParameterBounds
-          ? item.parametricUpperBound
-          : Math.max(item.parametricUpperBound, item.maxValue),
+          ? item.parametricUpperBound ?? item.maxValue
+          : item.parametricUpperBound ?? item.maxValue,
       ),
     );
 

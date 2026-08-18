@@ -20,9 +20,14 @@ export const useListConfidenceValues = (
   intervalValue: number,
   minValue?: number,
   maxValue?: number,
+  startDate?: Date,
+  endDate?: Date,
 ): UseDetailReturn => {
   const config = useConfiguration();
   const measurementsApi = new MeasurementsApi(config);
+
+  const startDateKey = startDate?.toISOString() ?? null;
+  const endDateKey = endDate?.toISOString() ?? null;
 
   const { data, isLoading, error } = useQuery<AggregatedMeasurement[]>({
     queryKey: [
@@ -34,6 +39,8 @@ export const useListConfidenceValues = (
       intervalValue,
       minValue,
       maxValue,
+      startDateKey,
+      endDateKey,
     ],
     queryFn: async () => {
       const requestParams: GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest =
@@ -45,6 +52,8 @@ export const useListConfidenceValues = (
           intervalValue: intervalValue,
           minValue,
           maxValue,
+          startDate,
+          endDate,
         };
       return await measurementsApi.getMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGet(
         requestParams,
