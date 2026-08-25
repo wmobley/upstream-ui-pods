@@ -34,25 +34,36 @@ const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
     Number.isFinite(minMeasurementValue) ? minMeasurementValue : undefined,
     Number.isFinite(maxMeasurementValue) ? maxMeasurementValue : undefined,
   );
+  // Fetch full items (without downsampling) for note timestamp matching
+  const { data: fullData, isLoading: fullItemsLoading } = useListDownsampled(
+    campaignId,
+    stationId,
+    sensorId,
+    500000,
+    undefined, // No downsampling for note matching
+    Number.isFinite(minMeasurementValue) ? minMeasurementValue : undefined,
+    Number.isFinite(maxMeasurementValue) ? maxMeasurementValue : undefined,
+  );
   // Keep full items with IDs for note timestamp matching
-  const fullItems: MeasurementItem[] = data?.items ?? [];
-  const downsampledData = fullItems.map(
+  const fullItems: MeasurementItem[] = fullData?.items ?? [];
+  const downsampledData = data?.items.map(
     (item) =>
       ({
         timestamp: item.collectiontime,
         value: item.value,
         geometry: item.geometry,
       }) as DataPoint,
-  );
+  ) ?? [];
 
   // Add state for selected time range
   const [selectedTimeRange, setSelectedTimeRange] = useState<
     [number, number] | null
   >(null);
 
-  if (!downsampledData || isLoading || error) {
+  // Wait for both downsampled data and full items to load
+  if (!downsampledData || isLoading || error || fullItemsLoading) {
     return (
-      <QueryWrapper isLoading={isLoading} error={error}>
+      <QueryWrapper isLoading={isLoading || fullItemsLoading} error={error}>
         <></>
       </QueryWrapper>
     );
