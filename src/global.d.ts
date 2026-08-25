@@ -13,6 +13,7 @@ declare global {
       VITE_TAPIS_SITE?: string;
       VITE_TAPIS_OAUTH_CLIENT_ID?: string;
       VITE_TAPIS_OAUTH_CLIENT_KEY?: string;
+      VITE_BASE_UPSTREAM_API_URL?: string;
     };
   }
 }

@@ -53,6 +53,35 @@ interface TapisPod {
 const SESSION_KEY = 'upstream_selected_instance';
 const ROLE_LOOKUP_CONCURRENCY = 6;
 
+// Base Upstream API URL — configurable via VITE_BASE_UPSTREAM_API_URL,
+// defaults to production upstreamapi pod.
+function getBaseUpstreamApiUrl(): string {
+  return (
+    window.__UPSTREAM_CONFIG__?.VITE_BASE_UPSTREAM_API_URL?.trim() ||
+    import.meta.env.VITE_BASE_UPSTREAM_API_URL?.trim() ||
+    'https://upstreamapi.pods.portals.tapis.io'
+  );
+}
+
+/** Check if the user has PT2050-DataX allocation by calling the base
+ *  upstreamapi's /user-roles/me endpoint. Returns true if role !== NONE. */
+async function checkBaseAllocation(tapisToken: string): Promise<boolean> {
+  const baseUrl = getBaseUpstreamApiUrl();
+  try {
+    const resp = await fetch(`${baseUrl}/api/v1/user-roles/me`, {
+      headers: {
+        Authorization: `Bearer ${tapisToken}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!resp.ok) return false;
+    const data = await resp.json();
+    return (data?.role || '').toUpperCase() !== 'NONE';
+  } catch {
+    return false;
+  }
+}
+
 // Selected project is mirrored into this query param so URLs (shared links,
 // reloads, back/forward) always identify which project's data is shown,
 // rather than relying solely on sessionStorage (which is per-tab and not
@@ -370,6 +399,23 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
     setError(null);
     try {
       const list = await fetchInstances(tapisToken);
+
+      // Check PT2050-DataX allocation on base upstreamapi.
+      // If user has allocation, ensure "UpStream Base" is in the list.
+      const hasBaseAllocation = await checkBaseAllocation(tapisToken);
+      if (hasBaseAllocation) {
+        const baseInstance: ProjectInstance = {
+          stackId: 'upstream',
+          displayName: 'UpStream Base',
+          apiUrl: getBaseUpstreamApiUrl(),
+          permission: 'USER', // placeholder; will be resolved by RoleSync/useConfiguration
+        };
+        // Avoid duplicate if Tapis already returned upstreamapi
+        if (!list.some((i) => i.stackId === 'upstream')) {
+          list.unshift(baseInstance);
+        }
+      }
+
       setInstances(list);
 
       // Auto-select: prefer the project named in the URL (so a shared link or
