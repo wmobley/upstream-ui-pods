@@ -346,12 +346,16 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSelectedInstanceState(instance);
     persistInstance(instance);
     if (discoveryEnabled) {
+      // When switching projects, navigate to the campaign list (home) instead of
+      // keeping the current path — the previous path (e.g. /campaign/10) may not
+      // exist in the new project and would show a confusing "API server not running"
+      // error. The home page shows available campaigns for the selected project.
       history.replace({
-        pathname: location.pathname,
+        pathname: '/',
         search: withProjectId(location.search, instance.stackId),
       });
     }
-  }, [discoveryEnabled, history, location.pathname, location.search]);
+  }, [discoveryEnabled, history, location.search]);
 
   // Invalidate all cached data after the render in which selectedInstance
   // changes — this way useConfiguration() already returns the new basePath
