@@ -265,7 +265,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
             Sensor Data (CSV)
             <span
-              title="Sensor CSV must include an alias column. This is a list of columns within the Measurements table."
+              title="Sensor CSV must include alias as a column. Optional columns: variablename, units, postprocess, postprocessscript."
               className="inline-flex items-center justify-center h-4 w-4 rounded-full border border-gray-300 text-[10px] text-gray-600"
             >
               i
@@ -284,17 +284,52 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
               hover:file:bg-primary-100
               disabled:opacity-50 disabled:cursor-not-allowed"
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Sensor CSV must include <code>alias</code> as a column. This is a
-            list of columns within the Measurements table. CSV only.
-          </p>
+          <div className="mt-2 overflow-x-auto">
+            <table className="min-w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border px-2 py-1 text-left font-medium text-gray-700">Column</th>
+                  <th className="border px-2 py-1 text-left font-medium text-gray-700">Required</th>
+                  <th className="border px-2 py-1 text-left font-medium text-gray-700">Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">alias</td>
+                  <td className="border px-2 py-1 text-center text-green-600 font-medium">Yes</td>
+                  <td className="border px-2 py-1 text-gray-600">Unique sensor identifier; becomes a column header in the Measurement CSV</td>
+                </tr>
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">variablename</td>
+                  <td className="border px-2 py-1 text-center text-gray-400">No</td>
+                  <td className="border px-2 py-1 text-gray-600">Defaults to "No BestGuess Formula"</td>
+                </tr>
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">units</td>
+                  <td className="border px-2 py-1 text-center text-gray-400">No</td>
+                  <td className="border px-2 py-1 text-gray-600">e.g., inches, cfs, ft</td>
+                </tr>
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">postprocess</td>
+                  <td className="border px-2 py-1 text-center text-gray-400">No</td>
+                  <td className="border px-2 py-1 text-gray-600">true/false</td>
+                </tr>
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">postprocessscript</td>
+                  <td className="border px-2 py-1 text-center text-gray-400">No</td>
+                  <td className="border px-2 py-1 text-gray-600">Optional post-processing script</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">CSV only. UTF-8 encoding recommended.</p>
         </div>
 
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
             Measurement Data (CSV)
             <span
-              title="Required columns: collectiontime, Lat_deg (latitude), Lon_deg (longitude), plus one column per sensor alias."
+              title="Required columns: collectiontime, Lat_deg, Lon_deg, plus one column per sensor alias from the Sensor CSV."
               className="inline-flex items-center justify-center h-4 w-4 rounded-full border border-gray-300 text-[10px] text-gray-600"
             >
               i
@@ -313,26 +348,43 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
               hover:file:bg-primary-100
               disabled:opacity-50 disabled:cursor-not-allowed"
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Measurement CSV must include <code>collectiontime</code>,{' '}
-            <code>Lat_deg</code>, <code>Lon_deg</code>, and one column per
-            sensor <code>alias</code>.
-          </p>
-          <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-gray-500">
-            <li>
-              Timestamps are ISO-8601: <code>YYYY-MM-DD</code> or{' '}
-              <code>YYYY-MM-DD HH:MM:SS</code>, optionally with <code>Z</code>{' '}
-              or <code>+HH:MM</code>.
-            </li>
-            <li>
-              Naive timestamps are interpreted in the station's timezone
-              ({stationTimezone || 'UTC'}); timestamps that include a timezone
-              are used as-is.
-            </li>
-            <li>
-              Numbers should not include commas; leave blanks for missing
-              values.
-            </li>
+          <div className="mt-2 overflow-x-auto">
+            <table className="min-w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border px-2 py-1 text-left font-medium text-gray-700">Column</th>
+                  <th className="border px-2 py-1 text-left font-medium text-gray-700">Required</th>
+                  <th className="border px-2 py-1 text-left font-medium text-gray-700">Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">collectiontime</td>
+                  <td className="border px-2 py-1 text-center text-green-600 font-medium">Yes</td>
+                  <td className="border px-2 py-1 text-gray-600">ISO-8601 timestamp: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS, optionally with Z or +HH:MM</td>
+                </tr>
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">Lat_deg</td>
+                  <td className="border px-2 py-1 text-center text-green-600 font-medium">Yes</td>
+                  <td className="border px-2 py-1 text-gray-600">Latitude as decimal degrees (string)</td>
+                </tr>
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800">Lon_deg</td>
+                  <td className="border px-2 py-1 text-center text-green-600 font-medium">Yes</td>
+                  <td className="border px-2 py-1 text-gray-600">Longitude as decimal degrees (string)</td>
+                </tr>
+                <tr>
+                  <td className="border px-2 py-1 font-mono text-gray-800"><sensor_alias></td>
+                  <td className="border px-2 py-1 text-center text-green-600 font-medium">Yes</td>
+                  <td className="border px-2 py-1 text-gray-600">One column per sensor alias from Sensor CSV (e.g., River Stage, Rain Increment, Flow Volume). Leave blank for missing values.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-gray-500">
+            <li>Naive timestamps are interpreted in the station's timezone ({stationTimezone || 'UTC'}); timestamps with a timezone are used as-is.</li>
+            <li>Numbers should not include commas; leave blanks for missing values.</li>
+            <li>CSV only. UTF-8 encoding recommended.</li>
           </ul>
         </div>
 

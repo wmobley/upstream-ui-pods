@@ -1,4 +1,4 @@
-alias,variablename,postprocess,units
-Rain Increment,Rain Increment,False,inches
-Flow Volume,Flow Volume,False,cfs
-River Stage,River Stage,False,ft
+alias,variablename,units,postprocess
+Rain Increment,Rain Increment,inches,false
+Flow Volume,Flow Volume,cfs,false
+River Stage,River Stage,ft,false
