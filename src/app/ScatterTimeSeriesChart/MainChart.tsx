@@ -76,10 +76,12 @@ const MainChart: React.FC<MainChartProps> = ({
     campaignId,
     stationId,
     sensorId,
-    500000,
-    undefined,
+    5000,
+    100,
     minMeasurementValue,
     maxMeasurementValue,
+    new Date(viewDomain[0]),
+    new Date(viewDomain[1]),
   );
   const data = response?.items.map((item) => ({
     timestamp: item.collectiontime,
