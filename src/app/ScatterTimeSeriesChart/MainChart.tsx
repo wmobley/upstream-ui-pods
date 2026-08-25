@@ -41,6 +41,7 @@ export interface MainChartProps {
   yMinValue?: number;
   yMaxValue?: number;
   setTooltip: (tooltip: TooltipData | null) => void;
+  noteTimestamps?: number[];
 }
 
 const MainChart: React.FC<MainChartProps> = ({
@@ -67,6 +68,7 @@ const MainChart: React.FC<MainChartProps> = ({
   yMinValue,
   yMaxValue,
   setTooltip,
+  noteTimestamps = [],
 }) => {
   const {
     data: response,
@@ -269,6 +271,33 @@ const MainChart: React.FC<MainChartProps> = ({
                 fill={colors.point}
               />
             ))}
+          </g>
+        )}
+        {/* Note markers - vertical dotted lines at timestamps with notes */}
+        {noteTimestamps.length > 0 && scales && (
+          <g className="note-markers">
+            {noteTimestamps.map((ts) => {
+              // Only render if within the viewDomain
+              if (ts >= viewDomain[0] && ts <= viewDomain[1]) {
+                const x = scales.xScale(ts);
+                if (x >= 0 && x <= innerWidth) {
+                  return (
+                    <line
+                      key={ts}
+                      x1={x}
+                      x2={x}
+                      y1={0}
+                      y2={innerHeight}
+                      stroke="#ea580c"
+                      strokeWidth={1}
+                      strokeDasharray="4,4"
+                      strokeOpacity={0.7}
+                    />
+                  );
+                }
+              }
+              return null;
+            })}
           </g>
         )}
         {/* Interactive overlay for tooltip */}

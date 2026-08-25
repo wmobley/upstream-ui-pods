@@ -6,6 +6,8 @@ import GeometryMap from '../common/GeometryMap/GeometryMap';
 import SensorTooltip from '../common/SensorTooltip/SensorTooltip';
 import MainChart from './MainChart';
 import OverviewChart from './OverviewChart';
+import { useSensorNotes } from '../../hooks/notes/useNotes';
+import type { MeasurementItem } from '@upstream/upstream-api';
 
 // Types
 interface TooltipData {
@@ -16,6 +18,7 @@ interface TooltipData {
 
 export interface TimeSeriesChartProps {
   data: DataPoint[];
+  fullItems?: MeasurementItem[];
   campaignId: string;
   stationId: string;
   sensorId: string;
@@ -70,6 +73,7 @@ const defaultProps: Partial<TimeSeriesChartProps> = {
 
 const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   data,
+  fullItems = [],
   // downsampledData is currently unused but will be used for performance optimization in the future
   // downsampledData,
   campaignId,
@@ -97,6 +101,38 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 }) => {
   // Add refs for container
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Fetch notes for this sensor to find timestamps with notes
+  const campaignIdNum = parseInt(campaignId);
+  const stationIdNum = parseInt(stationId);
+  const sensorIdNum = parseInt(sensorId);
+  const { data: sensorNotes } = useSensorNotes(
+    campaignIdNum,
+    stationIdNum,
+    sensorIdNum,
+  );
+
+  // Extract measurement IDs that have measurement-scoped notes
+  const noteMeasurementIds = React.useMemo(() => {
+    if (!sensorNotes?.items) return new Set<number>();
+    return new Set(
+      sensorNotes.items
+        .filter((note: { scope: string; measurement_id: number | null }) => note.scope === 'measurement' && note.measurement_id != null)
+        .map((note: { measurement_id: number | null }) => note.measurement_id!),
+    );
+  }, [sensorNotes?.items]);
+
+  // Find timestamps for measurements that have notes by matching with fullItems (which have IDs)
+  const noteTimestamps = React.useMemo(() => {
+    if (!fullItems.length || noteMeasurementIds.size === 0) return [];
+    const timestamps: number[] = [];
+    fullItems.forEach((item) => {
+      if (noteMeasurementIds.has(item.id)) {
+        timestamps.push(item.collectiontime.getTime());
+      }
+    });
+    return timestamps;
+  }, [fullItems, noteMeasurementIds]);
 
   // Add state for dimensions
   const [dimensions, setDimensions] = React.useState({
@@ -191,6 +227,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
              yMinValue={yMinValue}
              yMaxValue={yMaxValue}
              setTooltip={setTooltip}
+             noteTimestamps={noteTimestamps}
            />
         )}
 
@@ -210,6 +247,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
              colors={colors}
              xFormatterOverview={xFormatterOverview}
              onBrush={handleBrush}
+             noteTimestamps={noteTimestamps}
            />
         </g>
       </svg>

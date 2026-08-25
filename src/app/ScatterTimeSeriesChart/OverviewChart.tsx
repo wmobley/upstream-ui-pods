@@ -22,6 +22,7 @@ export interface OverviewChartProps {
   };
   xFormatterOverview: (date: Date | number) => string;
   onBrush: (domain: [number, number]) => void;
+  noteTimestamps?: number[];
 }
 
 const OverviewChart: React.FC<OverviewChartProps> = ({
@@ -36,6 +37,7 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
   colors,
   xFormatterOverview,
   onBrush,
+  noteTimestamps = [],
 }) => {
   // Add refs for brush
   const overviewRef = React.useRef<SVGGElement>(null);
@@ -212,6 +214,31 @@ const OverviewChart: React.FC<OverviewChartProps> = ({
               fill={colors.point}
             />
           ))}
+        </g>
+      )}
+      {/* Note markers - vertical dotted lines at timestamps with notes */}
+      {noteTimestamps.length > 0 && scales && (
+        <g className="note-markers">
+          {noteTimestamps.map((ts) => {
+            const x = scales.xScale(ts);
+            // Only render if within visible range
+            if (x >= 0 && x <= innerWidth) {
+              return (
+                <line
+                  key={ts}
+                  x1={x}
+                  x2={x}
+                  y1={0}
+                  y2={innerHeight}
+                  stroke="#ea580c"
+                  strokeWidth={1}
+                  strokeDasharray="4,4"
+                  strokeOpacity={0.7}
+                />
+              );
+            }
+            return null;
+          })}
         </g>
       )}
       {/* Overview chart x-axis */}

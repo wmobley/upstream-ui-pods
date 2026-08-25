@@ -4,6 +4,7 @@ import QueryWrapper from '../../common/QueryWrapper';
 import { DataPoint } from '../../../utils/dataProcessing';
 import { formatNumber } from '../../common/NumberFormatter/NumberFortatterUtils';
 import TimeSeriesChart from '../../ScatterTimeSeriesChart';
+import type { MeasurementItem } from '@upstream/upstream-api';
 
 interface TimeSeriesGraphProps {
   campaignId: string;
@@ -33,7 +34,9 @@ const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
     Number.isFinite(minMeasurementValue) ? minMeasurementValue : undefined,
     Number.isFinite(maxMeasurementValue) ? maxMeasurementValue : undefined,
   );
-  const downsampledData = data?.items.map(
+  // Keep full items with IDs for note timestamp matching
+  const fullItems: MeasurementItem[] = data?.items ?? [];
+  const downsampledData = fullItems.map(
     (item) =>
       ({
         timestamp: item.collectiontime,
@@ -120,6 +123,7 @@ const Chart = ({ campaignId, stationId, sensorId }: TimeSeriesGraphProps) => {
           stationId={stationId}
           sensorId={sensorId}
           data={downsampledData}
+          fullItems={fullItems}
           minMeasurementValue={
             Number.isFinite(minMeasurementValue) ? minMeasurementValue : undefined
           }

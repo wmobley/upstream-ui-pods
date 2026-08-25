@@ -374,7 +374,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
                   <td className="border px-2 py-1 text-gray-600">Longitude as decimal degrees (string)</td>
                 </tr>
                 <tr>
-                  <td className="border px-2 py-1 font-mono text-gray-800"><sensor_alias></td>
+                  <td className="border px-2 py-1 font-mono text-gray-800">sensor_alias</td>
                   <td className="border px-2 py-1 text-center text-green-600 font-medium">Yes</td>
                   <td className="border px-2 py-1 text-gray-600">One column per sensor alias from Sensor CSV (e.g., River Stage, Rain Increment, Flow Volume). Leave blank for missing values.</td>
                 </tr>
