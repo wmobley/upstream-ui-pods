@@ -9,6 +9,7 @@ import { useChartDimensions } from './hooks/useChartDimensions';
 import { useChartScales } from './hooks/useChartScales';
 import { useChartBrush } from './hooks/useChartBrush';
 import { defaultChartStyles, defaultFormatters } from './utils/chartUtils';
+import { useSensorNotes } from '../../hooks/notes/useNotes';
 
 // Define the structure of additional sensors
 export interface AdditionalSensor {
@@ -108,6 +109,38 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   const [selectedPoint, setSelectedPoint] =
     React.useState<SelectedPointPayload | null>(null);
 
+  // Fetch notes for this sensor to find timestamps with notes
+  const campaignIdNum = parseInt(campaignId);
+  const stationIdNum = parseInt(stationId);
+  const sensorIdNum = parseInt(sensorId);
+  const { data: sensorNotes } = useSensorNotes(
+    campaignIdNum,
+    stationIdNum,
+    sensorIdNum,
+  );
+
+  // Extract measurement IDs that have measurement-scoped notes
+  const noteMeasurementIds = React.useMemo(() => {
+    if (!sensorNotes?.items) return new Set<number>();
+    return new Set(
+      sensorNotes.items
+        .filter((note: { scope: string; measurement_id: number | null }) => note.scope === 'measurement' && note.measurement_id != null)
+        .map((note: { measurement_id: number | null }) => note.measurement_id!),
+    );
+  }, [sensorNotes?.items]);
+
+  // Find timestamps for measurements that have notes by matching with allPoints (which have IDs)
+  const noteTimestamps = React.useMemo(() => {
+    if (!allPoints || noteMeasurementIds.size === 0) return [];
+    const timestamps: number[] = [];
+    allPoints.forEach((item) => {
+      if (noteMeasurementIds.has(item.id)) {
+        timestamps.push(item.collectiontime.getTime());
+      }
+    });
+    return timestamps;
+  }, [allPoints, noteMeasurementIds]);
+
   // Calculate chart dimensions
   const { dimensions, chartDimensions } = useChartDimensions({
     containerRef,
@@ -191,6 +224,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           stationId={stationId}
           onResetView={resetZoom}
           onPointSelect={setSelectedPoint}
+          noteTimestamps={noteTimestamps}
+          viewDomain={viewDomain}
         />
 
         {/* Overview chart */}
@@ -206,6 +241,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             colorPalette={colorPalette}
             xFormatterOverview={xFormatterOverview}
             overviewRef={overviewRef}
+            noteTimestamps={noteTimestamps}
           />
         )}
 

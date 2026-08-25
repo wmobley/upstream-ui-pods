@@ -115,11 +115,14 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   // Extract measurement IDs that have measurement-scoped notes
   const noteMeasurementIds = React.useMemo(() => {
     if (!sensorNotes?.items) return new Set<number>();
-    return new Set(
+    const ids = new Set(
       sensorNotes.items
         .filter((note: { scope: string; measurement_id: number | null }) => note.scope === 'measurement' && note.measurement_id != null)
         .map((note: { measurement_id: number | null }) => note.measurement_id!),
     );
+    console.debug('[ScatterNotes] sensorNotes:', sensorNotes?.items);
+    console.debug('[ScatterNotes] noteMeasurementIds:', Array.from(ids));
+    return ids;
   }, [sensorNotes?.items]);
 
   // Find timestamps for measurements that have notes by matching with fullItems (which have IDs)
@@ -131,6 +134,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         timestamps.push(item.collectiontime.getTime());
       }
     });
+    console.debug('[ScatterNotes] fullItems count:', fullItems.length);
+    console.debug('[ScatterNotes] fullItems sample IDs:', fullItems.slice(0, 5).map(i => i.id));
+    console.debug('[ScatterNotes] matched timestamps:', timestamps);
     return timestamps;
   }, [fullItems, noteMeasurementIds]);
 

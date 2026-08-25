@@ -70,6 +70,8 @@ interface MainChartProps {
   stationId: string;
   onResetView: () => void;
   onPointSelect?: (payload: SelectedPointPayload) => void;
+  noteTimestamps?: number[];
+  viewDomain?: [number, number] | null;
 }
 
 // Helper Components
@@ -183,6 +185,8 @@ const MainChart: React.FC<MainChartProps> = ({
   stationId,
   onResetView,
   onPointSelect,
+  noteTimestamps = [],
+  viewDomain,
 }) => {
   // Helper function to handle tooltip positioning
   const handleTooltipPosition = React.useCallback(
@@ -607,6 +611,33 @@ const MainChart: React.FC<MainChartProps> = ({
         {renderLinePaths}
         {renderDataPointCircles}
         {renderIndividualPoints}
+        {/* Note markers - vertical dotted lines at timestamps with notes */}
+        {noteTimestamps.length > 0 && scales && viewDomain && (
+          <g className="note-markers">
+            {noteTimestamps.map((ts) => {
+              // Only render if within the viewDomain
+              if (ts >= viewDomain[0] && ts <= viewDomain[1]) {
+                const x = scales.xScale(ts);
+                if (x >= 0 && x <= chartDimensions.innerWidth) {
+                  return (
+                    <line
+                      key={ts}
+                      x1={x}
+                      x2={x}
+                      y1={0}
+                      y2={chartDimensions.mainInnerHeight}
+                      stroke="#ea580c"
+                      strokeWidth={1}
+                      strokeDasharray="4,4"
+                      strokeOpacity={0.7}
+                    />
+                  );
+                }
+              }
+              return null;
+            })}
+          </g>
+        )}
       </g>
 
       {/* Axes layer - rendered last to be on top */}
