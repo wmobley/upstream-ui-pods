@@ -32,8 +32,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY docs/ ./mkdocs-source/
 
 # Build the MkDocs site, then run Pagefind for static search
-RUN mkdocs build --config-file mkdocs-source/mkdocs.yml --site-dir site \
-    && cd site \
+RUN mkdocs build --config-file mkdocs-source/mkdocs.yml --site-dir /docs/site \
+    && cd /docs/site \
     && npx -y pagefind --site .
 
 # Production stage
