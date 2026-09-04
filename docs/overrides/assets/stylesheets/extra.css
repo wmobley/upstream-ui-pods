@@ -200,6 +200,11 @@
   background-color: var(--md-primary-fg-color--dark);
 }
 
+/* Dark mode: lighter header */
+[data-md-color-scheme="slate"] .md-tabs {
+  background-color: var(--md-primary-fg-color);
+}
+
 /* Footer */
 .md-footer {
   background-color: var(--md-default-bg-color--light);
