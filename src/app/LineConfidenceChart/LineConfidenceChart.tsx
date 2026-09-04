@@ -1,15 +1,13 @@
 import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
-import MainChart from './components/MainChart';
-import OverviewChart from './components/OverviewChart';
 import MeasurementNoteCallout, {
   SelectedPointPayload,
 } from './components/MeasurementNoteCallout';
-import { useChartDimensions } from './hooks/useChartDimensions';
-import { useChartScales } from './hooks/useChartScales';
-import { useChartBrush } from './hooks/useChartBrush';
 import { defaultChartStyles, defaultFormatters } from './utils/chartUtils';
 import { useSensorNotes } from '../../hooks/notes/useNotes';
+import { useLineConfidence } from 'src/app/Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
+import { UPlotChart } from './UPlotChart';
+import { PointSelectionData } from './plugins/crosshairClick';
 
 // Define the structure of additional sensors
 export interface AdditionalSensor {
@@ -94,30 +92,19 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   campaignId,
   stationId,
 }) => {
-  // Container ref for resizing
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  // Ref for the brush component
-  const overviewRef = React.useRef<SVGGElement>(null);
-
-  // View domain state
-  const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(
-    null,
-  );
-
-  // Y-axis view domain state (from y-brush interaction)
-  const [yViewDomain, setYViewDomain] = React.useState<[number, number] | null>(
-    null,
-  );
+  // View domain state (for external sync)
+  const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(null);
 
   // The measurement currently selected for viewing/adding a note, if any
-  const [selectedPoint, setSelectedPoint] =
-    React.useState<SelectedPointPayload | null>(null);
+  const [selectedPoint, setSelectedPoint] = React.useState<SelectedPointPayload | null>(null);
+
+  // Get aggregation settings from context
+  const { aggregationInterval, aggregationValue } = useLineConfidence();
 
   // Fetch notes for this sensor to find timestamps with notes
-  const campaignIdNum = parseInt(campaignId);
-  const stationIdNum = parseInt(stationId);
-  const sensorIdNum = parseInt(sensorId);
+  const campaignIdNum = parseInt(campaignId, 10);
+  const stationIdNum = parseInt(stationId, 10);
+  const sensorIdNum = parseInt(sensorId, 10);
   const { data: sensorNotes } = useSensorNotes(
     campaignIdNum,
     stationIdNum,
@@ -146,134 +133,76 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     return timestamps;
   }, [allPoints, noteMeasurementIds]);
 
-  // Calculate chart dimensions
-  const { dimensions, chartDimensions } = useChartDimensions({
-    containerRef,
-    width,
-    height,
-    margin,
-  });
-
-  // Generate scales and paths
-  const { scales, paths, axisTicks } = useChartScales({
-    data,
-    chartDimensions,
-    viewDomain,
-    yViewDomain,
-    gapThresholdMinutes,
-    minValue,
-    maxValue,
-    additionalSensors,
-    xFormatter: showLineOverview ? xFormatterOverview : xFormatter,
-    yFormatter,
-  });
-
-  const { resetZoom } = useChartBrush({
-    overviewRef,
-    innerWidth: chartDimensions.innerWidth,
-    overviewXScale: scales?.overviewXScale,
-    overviewInnerHeight: chartDimensions.overviewInnerHeight,
-    setViewDomain,
-    onBrush,
-  });
-
-  // Combined reset that clears both x and y view domains
-  const handleResetView = React.useCallback(() => {
-    setYViewDomain(null);
-    resetZoom();
-  }, [resetZoom]);
+  // Handle point selection from uPlot chart
+  const handlePointSelect = React.useCallback(
+    (pointData: PointSelectionData) => {
+      setSelectedPoint({
+        x: pointData.x,
+        y: pointData.y,
+        measurementId: pointData.measurementId ?? 0,
+        timestamp: pointData.timestamp,
+        value: pointData.value,
+        campaignId: pointData.campaignId,
+        stationId: pointData.stationId,
+        sensorId: pointData.sensorId,
+        bucketContext: pointData.bucketContext,
+        geometry: pointData.geometry,
+      });
+    },
+    []
+  );
 
   // Quick validation checks
   if (data.length === 0) {
-    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
-      No data available
-    </div>;
-  } 
-
-  if (!scales) {
-    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
-      Cannot calculate chart scales
-      </div>;
-  }
-
-  if (!paths) {
-    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
-      Cannot calculate chart paths
-    </div>;
-  }
-
-  if (!axisTicks) {
-    return <div className='text-gray-600 text-lg flex justify-center items-center p-4'>
-      Cannot calculate chart axis ticks
-    </div>;
+    return (
+      <div className="text-gray-600 text-lg flex justify-center items-center p-4">
+        No data available
+      </div>
+    );
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="flex flex-col items-center justify-center relative w-full h-full"
-    >
-      <svg width={dimensions.width} height={dimensions.height}>
-        {/* Main chart */}
-        <MainChart
-          loading={loading}
-          data={data}
-          allPoints={allPoints}
-          scales={scales}
-          chartDimensions={chartDimensions}
-          paths={paths}
-          axisTicks={axisTicks}
-          margin={margin}
-          colors={colors}
-          pointRadius={pointRadius}
-          xAxisTitle={xAxisTitle}
-          yAxisTitle={yAxisTitle}
-          additionalSensors={additionalSensors}
-          colorPalette={colorPalette}
-          renderDataPoints={renderDataPoints}
-          selectedSensorId={sensorId}
-          campaignId={campaignId}
-          stationId={stationId}
-          onResetView={handleResetView}
-          onYBrush={setYViewDomain}
-          onPointSelect={setSelectedPoint}
-          noteTimestamps={noteTimestamps}
-          viewDomain={viewDomain}
-        />
-
-        {/* Overview chart */}
-        {showLineOverview && (
-          <OverviewChart
-            showAreaOverview={showAreaOverview}
-            showLineOverview={showLineOverview}
-            paths={paths}
-            chartDimensions={chartDimensions}
-            scales={scales}
-            margin={margin}
-            colors={colors}
-            colorPalette={colorPalette}
-            xFormatterOverview={xFormatterOverview}
-            overviewRef={overviewRef}
-            noteTimestamps={noteTimestamps}
-          />
-        )}
-
-        {/* Right margin background */}
-        <rect
-          x={dimensions.width - margin.right}
-          y={0}
-          width={margin.right}
-          height={dimensions.height}
-          fill="white"
-        />
-      </svg>
+    <div className="flex flex-col items-center justify-center relative w-full h-full">
+      <UPlotChart
+        data={data}
+        allPoints={allPoints}
+        loading={loading}
+        width={width}
+        height={height}
+        margin={margin}
+        showAreaOverview={showAreaOverview}
+        showLineOverview={showLineOverview}
+        pointRadius={pointRadius}
+        colors={colors}
+        xAxisTitle={xAxisTitle}
+        yAxisTitle={yAxisTitle}
+        xFormatter={xFormatter}
+        xFormatterOverview={xFormatterOverview}
+        yFormatter={yFormatter}
+        onBrush={onBrush}
+        gapThresholdMinutes={gapThresholdMinutes}
+        maxValue={maxValue}
+        minValue={minValue}
+        additionalSensors={additionalSensors}
+        colorPalette={colorPalette}
+        renderDataPoints={renderDataPoints}
+        selectedSensorId={sensorId}
+        campaignId={campaignId}
+        stationId={stationId}
+        aggregationInterval={aggregationInterval}
+        aggregationValue={aggregationValue}
+        noteTimestamps={noteTimestamps}
+        onYBrush={() => {
+          // Could add y-domain callback if needed
+        }}
+        onPointSelect={handlePointSelect}
+        viewDomain={viewDomain}
+        onViewDomainChange={setViewDomain}
+      />
 
       {/* Measurement note callout — opens on click, shows/adds notes at that point */}
       {selectedPoint && (
-        <MeasurementNoteCallout
-          point={selectedPoint}
-          onClose={() => setSelectedPoint(null)}
-        />
+        <MeasurementNoteCallout point={selectedPoint} onClose={() => setSelectedPoint(null)} />
       )}
     </div>
   );
