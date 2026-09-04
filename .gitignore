@@ -22,3 +22,7 @@ dist-ssr
 *.sln
 *.sw?
 .env.local
+
+# MkDocs build artifacts
+docs/site/
+docs/.venv/

@@ -491,6 +491,28 @@ collectiontime,Lat_deg,Lon_deg,River Stage,Rain Increment,Flow Volume
 
 Any other columns in either file are ignored by the importer. The upload dialog validates both files client-side before submitting and reports missing/unmatched columns.
 
+## Documentation
+
+End-user documentation is built with MkDocs and served at `/docs/` from the UI pod. The docs source lives in `docs/` alongside this project.
+
+### Local docs build
+
+```bash
+cd docs
+pip install -r requirements.txt
+
+# Build the docs site
+mkdocs build --config-file mkdocs.yml --site-dir site
+
+# Serve docs locally with live reload
+mkdocs serve --config-file mkdocs.yml
+
+# Generate Pagefind search index (after building the site)
+cd site && npx -y pagefind --site .
+```
+
+The docs site is built automatically as part of the Docker image. See `Dockerfile` for the build stages.
+
 ## Deployment
 
 The application can be deployed as a static site or using Docker:

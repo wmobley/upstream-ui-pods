@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  <link href="/docs/pagefind/pagefind-ui.css" rel="stylesheet" />
+  <script src="/docs/pagefind/pagefind-ui.js"></script>
+  <style>
+    /* Pagefind search container */
+    .pagefind-search-container {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--md-default-bg-color--light);
+      border-radius: 4px;
+    }
+    .pagefind-search-container .pagefind-ui__search-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--md-default-fg-color--lightest);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="pagefind-search-container" id="pagefind-search"></div>
+  {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      if (typeof PagefindUI !== 'undefined') {
+        new PagefindUI({ element: "#pagefind-search", showSubResults: true });
+      }
+    });
+  </script>
+{% endblock %}

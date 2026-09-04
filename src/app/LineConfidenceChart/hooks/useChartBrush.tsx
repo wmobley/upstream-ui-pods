@@ -71,7 +71,7 @@ export function useChartBrush({
         [0, 0],
         [innerWidth, overviewInnerHeight],
       ])
-      .on('brush end', (event) => {
+      .on('end', (event) => {
         if (!event.selection) {
           emitDomain(fullDomain);
           return;

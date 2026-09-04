@@ -7,6 +7,8 @@ interface LegendProps {
   intervals: Interval[];
   selectedInterval: Interval | null;
   onIntervalSelect: (interval: Interval | null) => void;
+  opacity: number;
+  onOpacityChange: (opacity: number) => void;
 }
 
 export default function Legend({
@@ -14,6 +16,8 @@ export default function Legend({
   intervals,
   selectedInterval,
   onIntervalSelect,
+  opacity,
+  onOpacityChange,
 }: LegendProps) {
   return (
     <div className="absolute bottom-16 right-4 z-[1000] bg-white p-4 rounded-lg shadow-lg">
@@ -29,7 +33,7 @@ export default function Legend({
             Show All Intervals
           </button>
         </div>
-        {intervals.map((interval, index) => (
+        {[...intervals].reverse().map((interval, index) => (
           <div
             key={index}
             className="flex items-center gap-2 cursor-pointer"
@@ -53,6 +57,26 @@ export default function Legend({
             </span>
           </div>
         ))}
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-gray-200">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Transparency
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={opacity}
+            onChange={(e) => onOpacityChange(parseFloat(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+          />
+          <span className="text-xs text-gray-500 w-10 text-right">
+            {Math.round(opacity * 100)}%
+          </span>
+        </div>
       </div>
     </div>
   );

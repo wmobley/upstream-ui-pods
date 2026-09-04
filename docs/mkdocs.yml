@@ -1,0 +1,179 @@
+site_name: Upstream Documentation
+site_description: End-user documentation for the Upstream environmental sensor data platform
+site_url: https://upstream.pods.portals.tapis.io/docs/
+repo_url: https://github.com/wmobley/upstream-ui-pods
+repo_name: upstream-ui-pods
+edit_uri: edit/main/docs/docs/
+
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  version:
+    provider: mike
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - getting-started/index.md
+      - Web UI: getting-started/quickstart-web-ui.md
+      - Python SDK: getting-started/quickstart-python-sdk.md
+      - REST API: getting-started/quickstart-api.md
+  - Concepts:
+      - concepts/index.md
+      - Authentication: concepts/authentication.md
+      - Projects and API URLs: concepts/projects-and-api-urls.md
+  - Web UI Guide:
+      - web-ui-guide/index.md
+      - Authentication: web-ui-guide/authentication.md
+      - Campaigns:
+          - Creating: web-ui-guide/campaigns/creating.md
+          - Managing: web-ui-guide/campaigns/managing.md
+          - Publishing: web-ui-guide/campaigns/publishing.md
+      - Stations:
+          - Creating: web-ui-guide/stations/creating.md
+          - Dashboard: web-ui-guide/stations/dashboard.md
+          - Uploading Data: web-ui-guide/stations/uploading-data.md
+          - Exporting Data: web-ui-guide/stations/exporting-data.md
+          - Publishing: web-ui-guide/stations/publishing.md
+      - Sensors:
+          - Managing: web-ui-guide/sensors/managing.md
+          - Statistics: web-ui-guide/sensors/statistics.md
+          - Visualization: web-ui-guide/sensors/visualization.md
+      - Measurements:
+          - Viewing: web-ui-guide/measurements/viewing.md
+          - Exporting: web-ui-guide/measurements/exporting.md
+      - Administration:
+          - User Roles: web-ui-guide/administration/user-roles.md
+          - Metadata Schemas: web-ui-guide/administration/metadata-schemas.md
+          - Pod Bundles: web-ui-guide/administration/pod-bundles.md
+  - Data Preparation:
+      - data-preparation/index.md
+      - Sensors CSV: data-preparation/sensors-csv.md
+      - Measurements CSV: data-preparation/measurements-csv.md
+      - Timezone Handling: data-preparation/timezone-handling.md
+      - Validation: data-preparation/validation.md
+      - Large Files: data-preparation/large-files.md
+      - Templates: data-preparation/templates.md
+      - Common Mistakes: data-preparation/common-mistakes.md
+  - Visualization Guide:
+      - visualization-guide/index.md
+      - Temporal Visualizations: visualization-guide/temporal-visualizations.md
+      - Spatial Visualizations: visualization-guide/spatial-visualizations.md
+  - Python SDK Guide:
+      - python-sdk-guide/index.md
+      - Installation: python-sdk-guide/installation.md
+      - Authentication: python-sdk-guide/authentication.md
+      - Configuration: python-sdk-guide/configuration.md
+      - Core Workflows:
+          - Campaign Management: python-sdk-guide/core-workflows/campaign-management.md
+          - Station Management: python-sdk-guide/core-workflows/station-management.md
+          - Sensor Management: python-sdk-guide/core-workflows/sensor-management.md
+          - Measurement Operations: python-sdk-guide/core-workflows/measurement-operations.md
+          - Data Upload: python-sdk-guide/core-workflows/data-upload.md
+      - Advanced Workflows:
+          - CKAN Publishing: python-sdk-guide/advanced-workflows/ckan-publishing.md
+          - Geospatial Analysis: python-sdk-guide/advanced-workflows/geospatial-analysis.md
+          - Statistical Analysis: python-sdk-guide/advanced-workflows/statistical-analysis.md
+          - Automation Examples: python-sdk-guide/advanced-workflows/automation-examples.md
+          - Metadata Schemas: python-sdk-guide/advanced-workflows/metadata-schemas.md
+      - Examples: python-sdk-guide/examples/index.md
+      - Troubleshooting: python-sdk-guide/troubleshooting.md
+  - API Reference:
+      - api-reference/index.md
+      - Quick Reference: api-reference/quick-reference.md
+      - Authentication: api-reference/authentication.md
+      - Endpoints:
+          - Campaigns: api-reference/endpoints/campaigns.md
+          - Stations: api-reference/endpoints/stations.md
+          - Sensors: api-reference/endpoints/sensors.md
+          - Measurements: api-reference/endpoints/measurements.md
+          - Upload: api-reference/endpoints/upload.md
+          - Sensor Variables: api-reference/endpoints/sensor-variables.md
+          - Projects: api-reference/endpoints/projects.md
+          - User Roles: api-reference/endpoints/user-roles.md
+          - Metadata Schemas: api-reference/endpoints/metadata-schemas.md
+          - CKAN: api-reference/endpoints/ckan.md
+          - Pods: api-reference/endpoints/pods.md
+      - Data Formats: api-reference/data-formats.md
+      - Pagination: api-reference/pagination.md
+      - Error Codes: api-reference/error-codes.md
+      - Rate Limits: api-reference/rate-limits.md
+  - CKAN Integration:
+      - ckan-integration/index.md
+      - Publishing from UI: ckan-integration/publishing-from-ui.md
+      - Publishing from SDK: ckan-integration/publishing-from-sdk.md
+      - Publishing from API: ckan-integration/publishing-from-api.md
+      - Dataset Structure: ckan-integration/dataset-structure.md
+      - Metadata Mapping: ckan-integration/metadata-mapping.md
+      - Troubleshooting: ckan-integration/troubleshooting.md
+      - Public Portal: ckan-integration/public-portal.md
+  - Administration:
+      - administration/index.md
+      - User Management: administration/user-management.md
+      - Metadata Schemas: administration/metadata-schemas.md
+      - Pod Bundles: administration/pod-bundles.md
+      - Monitoring: administration/monitoring.md
+      - Backup and Restore: administration/backup-restore.md
+  - Reference:
+      - reference/index.md
+      - Glossary: reference/glossary.md
+      - FAQ: reference/faq.md
+      - Environment URLs: reference/environment-urls.md
+      - CSV Templates: reference/csv-templates.md
+      - Changelog: reference/changelog.md
+      - Support: reference/support.md

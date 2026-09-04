@@ -28,6 +28,8 @@ export default function HeatMap({ measurements, intervals, onSelectMeasurement }
     position: LatLngExpression;
   } | null>(null);
 
+  const [opacity, setOpacity] = useState(1);
+
   // Filter measurements based on selected interval
   const filteredMeasurements = useMemo(() => {
     if (!measurements) return [];
@@ -72,7 +74,7 @@ export default function HeatMap({ measurements, intervals, onSelectMeasurement }
               radius={6}
               pathOptions={{
                 color: getColorByValue(value, intervals),
-                fillOpacity: 1,
+                fillOpacity: opacity,
                 weight: 1,
               }}
               eventHandlers={{
@@ -108,6 +110,8 @@ export default function HeatMap({ measurements, intervals, onSelectMeasurement }
         intervals={intervals}
         selectedInterval={selectedInterval}
         onIntervalSelect={setSelectedInterval}
+        opacity={opacity}
+        onOpacityChange={setOpacity}
       />
     </div>
   );

@@ -105,6 +105,11 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     null,
   );
 
+  // Y-axis view domain state (from y-brush interaction)
+  const [yViewDomain, setYViewDomain] = React.useState<[number, number] | null>(
+    null,
+  );
+
   // The measurement currently selected for viewing/adding a note, if any
   const [selectedPoint, setSelectedPoint] =
     React.useState<SelectedPointPayload | null>(null);
@@ -154,6 +159,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     data,
     chartDimensions,
     viewDomain,
+    yViewDomain,
     gapThresholdMinutes,
     minValue,
     maxValue,
@@ -170,6 +176,12 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     setViewDomain,
     onBrush,
   });
+
+  // Combined reset that clears both x and y view domains
+  const handleResetView = React.useCallback(() => {
+    setYViewDomain(null);
+    resetZoom();
+  }, [resetZoom]);
 
   // Quick validation checks
   if (data.length === 0) {
@@ -222,7 +234,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           selectedSensorId={sensorId}
           campaignId={campaignId}
           stationId={stationId}
-          onResetView={resetZoom}
+          onResetView={handleResetView}
+          onYBrush={setYViewDomain}
           onPointSelect={setSelectedPoint}
           noteTimestamps={noteTimestamps}
           viewDomain={viewDomain}

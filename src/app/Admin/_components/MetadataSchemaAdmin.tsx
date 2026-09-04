@@ -5,7 +5,7 @@ import {
   useDeleteMetadataSchema,
   useUpdateMetadataSchema,
 } from '../../../hooks/metadataSchema/useMetadataSchemaMutations';
-import { MetadataSchemaItem } from '../../../hooks/metadataSchema/types';
+import { MetadataJsonValue, MetadataSchemaItem } from '../../../hooks/metadataSchema/types';
 
 const defaultSchema: Omit<MetadataSchemaItem, 'id'> = {
   scope: 'campaign',
@@ -36,7 +36,7 @@ const MetadataSchemaAdmin: React.FC<MetadataSchemaAdminProps> = ({ canManage }) 
   const [optionsText, setOptionsText] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  const schemaItems = data?.items ?? [];
+  const schemaItems = useMemo(() => data?.items ?? [], [data?.items]);
   const grouped = useMemo(() => {
     return schemaItems.reduce<Record<string, MetadataSchemaItem[]>>((acc, item) => {
       const scope = item.scope || 'unknown';
@@ -46,8 +46,29 @@ const MetadataSchemaAdmin: React.FC<MetadataSchemaAdminProps> = ({ canManage }) 
     }, {});
   }, [schemaItems]);
 
-  const handleFormChange = (key: keyof Omit<MetadataSchemaItem, 'id'>, value: any) => {
+  const handleFormChange = (
+    key: keyof Omit<MetadataSchemaItem, 'id'>,
+    value: Omit<MetadataSchemaItem, 'id'>[keyof Omit<MetadataSchemaItem, 'id'>],
+  ) => {
     setFormState((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const isMetadataJsonValue = (value: unknown): value is MetadataJsonValue => {
+    if (
+      value === null ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return true;
+    }
+    if (Array.isArray(value)) {
+      return value.every(isMetadataJsonValue);
+    }
+    if (typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>).every(isMetadataJsonValue);
+    }
+    return false;
   };
 
   const handleCreate = async () => {
@@ -61,10 +82,20 @@ const MetadataSchemaAdmin: React.FC<MetadataSchemaAdminProps> = ({ canManage }) 
       return;
     }
 
-    let options: Record<string, any> | null = null;
+    let options: Record<string, MetadataJsonValue> | MetadataJsonValue[] | null = null;
     if (optionsText.trim()) {
       try {
-        options = JSON.parse(optionsText);
+        const parsedOptions = JSON.parse(optionsText) as unknown;
+        if (
+          parsedOptions !== null &&
+          typeof parsedOptions === 'object' &&
+          isMetadataJsonValue(parsedOptions)
+        ) {
+          options = parsedOptions as Record<string, MetadataJsonValue> | MetadataJsonValue[];
+        } else {
+          setFormError('Options must be a valid JSON object or array.');
+          return;
+        }
       } catch {
         setFormError('Options must be valid JSON.');
         return;

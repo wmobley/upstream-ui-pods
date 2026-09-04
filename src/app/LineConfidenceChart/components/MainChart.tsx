@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import { ScaleLinear } from 'd3-scale';
+import { brushY } from 'd3-brush';
+import { select } from 'd3-selection';
 import { AdditionalSensor } from '../LineConfidenceChart';
 import { useLineConfidence } from '../../Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
 import { SelectedPointPayload } from './MeasurementNoteCallout';
@@ -69,6 +71,7 @@ interface MainChartProps {
   campaignId: string;
   stationId: string;
   onResetView: () => void;
+  onYBrush?: (domain: [number, number]) => void;
   onPointSelect?: (payload: SelectedPointPayload) => void;
   noteTimestamps?: number[];
   viewDomain?: [number, number] | null;
@@ -184,6 +187,7 @@ const MainChart: React.FC<MainChartProps> = ({
   campaignId,
   stationId,
   onResetView,
+  onYBrush,
   onPointSelect,
   noteTimestamps = [],
   viewDomain,
@@ -215,6 +219,59 @@ const MainChart: React.FC<MainChartProps> = ({
     [colorPalette, colors],
   );
   const { sampleSizeLoading } = useLineConfidence();
+
+  // Ref for y-axis brush
+  const yBrushRef = React.useRef<SVGGElement>(null);
+
+  // Initialize y-axis brush for vertical drag-zoom
+  React.useLayoutEffect(() => {
+    if (!scales || !yBrushRef.current || !onYBrush) return;
+
+    const brush = brushY<unknown>()
+      .extent([
+        [0, 0],
+        [0, chartDimensions.mainInnerHeight],
+      ])
+      .on('end', (event) => {
+        if (!event.selection) return;
+        const selection = event.selection as [number, number];
+
+        // Convert pixel coordinates to domain values (inverted because y-axis is flipped)
+        const domain: [number, number] = [
+          scales.yScale.invert(selection[1]),
+          scales.yScale.invert(selection[0]),
+        ];
+
+        onYBrush(domain);
+      });
+
+    const brushGroup = select(yBrushRef.current);
+
+    // Remove any existing brush before adding a new one
+    brushGroup.selectAll('.brush').remove();
+
+    // Apply the brush
+    brushGroup.call(brush);
+
+    // Style the brush selection
+    brushGroup
+      .selectAll('.selection')
+      .attr('fill', '#3b82f6')
+      .attr('fill-opacity', 0.15)
+      .attr('stroke', '#3b82f6')
+      .attr('stroke-width', 1);
+
+    brushGroup
+      .selectAll('.handle')
+      .attr('fill', '#ffffff')
+      .attr('stroke', '#3b82f6')
+      .attr('stroke-width', 1.5);
+
+    // Cleanup
+    return () => {
+      brushGroup.on('.brush', null);
+    };
+  }, [scales, chartDimensions.mainInnerHeight, onYBrush]);
 
   // Memoized components
   const renderAreaPaths = React.useMemo(
@@ -650,6 +707,9 @@ const MainChart: React.FC<MainChartProps> = ({
         {renderXAxis}
         {renderYAxis}
       </g>
+
+      {/* Y-axis brush - rendered outside axes layer to receive pointer events */}
+      <g ref={yBrushRef} className="y-brush" />
 
       {/* Reset button */}
       <ResetButton

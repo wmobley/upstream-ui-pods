@@ -1,7 +1,6 @@
 import React from 'react';
 import { Route, Switch, RouteComponentProps } from 'react-router-dom';
 import HeatMapViz from '../../Sensor/viz/HeatMapViz';
-import ScatterTimeViz from '../../Sensor/viz/ScatterTimeViz';
 import LineConfidenceViz from '../viz/LineConfidenceViz/LineConfidenceViz';
 import { ConfidenceMethodExplanation } from '../viz';
 import SensorDashboard from '../../SensorDashboard/SensorDashboard';
@@ -39,24 +38,6 @@ const Router: React.FC = () => {
           sensorId: string;
         }>) => (
           <HeatMapViz
-            campaignId={campaignId}
-            stationId={stationId}
-            sensorId={sensorId}
-          />
-        )}
-      />
-      <Route
-        path={`/campaigns/:campaignId/stations/:stationId/sensors/:sensorId/viz/scatter-time`}
-        render={({
-          match: {
-            params: { campaignId, stationId, sensorId },
-          },
-        }: RouteComponentProps<{
-          campaignId: string;
-          stationId: string;
-          sensorId: string;
-        }>) => (
-          <ScatterTimeViz
             campaignId={campaignId}
             stationId={stationId}
             sensorId={sensorId}

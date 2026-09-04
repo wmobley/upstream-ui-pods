@@ -7,7 +7,7 @@ import useOrganizations from '../../../../hooks/ckan/useOrganizations';
 import { useAuth } from '../../../../contexts/AuthContextState';
 import { useMetadataSchemaList } from '../../../../hooks/metadataSchema/useMetadataSchemaList';
 import MetadataFields from '../../../../components/MetadataFields/MetadataFields';
-import { normalizeMetadata } from '../../../../utils/metadata';
+import { MetadataValues, normalizeMetadata } from '../../../../utils/metadata';
 
 interface CreateCampaignFormProps {
   onCancel?: () => void;
@@ -40,7 +40,7 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
     endDate: null,
     allocation: '',
   });
-  const [metadataValues, setMetadataValues] = useState<Record<string, any>>({});
+  const [metadataValues, setMetadataValues] = useState<MetadataValues>({});
 
   const [errors, setErrors] = useState<Partial<Record<keyof CampaignsIn, string>>>({});
   const [metadataErrors, setMetadataErrors] = useState<Record<string, string>>({});
@@ -54,7 +54,7 @@ const CreateCampaignForm: React.FC<CreateCampaignFormProps> = ({ onCancel }) => 
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
-  const handleMetadataChange = (key: string, value: any) => {
+  const handleMetadataChange = (key: string, value: unknown) => {
     setMetadataValues(prev => ({ ...prev, [key]: value }));
     if (metadataErrors[key]) {
       setMetadataErrors(prev => {

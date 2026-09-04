@@ -1,5 +1,5 @@
 import React from 'react';
-import { MetadataSchemaItem } from '../../hooks/metadataSchema/types';
+import { MetadataJsonValue, MetadataSchemaItem } from '../../hooks/metadataSchema/types';
 
 type MetadataFieldsProps = {
   schema: MetadataSchemaItem[];
@@ -8,10 +8,16 @@ type MetadataFieldsProps = {
   onChange: (key: string, value: unknown) => void;
 };
 
-const getEnumOptions = (options?: Record<string, unknown> | null): string[] => {
+const getEnumOptions = (
+  options?: Record<string, MetadataJsonValue> | MetadataJsonValue[] | null,
+): string[] => {
   if (!options) return [];
-  if (Array.isArray(options)) return options as string[];
-  if (Array.isArray(options.values)) return options.values as string[];
+  if (Array.isArray(options)) {
+    return options.filter((option): option is string => typeof option === 'string');
+  }
+  if (Array.isArray(options.values)) {
+    return options.values.filter((option): option is string => typeof option === 'string');
+  }
   return [];
 };
 

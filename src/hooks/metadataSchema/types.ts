@@ -1,5 +1,13 @@
 export type MetadataSchemaScope = 'campaign' | 'station' | 'sensor' | string;
 
+export type MetadataJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | MetadataJsonValue[]
+  | { [key: string]: MetadataJsonValue };
+
 export type MetadataSchemaItem = {
   id: number;
   scope: MetadataSchemaScope;
@@ -13,7 +21,7 @@ export type MetadataSchemaItem = {
   ckan_mode?: string | null;
   order_index?: number;
   active?: boolean;
-  options?: Record<string, any> | null;
+  options?: Record<string, MetadataJsonValue> | MetadataJsonValue[] | null;
 };
 
 export type MetadataSchemaListResponse = {

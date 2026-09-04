@@ -17,6 +17,7 @@ interface UseChartScalesProps {
   data: AggregatedMeasurement[];
   chartDimensions: ChartDimensions;
   viewDomain: [number, number] | null;
+  yViewDomain?: [number, number] | null;
   gapThresholdMinutes: number;
   minValue: number;
   maxValue: number;
@@ -32,6 +33,7 @@ export function useChartScales({
   data,
   chartDimensions,
   viewDomain,
+  yViewDomain,
   gapThresholdMinutes,
   minValue,
   maxValue,
@@ -81,7 +83,7 @@ export function useChartScales({
       .range([xPadding, chartDimensions.innerWidth - xPadding]);
 
     const yScale = scaleLinear()
-      .domain(yExtent)
+      .domain(yViewDomain || yExtent)
       .range([chartDimensions.mainInnerHeight, 0]);
 
     // Overview chart scales
@@ -98,6 +100,7 @@ export function useChartScales({
     data,
     chartDimensions,
     viewDomain,
+    yViewDomain,
     minValue,
     maxValue,
     additionalSensors,

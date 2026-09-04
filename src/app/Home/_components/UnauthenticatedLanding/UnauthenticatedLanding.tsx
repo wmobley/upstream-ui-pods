@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   FaArrowRight,
+  FaBook,
   FaCodeBranch,
   FaDatabase,
   FaExternalLinkAlt,
@@ -54,6 +55,12 @@ const coordinationSteps = [
 ];
 
 const resourceLinks = [
+  {
+    label: 'Documentation',
+    href: '/docs/',
+    description: 'User guides, quickstarts, and references for the web UI, Python SDK, and API.',
+    icon: FaBook,
+  },
   {
     label: 'Python SDK',
     href: 'https://pypi.org/project/upstream-sdk/',

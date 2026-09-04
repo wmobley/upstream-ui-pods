@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+htmlcov
+.coverage
+.git
+.env
+.env.local
+docs/site
+docs/.venv
+*.log

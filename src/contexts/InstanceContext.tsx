@@ -491,6 +491,8 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
   );
 };
 
+// Existing consumers import both InstanceProvider and useInstance from this module.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useInstance = (): InstanceContextType => {
   const ctx = useContext(InstanceContext);
   if (!ctx) throw new Error('useInstance must be used within an InstanceProvider');

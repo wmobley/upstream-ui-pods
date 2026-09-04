@@ -4,7 +4,7 @@ import { StationCreate, StationType, GetCampaignResponse } from '@upstream/upstr
 import { useCreate } from '../../../../hooks/station/useCreate';
 import { useMetadataSchemaList } from '../../../../hooks/metadataSchema/useMetadataSchemaList';
 import MetadataFields from '../../../../components/MetadataFields/MetadataFields';
-import { normalizeMetadata } from '../../../../utils/metadata';
+import { MetadataValues, normalizeMetadata } from '../../../../utils/metadata';
 import { TIMEZONES, suggestedTimezoneFor } from '../../../../utils/timezones';
 
 interface CreateStationFormProps {
@@ -35,7 +35,7 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, campa
       timezone: suggested ?? 'UTC',
     };
   });
-  const [metadataValues, setMetadataValues] = useState<Record<string, any>>({});
+  const [metadataValues, setMetadataValues] = useState<MetadataValues>({});
 
   const [errors, setErrors] = useState<Partial<Record<keyof StationCreate, string>>>({});
   const [metadataErrors, setMetadataErrors] = useState<Record<string, string>>({});
@@ -47,7 +47,7 @@ const CreateStationForm: React.FC<CreateStationFormProps> = ({ campaignId, campa
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
-  const handleMetadataChange = (key: string, value: any) => {
+  const handleMetadataChange = (key: string, value: unknown) => {
     setMetadataValues(prev => ({ ...prev, [key]: value }));
     if (metadataErrors[key]) {
       setMetadataErrors(prev => {
