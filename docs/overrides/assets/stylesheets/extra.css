@@ -29,23 +29,89 @@
 
 /* Dark mode overrides */
 [data-md-color-scheme="slate"] {
-  --md-default-fg-color: #F4F4F4;
-  --md-default-fg-color--light: #AFAFAF;
-  --md-default-fg-color--lighter: #707070;
-  --md-default-fg-color--lightest: #484848;
-  --md-default-bg-color: #222222;
-  --md-default-bg-color--light: #484848;
-  --md-default-bg-color--lighter: #222222;
+  --md-default-fg-color: #E8E8E8;
+  --md-default-fg-color--light: #B0B0B0;
+  --md-default-fg-color--lighter: #808080;
+  --md-default-fg-color--lightest: #555555;
+  --md-default-bg-color: #1A1A1A;
+  --md-default-bg-color--light: #2A2A2A;
+  --md-default-bg-color--lighter: #1A1A1A;
 
-  --md-primary-fg-color: #3D6ACC;
-  --md-primary-fg-color--light: #AAC7FF;
-  --md-primary-fg-color--dark: #003399;
-  --md-primary-bg-color: #222222;
+  --md-primary-fg-color: #4A7AE0;
+  --md-primary-fg-color--light: #B8D4FF;
+  --md-primary-fg-color--dark: #2A5AB8;
+  --md-primary-bg-color: #1A1A1A;
 
-  --md-accent-fg-color: #D5B57C;
-  --md-accent-bg-color: #332C1F;
+  --md-accent-fg-color: #E0C080;
+  --md-accent-bg-color: #3A3020;
 
-  --md-typeset-a-color: #AAC7FF;
+  --md-typeset-a-color: #B8D4FF;
+}
+
+/* Dark mode: code blocks */
+[data-md-color-scheme="slate"] .md-typeset code {
+  background-color: #2A2A2A;
+  color: #E0C080;
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre {
+  background-color: #252525;
+  border: 1px solid #3A3A3A;
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre > code {
+  background-color: transparent;
+  color: #D4D4D4;
+}
+
+/* Dark mode: admonitions */
+[data-md-color-scheme="slate"] .md-typeset .admonition,
+[data-md-color-scheme="slate"] .md-typeset details {
+  background-color: #252525;
+  border-color: #444444;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition-title,
+[data-md-color-scheme="slate"] .md-typeset details summary {
+  background-color: #2A2A2A;
+  border-color: #444444;
+  color: #E8E8E8;
+}
+
+/* Dark mode: tables */
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  border-color: #444444;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: #2A2A2A;
+  border-color: #444444;
+  color: #E8E8E8;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) td {
+  border-color: #3A3A3A;
+  color: #D0D0D0;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:nth-child(even) {
+  background-color: #222222;
+}
+
+/* Dark mode: blockquotes */
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+  border-left-color: #4A7AE0;
+  color: #B0B0B0;
+}
+
+/* Dark mode: horizontal rules */
+[data-md-color-scheme="slate"] .md-typeset hr {
+  border-color: #444444;
+}
+
+/* Dark mode: search highlight */
+[data-md-color-scheme="slate"] .md-search-result__teaser {
+  color: #B0B0B0;
 }
 
 /* Content width */
@@ -115,6 +181,20 @@
   color: var(--md-primary-fg-color--light);
 }
 
+/* Dark mode: sidebar borders more visible */
+[data-md-color-scheme="slate"] .md-sidebar--primary .md-nav[data-md-level="1"] > .md-nav__list {
+  border-left-color: #555555;
+}
+
+[data-md-color-scheme="slate"] .md-sidebar--primary .md-nav[data-md-level="2"] > .md-nav__list {
+  border-left-color: var(--md-accent-fg-color);
+}
+
+/* Dark mode: active nav link background */
+[data-md-color-scheme="slate"] .md-sidebar--primary .md-nav__link--active {
+  background-color: rgba(74, 122, 224, 0.15);
+}
+
 /* Header nav tabs */
 .md-tabs {
   background-color: var(--md-primary-fg-color--dark);
@@ -129,4 +209,10 @@
 .highlight > pre,
 .md-typeset pre > code {
   border-left: 3px solid #61A39C;
+}
+
+/* Dark mode: brighter teal for code fence border */
+[data-md-color-scheme="slate"] .highlight > pre,
+[data-md-color-scheme="slate"] .md-typeset pre > code {
+  border-left-color: #7ECFC4;
 }
