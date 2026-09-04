@@ -15,8 +15,8 @@ const StatsSection = ({
     campaignId,
     stationId,
     sensorId,
-    500,
-    500,
+    500000,
+    5000,
   );
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
