@@ -12,12 +12,7 @@ When you open a station, the dashboard displays:
 - **Spatial maps** — heat maps and route maps showing measurement locations
 - **Measurement table** — tabular view of individual measurements
 
-!!! note "Walkthrough GIF planned"
-    Add `../../assets/gifs/station-dashboard.gif` here after recording a station dashboard overview.
-
-    ```markdown
-    ![Station dashboard overview](../../assets/gifs/station-dashboard.gif)
-    ```
+![Station dashboard overview](../../assets/gifs/station-dashboard.gif)
 
 ## Temporal visualizations
 

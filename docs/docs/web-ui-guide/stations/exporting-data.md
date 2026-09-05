@@ -11,12 +11,7 @@ You can export station data as CSV or GeoJSON for use in external tools like Exc
     - **GeoJSON** — spatial format for GIS tools
 4. The export includes the currently filtered subset of data (if filters are applied).
 
-!!! note "Walkthrough GIF planned"
-    Add `../../assets/gifs/export-data.gif` here after recording the export workflow.
-
-    ```markdown
-    ![Exporting station data](../../assets/gifs/export-data.gif)
-    ```
+![Exporting station data](../../assets/gifs/export-data.gif)
 
 ## Export formats
 

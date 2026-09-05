@@ -14,12 +14,7 @@ A **campaign** is the top-level organizational unit in Upstream. It represents a
     - **Allocation** — optional allocation or project reference
 4. Click **Create**.
 
-!!! note "Walkthrough GIF planned"
-    Add `../../assets/gifs/create-campaign.gif` here after recording the campaign creation workflow.
-
-    ```markdown
-    ![Creating a campaign](../../assets/gifs/create-campaign.gif)
-    ```
+![Creating a campaign](../../assets/gifs/create-campaign.gif)
 
 ## Campaign details
 

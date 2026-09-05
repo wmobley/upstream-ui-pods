@@ -16,12 +16,7 @@ A **station** represents a physical location or platform where sensors are deplo
     - **Contact email** — optional contact email
 4. Click **Create**.
 
-!!! note "Walkthrough GIF planned"
-    Add `../../assets/gifs/create-station.gif` here after recording the station creation workflow, including timezone selection.
-
-    ```markdown
-    ![Creating a station](../../assets/gifs/create-station.gif)
-    ```
+![Creating a station](../../assets/gifs/create-station.gif)
 
 ## Why timezone matters
 

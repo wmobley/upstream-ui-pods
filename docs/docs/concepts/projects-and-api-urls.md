@@ -37,12 +37,7 @@ To find the projects available to you:
 4. Select the project you want to work with.
 5. Use the API docs link in the header to open that project's Swagger page.
 
-!!! note "Walkthrough GIF planned"
-    Add `../assets/gifs/project-selector.gif` here after recording the project selector/API docs workflow.
-
-    ```markdown
-    ![Finding your project API URL](../assets/gifs/project-selector.gif)
-    ```
+![Finding your project API URL](../assets/gifs/project-selector.gif)
 
 The Swagger page URL is usually:
 
