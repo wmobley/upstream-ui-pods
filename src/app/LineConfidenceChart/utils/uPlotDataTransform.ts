@@ -206,6 +206,7 @@ export function buildSeriesConfig(
     show: false,
     spanGaps: true,
     stroke: 'transparent',
+    points: { show: false },
   });
 
   // Series 3: Primary lower bound (hidden, used for band)
@@ -214,6 +215,7 @@ export function buildSeriesConfig(
     show: false,
     spanGaps: true,
     stroke: 'transparent',
+    points: { show: false },
   });
 
   // Additional sensors: 3 series each (value, upper, lower)
@@ -242,6 +244,7 @@ export function buildSeriesConfig(
       show: false,
       spanGaps: true,
       stroke: 'transparent',
+      points: { show: false },
     });
 
     // Lower bound (hidden)
@@ -250,6 +253,7 @@ export function buildSeriesConfig(
       show: false,
       spanGaps: true,
       stroke: 'transparent',
+      points: { show: false },
     });
   });
 
