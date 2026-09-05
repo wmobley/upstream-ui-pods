@@ -361,7 +361,10 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
       if (i === 0) return;
       // Update points configuration directly
       if (s.points) {
-        s.points.show = renderDataPoints && (s.points.show ?? false);
+        // uPlot wraps points.show into a function (fnOrSelf) when the series is
+        // created; it must stay callable here or drawSeries throws on redraw.
+        const shouldShowPoints = renderDataPoints && s.show !== false;
+        s.points.show = () => shouldShowPoints;
         s.points.size = pointRadius;
       }
     });

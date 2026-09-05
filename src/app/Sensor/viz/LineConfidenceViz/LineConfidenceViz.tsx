@@ -46,6 +46,7 @@ const LineConfidenceViz = ({
         </div>
       </div>
       <LineConfidenceProvider
+        key={`${campaignId}-${stationId}-${sensorId}`}
         campaignId={campaignId}
         stationId={stationId}
         sensorId={sensorId}
