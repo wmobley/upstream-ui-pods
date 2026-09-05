@@ -16,6 +16,7 @@ interface SelectedSensor {
   id: string;
   label: string;
   stationName?: string;
+  units?: string;
 }
 
 const getSensorKey = (campaignId: string, stationId: string, sensorId: string) =>
@@ -91,6 +92,7 @@ const SensorFilteringModal = React.memo(() => {
           id: sensorId,
           label: sensorLabel,
           stationName: selectedStation?.name,
+          units: sensor.units ?? undefined,
         };
       }
 

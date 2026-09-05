@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   ListMeasurementsResponsePagination,
   MeasurementsApi,
@@ -58,6 +58,9 @@ export const useList = (
           );
         return response;
       },
+      // Keep previous points visible during a start/end date refetch instead
+      // of resetting to undefined (see useListConfidenceValues.ts for why).
+      placeholderData: keepPreviousData,
     });
 
   return { data: data ?? null, isLoading, error: error as Error | null };

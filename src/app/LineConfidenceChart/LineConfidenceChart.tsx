@@ -16,6 +16,7 @@ export interface AdditionalSensor {
     id: string;
     campaignId: string;
     stationId: string;
+    units?: string;
   };
   aggregatedData: AggregatedMeasurement[] | null;
   allPoints: MeasurementItem[] | null;
@@ -80,12 +81,12 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   minValue,
   additionalSensors = [],
   colorPalette = [
-    { line: '#9a6fb0', area: '#9a6fb0', point: '#9a6fb0' }, // Primary sensor
-    { line: '#4287f5', area: '#4287f5', point: '#4287f5' },
-    { line: '#42c5f5', area: '#42c5f5', point: '#42c5f5' },
-    { line: '#42f5a7', area: '#42f5a7', point: '#42f5a7' },
-    { line: '#f5cd42', area: '#f5cd42', point: '#f5cd42' },
-    { line: '#f54242', area: '#f54242', point: '#f54242' },
+    { line: '#1baf7a', area: '#1baf7a', point: '#1baf7a' }, // Primary sensor
+    { line: '#eda100', area: '#eda100', point: '#eda100' },
+    { line: '#e87ba4', area: '#e87ba4', point: '#e87ba4' },
+    { line: '#008300', area: '#008300', point: '#008300' },
+    { line: '#4a3aa7', area: '#4a3aa7', point: '#4a3aa7' },
+    { line: '#e34948', area: '#e34948', point: '#e34948' },
   ],
   renderDataPoints,
   selectedSensorId: sensorId,

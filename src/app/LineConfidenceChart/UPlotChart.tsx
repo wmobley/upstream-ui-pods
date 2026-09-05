@@ -42,28 +42,36 @@ interface UPlotChartProps {
   onViewDomainChange?: (domain: [number, number] | null) => void;
 }
 
+// Site brand teal (tailwind.config.ts `primary.DEFAULT`) — used for the
+// single-sensor default line/point. Too low-chroma to serve as a categorical
+// slot once multiple sensors are compared (see defaultColorPalette below).
 const defaultColors = {
-  line: '#9a6fb0',
-  area: '#9a6fb0',
-  point: '#9a6fb0',
+  line: '#008080',
+  area: '#008080',
+  point: '#008080',
 };
 
+// Colorblind-safe categorical sequence for comparing 2+ sensors, validated
+// with the dataviz skill's palette checker (CVD/contrast/lightness all pass
+// in this order; do not reorder without re-validating adjacent pairs). Slot 1
+// is the teal/aqua family closest to the site's brand color.
 const defaultColorPalette = [
-  { line: '#9a6fb0', area: '#9a6fb0', point: '#9a6fb0' },
-  { line: '#4287f5', area: '#4287f5', point: '#4287f5' },
-  { line: '#42c5f5', area: '#42c5f5', point: '#42c5f5' },
-  { line: '#42f5a7', area: '#42f5a7', point: '#42f5a7' },
-  { line: '#f5cd42', area: '#f5cd42', point: '#f5cd42' },
-  { line: '#f54242', area: '#f54242', point: '#f54242' },
+  { line: '#1baf7a', area: '#1baf7a', point: '#1baf7a' },
+  { line: '#eda100', area: '#eda100', point: '#eda100' },
+  { line: '#e87ba4', area: '#e87ba4', point: '#e87ba4' },
+  { line: '#008300', area: '#008300', point: '#008300' },
+  { line: '#4a3aa7', area: '#4a3aa7', point: '#4a3aa7' },
+  { line: '#e34948', area: '#e34948', point: '#e34948' },
 ];
 
-const defaultMargin = { top: 20, right: 50, bottom: 50, left: 50 };
+// Neutral grid/axis chrome, matching tailwind.config.ts `secondary` (gray)
+// scale. uPlot draws on <canvas>, which cannot resolve CSS custom properties
+// (unlike SVG) — `var(--gray-300)` silently no-ops there, so these must stay
+// literal hex.
+const axisGridColor = '#D1D5DB'; // secondary.300
+const axisTextColor = '#4B5563'; // secondary.600
 
-// Generate axis tick values
-function generateTicks(min: number, max: number, count: number): number[] {
-  const incr = (max - min) / (count - 1);
-  return Array.from({ length: count }, (_, i) => min + i * incr);
-}
+const defaultMargin = { top: 20, right: 50, bottom: 50, left: 50 };
 
 export const UPlotChart: React.FC<UPlotChartProps> = ({
   data,
@@ -101,21 +109,31 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
 }) => {
   // Suppress unused variable warnings
   void showAreaOverview;
-  void xFormatterOverview;
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const uplotRef = React.useRef<uPlot | null>(null);
   const [dimensions, setDimensions] = React.useState({ width: width || 800, height: height || 500 });
   const [isInitialized, setIsInitialized] = React.useState(false);
+  // Guards the setScale hook against firing onViewDomainChange/onBrush for
+  // scale changes we trigger ourselves (mount/data-sync effects). Without
+  // this, our own u.setScale calls feed back into viewDomain/selectedTimeRange
+  // state, which re-triggers the same effect and loops forever.
+  const isProgrammaticScaleUpdate = React.useRef(false);
 
-  // Resize observer
+  // Resize observer. Only tracks width — the container's own CSS height used
+  // to be pinned to this observed value, but uPlot renders a legend table
+  // below the canvas inside the same container, so a height that grows with
+  // more comparison-sensor legend rows would (a) get read back as an even
+  // taller "observed" height and (b) require the container to also be
+  // unconstrained (see the plain <div> below) so the legend isn't clipped or
+  // spilling past a box sized for the canvas alone.
   React.useEffect(() => {
     if (!containerRef.current || (width && height)) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       if (entries[0]) {
-        const { width: w, height: h } = entries[0].contentRect;
-        setDimensions({ width: w, height: h });
+        const { width: w } = entries[0].contentRect;
+        setDimensions((prev) => ({ width: w, height: prev.height }));
       }
     });
 
@@ -156,25 +174,28 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
     noteTimestamps,
   ]);
 
-  // Build series config
-  const { series } = React.useMemo(() => {
-    return buildSeriesConfig(uplotData, {
-      colorPalette,
-      primaryColors: colors,
-      showLine: showLineOverview,
-      pointRadius,
-      renderDataPoints,
-    });
-  }, [uplotData, colorPalette, colors, showLineOverview, pointRadius, renderDataPoints]);
-
   // Build data array
   const dataArray = React.useMemo(() => buildUPlotDataArray(uplotData), [uplotData]);
 
-  // Time formatter for uPlot
+  // Compact time formatter for x-axis tick labels. Axis ticks need a short,
+  // date-only label to avoid overlapping at typical tick densities; the full
+  // date+time (xFormatter) is reserved for the crosshair/tooltip readout,
+  // where there's room and precision matters more than density.
   const timeFormatter = React.useCallback(
     (ms: number) => {
-      if (!xFormatter) return new Date(ms).toLocaleTimeString();
-      return xFormatter(ms);
+      if (xFormatterOverview) return xFormatterOverview(ms);
+      if (xFormatter) return xFormatter(ms);
+      return new Date(ms).toLocaleDateString();
+    },
+    [xFormatter, xFormatterOverview]
+  );
+
+  // Full date+time formatter for the legend/crosshair "Time" readout, where
+  // precision matters more than density (unlike the axis ticks above).
+  const legendTimeFormatter = React.useCallback(
+    (ms: number) => {
+      if (xFormatter) return xFormatter(ms);
+      return new Date(ms).toLocaleString();
     },
     [xFormatter]
   );
@@ -188,9 +209,54 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
     [yFormatter]
   );
 
-  // Initialize uPlot
+  // A comparison sensor whose units differ from the primary's gets its own
+  // (right-side) y-axis instead of being squashed flat against a scale built
+  // for a different unit. At most one secondary unit is supported — further
+  // distinct units fall back onto that same secondary axis rather than
+  // growing an unbounded number of axes.
+  const additionalSensorUnits = React.useMemo(
+    () => additionalSensors.map((s) => s.info.units),
+    [additionalSensors]
+  );
+  const secondaryUnitLabel = React.useMemo(
+    () => additionalSensorUnits.find((u) => u != null && u !== yAxisTitle),
+    [additionalSensorUnits, yAxisTitle]
+  );
+
+  // Build series config
+  const { series } = React.useMemo(() => {
+    return buildSeriesConfig(uplotData, {
+      colorPalette,
+      primaryColors: colors,
+      showLine: showLineOverview,
+      pointRadius,
+      renderDataPoints,
+      timeFormatter: legendTimeFormatter,
+      primaryUnits: yAxisTitle,
+      additionalSensorUnits,
+    });
+  }, [
+    uplotData,
+    colorPalette,
+    colors,
+    showLineOverview,
+    pointRadius,
+    renderDataPoints,
+    legendTimeFormatter,
+    yAxisTitle,
+    additionalSensorUnits,
+  ]);
+
+  // Initialize uPlot. Re-runs (destroying and recreating the instance) when
+  // the number of series changes — e.g. a comparison sensor is added or
+  // removed via the "Compare" modal. uPlot's series list is fixed at
+  // construction time; series.length is not in this effect's deps, calling
+  // u.setData() with more/fewer data columns than the currently-constructed
+  // series count silently does not add the new series (no new line, no new
+  // legend row), which is why comparison sensors previously appeared in the
+  // "Comparison Sensors" list but never showed up on the chart.
   React.useEffect(() => {
-    if (!containerRef.current || isInitialized) return;
+    if (!containerRef.current) return;
 
     const opts: uPlot.Options = {
       title: '',
@@ -207,43 +273,69 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
           min: minValue,
           max: maxValue,
         },
+        // Only used when a comparison sensor's units differ from the
+        // primary's (see secondaryUnitLabel) — auto-ranged independently so
+        // it isn't constrained by the primary's min/max.
+        y2: {
+          auto: true,
+        },
       },
       series,
       axes: [
         {
           scale: 'x',
           side: 2, // bottom
-          grid: { stroke: 'var(--gray-300)', width: 1 },
-          ticks: { size: 6, stroke: 'var(--gray-300)' },
-          values: (u: uPlot) => {
-            const scale = u.scales.x;
-            const xMin = scale.min ?? 0;
-            const xMax = scale.max ?? 1;
-            const ticks = generateTicks(xMin, xMax, 5);
-            return ticks.map((v) => [v, timeFormatter(v)]) as unknown as (string | number | null)[];
-          },
+          // Vertical gridlines are dropped — with the y-axis's horizontal
+          // ones already present, both together just produce a checkerboard
+          // with no added readability.
+          grid: { show: false },
+          ticks: { size: 6, stroke: axisGridColor },
+          // Minimum pixel gap between ticks — our date labels are wider than
+          // uPlot's own default time-axis labels, so its default spacing
+          // packs ticks close enough to overlap.
+          space: 90,
+          // Format uPlot's own computed tick positions (splits) — do not
+          // generate a separate set of tick positions here, or the labels
+          // won't line up with (or even match the count of) the gridlines
+          // uPlot actually draws.
+          values: (_u: uPlot, splits: number[]) => splits.map((v) => timeFormatter(v)),
           label: xAxisTitle,
           labelGap: 30,
           labelSize: 11,
-          stroke: 'var(--gray-600)',
+          font: '12px system-ui, sans-serif',
+          stroke: axisTextColor,
         },
         {
           scale: 'y',
           side: 3, // left
-          grid: { stroke: 'var(--gray-300)', width: 1 },
-          ticks: { size: 6, stroke: 'var(--gray-300)' },
-          values: (u: uPlot) => {
-            const scale = u.scales.y;
-            const yMin = scale.min ?? 0;
-            const yMax = scale.max ?? 1;
-            const ticks = generateTicks(yMin, yMax, 5);
-            return ticks.map((v) => [v, valueFormatter(v)]) as unknown as (string | number | null)[];
-          },
+          grid: { stroke: axisGridColor, width: 1 },
+          ticks: { size: 6, stroke: axisGridColor },
+          values: (_u: uPlot, splits: number[]) => splits.map((v) => valueFormatter(v)),
           label: yAxisTitle,
           labelGap: 30,
           labelSize: 11,
-          stroke: 'var(--gray-600)',
+          font: '12px system-ui, sans-serif',
+          stroke: axisTextColor,
         },
+        // Right-side axis for a comparison sensor with different units. Only
+        // added when actually needed, since an unused scale still renders an
+        // empty auto-ranged (0–1) axis otherwise.
+        ...(secondaryUnitLabel
+          ? [
+              {
+                scale: 'y2',
+                side: 1 as const, // right
+                grid: { show: false },
+                ticks: { size: 6, stroke: axisGridColor },
+                values: (_u: uPlot, splits: number[]) => splits.map((v) => valueFormatter(v)),
+                label: secondaryUnitLabel,
+                labelGap: 30,
+                labelSize: 11,
+                font: '12px system-ui, sans-serif',
+                stroke: axisTextColor,
+              },
+            ]
+          : []),
       ],
       cursor: {
         show: true,
@@ -281,6 +373,16 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
         // Sync view domain changes to parent
         setScale: [
           (u: uPlot) => {
+            if (isProgrammaticScaleUpdate.current) return;
+            // uPlot also fires this hook for its own internal auto-ranging
+            // (e.g. establishing the initial scale from data on construction,
+            // or after setData), not just real user drag/zoom. cursor.event
+            // is only ever set by a genuine mouse event, so use it to ignore
+            // non-interactive scale changes — otherwise a fresh mount's own
+            // initial auto-range gets treated as a user brush, narrows
+            // selectedTimeRange, triggers a refetch, and (if that refetch
+            // remounts this component) repeats forever.
+            if (u.cursor.event == null) return;
             if (onViewDomainChange) {
               const xScale = u.scales.x;
               const domain: [number, number] = [xScale.min ?? 0, xScale.max ?? 1];
@@ -327,9 +429,16 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
     uplotRef.current = u;
     setIsInitialized(true);
 
-    // Apply initial view domain if provided
+    // Apply initial view domain if provided. u.batch() commits synchronously
+    // (uPlot's plain setScale defers the setScale hook to a microtask via
+    // commit(), which would run after isProgrammaticScaleUpdate is already
+    // reset back to false below).
     if (viewDomain) {
-      u.setScale('x', { min: viewDomain[0], max: viewDomain[1] });
+      isProgrammaticScaleUpdate.current = true;
+      u.batch(() => {
+        u.setScale('x', { min: viewDomain[0], max: viewDomain[1] });
+      });
+      isProgrammaticScaleUpdate.current = false;
     }
 
     return () => {
@@ -337,20 +446,31 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
       uplotRef.current = null;
       setIsInitialized(false);
     };
-  }, []); // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately
+    // narrow: only series.length should force a full destroy/recreate. Other
+    // props (colors, formatters, callbacks, etc.) are read once per mount and
+    // kept in sync afterward by the lighter-weight effects below (data/scale
+    // updates, cursor point config) rather than tearing down the whole chart.
+  }, [series.length, secondaryUnitLabel]);
 
   // Update data when props change
   React.useEffect(() => {
     if (!uplotRef.current || !isInitialized) return;
 
     const u = uplotRef.current;
-    u.setData(dataArray as uPlot.AlignedData);
 
-    // Update scales if needed
-    if (viewDomain) {
-      u.setScale('x', { min: viewDomain[0], max: viewDomain[1] });
-    }
-    u.setScale('y', { min: minValue, max: maxValue });
+    // Batched so setData + both setScale calls commit synchronously in one
+    // pass; otherwise commit() defers to a microtask and the setScale hook
+    // fires after isProgrammaticScaleUpdate has already been reset below.
+    isProgrammaticScaleUpdate.current = true;
+    u.batch(() => {
+      u.setData(dataArray as uPlot.AlignedData);
+      if (viewDomain) {
+        u.setScale('x', { min: viewDomain[0], max: viewDomain[1] });
+      }
+      u.setScale('y', { min: minValue, max: maxValue });
+    });
+    isProgrammaticScaleUpdate.current = false;
   }, [dataArray, viewDomain, minValue, maxValue, isInitialized]);
 
   // Update cursor options when renderDataPoints changes
@@ -396,7 +516,11 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
     );
   }
 
-  return <div ref={containerRef} className="w-full h-full" style={{ width: dimensions.width, height: dimensions.height }} />;
+  // No fixed height here: uPlot renders its legend table below the canvas,
+  // inside this same container, and the legend grows taller with each
+  // comparison sensor added. A height matching only the canvas would let
+  // that legend spill out past the box into whatever follows on the page.
+  return <div ref={containerRef} className="w-full" style={{ width: dimensions.width }} />;
 };
 
 export default React.memo(UPlotChart);

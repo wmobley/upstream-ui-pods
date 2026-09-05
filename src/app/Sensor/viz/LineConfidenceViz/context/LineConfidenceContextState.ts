@@ -73,6 +73,8 @@ export interface SensorInfo {
   stationId: string;
   label?: string;
   stationName?: string;
+  /** Sensor's unit of measurement, used to decide whether it needs its own y-axis when compared. */
+  units?: string;
 }
 
 export interface SensorData {
