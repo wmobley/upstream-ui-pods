@@ -32,26 +32,7 @@ interface InstanceContextType {
 
 const InstanceContext = createContext<InstanceContextType | undefined>(undefined);
 
-// ---------------------------------------------------------------------------
-// Tapis Pods API types
-// ---------------------------------------------------------------------------
-interface TapisPodNetworking {
-  url?: string;
-  protocol?: string;
-  port?: number;
-}
-
-interface TapisPod {
-  pod_id: string;
-  image?: string;
-  description?: string;
-  status?: string;
-  tags?: string[];
-  networking?: Record<string, TapisPodNetworking>;
-}
-
 const SESSION_KEY = 'upstream_selected_instance';
-const ROLE_LOOKUP_CONCURRENCY = 6;
 
 // Base Upstream API URL — configurable via VITE_BASE_UPSTREAM_API_URL,
 // defaults to production upstreamapi pod.
@@ -103,74 +84,6 @@ function withProjectId(search: string, stackId: string | null): string {
   return qs ? `?${qs}` : '';
 }
 
-/** Runs `fn` over `items` with at most `limit` in flight; never throws — each
- *  outcome is captured like Promise.allSettled, so one failure can't affect
- *  the others or abort the batch. */
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>
-): Promise<PromiseSettledResult<R>[]> {
-  const results: PromiseSettledResult<R>[] = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker(): Promise<void> {
-    while (nextIndex < items.length) {
-      const current = nextIndex++;
-      try {
-        const value = await fn(items[current]);
-        results[current] = { status: 'fulfilled', value };
-      } catch (reason) {
-        results[current] = { status: 'rejected', reason };
-      }
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
-
-/** Maps the app's own per-project DB role (from GET /user-roles/me) to a
- *  Permission. Returns null for NONE — the caller has no real access and
- *  the instance should be dropped, not just relabeled. */
-function mapBackendRole(role: unknown): Permission | null {
-  switch (role) {
-    case 'ADMIN':
-    case 'APPROVEDADMIN':
-      return 'ADMIN';
-    case 'USER':
-      return 'USER';
-    case 'READ':
-      return 'READ';
-    default:
-      return null;
-  }
-}
-
-/** Resolves the caller's own DB role for one project instance.
- *  Returns null when the caller genuinely has no access (NONE role, or
- *  401/403). Throws for anything else (network error, timeout, 5xx) so the
- *  caller can distinguish "no access" from "couldn't check" instead of
- *  conflating a down/restarting pod with a real permission denial. */
-async function fetchRoleForInstance(apiUrl: string, tapisToken: string): Promise<Permission | null> {
-  const resp = await fetch(`${apiUrl}/api/v1/user-roles/me`, {
-    headers: {
-      Authorization: `Bearer ${tapisToken}`,
-      Accept: 'application/json',
-    },
-  });
-
-  if (resp.status === 401 || resp.status === 403) {
-    return null;
-  }
-  if (!resp.ok) {
-    throw new Error(`GET /user-roles/me ${resp.status}`);
-  }
-
-  const data = await resp.json();
-  return mapBackendRole(data?.role);
-}
-
 class TapisAuthError extends Error {
   constructor(message: string) {
     super(message);
@@ -178,40 +91,19 @@ class TapisAuthError extends Error {
   }
 }
 
-function getPodsBaseUrl(): string {
-  return (
-    window.__UPSTREAM_CONFIG__?.VITE_TAPIS_PODS_BASE_URL?.trim() ||
-    import.meta.env.VITE_TAPIS_PODS_BASE_URL?.trim() ||
-    'https://portals.tapis.io'
-  );
-}
-
-/** Derives the pod hostname suffix from the Tapis base URL.
- *  https://portals.tapis.io → pods.portals.tapis.io
- *  https://portals.develop.tapis.io → pods.portals.develop.tapis.io
- */
-function getPodsDomain(baseUrl: string): string {
-  const hostname = baseUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-  return `pods.${hostname}`;
-}
-
 async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
-  const baseUrl = getPodsBaseUrl();
+  const baseUrl = getBaseUpstreamApiUrl();
 
   // Use the same-origin nginx proxy (/tapis-proxy/) to avoid CORS when calling
   // Tapis from a pod subdomain. Falls back to the direct URL in local dev.
   // No list_type param needed — GET /pods already returns every pod the
   // caller has READ+ access to by default (confirmed against the Tapis
   // Pods service source; there is no list_type query param on this endpoint).
-  const isDeployedPod = typeof window !== 'undefined' &&
-    window.location.hostname.endsWith('.tapis.io');
-  const podsUrl = isDeployedPod
-    ? `/tapis-proxy/v3/pods`
-    : `${baseUrl}/v3/pods`;
+  const podsUrl = `${baseUrl}/api/v1/project-instances`;
 
   const resp = await fetch(podsUrl, {
     headers: {
-      'X-Tapis-Token': tapisToken,
+      Authorization: `Bearer ${tapisToken}`,
       Accept: 'application/json',
     },
   });
@@ -225,57 +117,7 @@ async function fetchInstances(tapisToken: string): Promise<ProjectInstance[]> {
   }
 
   const data = await resp.json();
-  const pods: TapisPod[] = Array.isArray(data.result) ? data.result : [];
-
-  // Filter to upstream API pods — only pods whose description starts with
-  // '[upstream]' (set via tag_upstream_stacks.py or build_bundle).
-  const apiPods = pods.filter(
-    (p) => p.pod_id.endsWith('api') && (p.description ?? '').startsWith('[upstream]')
-  );
-
-  const candidates = apiPods.map((p) => {
-    // Derive API URL from the pod's networking entry, or fall back to convention
-    const netEntry = p.networking
-      ? Object.values(p.networking)[0]
-      : undefined;
-    const apiUrl = netEntry?.url
-      ? `https://${netEntry.url}`
-      : `https://${p.pod_id}.${getPodsDomain(baseUrl)}`;
-
-    // Stack name = pod_id with trailing 'api' stripped
-    const stackId = p.pod_id.replace(/api$/, '');
-
-    const desc = (p.description ?? '').trim();
-    const displayName = desc.startsWith('[upstream]')
-      ? desc.replace('[upstream]', '').trim() || stackId
-      : stackId;
-
-    return { stackId, displayName, apiUrl };
-  });
-
-  // Resolve each project's real per-user DB role (GET /user-roles/me) in
-  // parallel, capped, so one slow/erroring project can't block the others.
-  // NONE/401/403 -> real no-access, drop the instance. Any other failure
-  // (network error, timeout, 5xx — e.g. a pod mid-restart) -> keep the
-  // instance but mark it 'UNKNOWN' rather than silently hiding a project
-  // the user may actually have access to.
-  const roleResults = await mapWithConcurrency(candidates, ROLE_LOOKUP_CONCURRENCY, (c) =>
-    fetchRoleForInstance(c.apiUrl, tapisToken)
-  );
-
-  const instances: ProjectInstance[] = [];
-  candidates.forEach((c, i) => {
-    const result = roleResults[i];
-    if (result.status === 'fulfilled') {
-      if (result.value === null) return; // no access — drop
-      instances.push({ ...c, permission: result.value });
-    } else {
-      console.warn(`[InstanceContext] Could not verify role for ${c.stackId}:`, result.reason);
-      instances.push({ ...c, permission: 'UNKNOWN' });
-    }
-  });
-
-  return instances;
+  return Array.isArray(data) ? data as ProjectInstance[] : [];
 }
 
 function loadPersistedInstance(): ProjectInstance | null {
