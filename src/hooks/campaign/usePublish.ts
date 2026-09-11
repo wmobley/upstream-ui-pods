@@ -31,7 +31,13 @@ export const usePublish = () => {
 
   return useMutation<PublishDebugResponse, Error, PublishCampaignRequest>({
     mutationFn: async ({ campaignId, cascade = false, force = false }: PublishCampaignRequest) => {
-      const publishRequest: PublishRequest = { cascade, force };
+      const publishRequest: PublishRequest = {
+        cascade,
+        force,
+        // Campaign publication cascades to stations whose CKAN datasets already
+        // exist from ingestion, so update those datasets instead of conflicting.
+        patchExistingCkanDataset: true,
+      };
       const requestId = createPublishRequestId('campaign', [campaignId]);
       const url = appendPublishRequestId(
         `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/publish`,
