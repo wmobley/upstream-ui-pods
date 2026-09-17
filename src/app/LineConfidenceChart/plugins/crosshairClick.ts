@@ -151,22 +151,24 @@ export function crosshairClickPlugin(opts: CrosshairClickOptions): uPlot.Plugin 
   function selectNearestPoint(u: uPlot, e: MouseEvent): void {
     if (!onPointSelect) return;
 
-    const overRect = u.over.getBoundingClientRect();
-    const cursorX = e.clientX - overRect.left;
-    const cursorY = e.clientY - overRect.top;
-    const { left, top, width, height } = u.bbox;
+    // uPlot's bbox is in canvas pixels, while mouse coordinates and the
+    // position conversion helpers use CSS pixels relative to the plot area.
+    // Use the cached plot-area rect so selection works on high-DPI canvases
+    // and when the chart has axes/margins around the plot.
+    const plotRect = u.rect;
+    const cursorX = e.clientX - plotRect.left;
+    const cursorY = e.clientY - plotRect.top;
 
     if (
-      cursorX < left ||
-      cursorX > left + width ||
-      cursorY < top ||
-      cursorY > top + height
+      cursorX < 0 ||
+      cursorX > plotRect.width ||
+      cursorY < 0 ||
+      cursorY > plotRect.height
     ) {
       return;
     }
 
-    const targetTime = u.posToVal(cursorX, 'x');
-    const idx = u.valToIdx(targetTime);
+    const idx = u.posToIdx(cursorX);
     const timestamp = u.data[0]?.[idx];
     if (idx < 0 || timestamp == null) return;
 
