@@ -207,8 +207,11 @@ const formatSensorSeriesLabel = (
 ): string => {
   const sensorDescription = [sensorLabel, stationName]
     .filter(Boolean)
-    .join(' — ');
-  return sensorDescription ? `${sensorDescription} ${seriesLabel}` : seriesLabel;
+    .join(' ');
+  if (!sensorDescription) return seriesLabel;
+  return seriesLabel === 'Value'
+    ? sensorDescription
+    : `${sensorDescription} ${seriesLabel}`;
 };
 
 export function buildSeriesConfig(
