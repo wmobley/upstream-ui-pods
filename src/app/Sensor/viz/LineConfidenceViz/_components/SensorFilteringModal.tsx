@@ -19,6 +19,8 @@ interface SelectedSensor {
   units?: string;
 }
 
+type SensorSortOrder = 'asc' | 'desc';
+
 const getSensorKey = (campaignId: string, stationId: string, sensorId: string) =>
   `${campaignId}-${stationId}-${sensorId}`;
 
@@ -41,6 +43,7 @@ const SensorFilteringModal = React.memo(() => {
     Record<string, SelectedSensor>
   >({});
   const [selectedStationId, setSelectedStationId] = useState(stationId);
+  const [sensorSortOrder, setSensorSortOrder] = useState<SensorSortOrder>('asc');
 
   const stationFilters = useMemo(
     () => ({
@@ -91,10 +94,14 @@ const SensorFilteringModal = React.memo(() => {
 
   const sortedSensors = useMemo(
     () =>
-      [...(sensors?.items ?? [])].sort((first, second) =>
-        compareLabels(getSensorLabel(first), getSensorLabel(second)),
-      ),
-    [sensors?.items],
+      [...(sensors?.items ?? [])].sort((first, second) => {
+        const comparison = compareLabels(
+          getSensorLabel(first),
+          getSensorLabel(second),
+        );
+        return sensorSortOrder === 'asc' ? comparison : -comparison;
+      }),
+    [sensorSortOrder, sensors?.items],
   );
 
   const handleToggleSensor = (sensor: SensorItem) => {
@@ -166,6 +173,26 @@ const SensorFilteringModal = React.memo(() => {
             <p className="mt-2 text-xs text-gray-500">
               Select any station in this campaign, then choose sensors to compare.
             </p>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <label
+              htmlFor="comparison-sensor-sort"
+              className="text-sm font-medium text-gray-700"
+            >
+              Sort sensors
+            </label>
+            <select
+              id="comparison-sensor-sort"
+              value={sensorSortOrder}
+              onChange={(event) =>
+                setSensorSortOrder(event.target.value as SensorSortOrder)
+              }
+              className="rounded border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="asc">A–Z</option>
+              <option value="desc">Z–A</option>
+            </select>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto py-2">
