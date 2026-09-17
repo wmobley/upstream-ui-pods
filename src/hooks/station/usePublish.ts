@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PublishRequest, Configuration } from '@upstream/upstream-api';
+import { PublishRequest, PublishRequestToJSON, Configuration } from '@upstream/upstream-api';
 import useConfiguration from '../api/useConfiguration';
 import {
   appendPublishRequestId,
@@ -88,7 +88,7 @@ export const usePublish = () => {
         const resp = await fetch(url, {
           method: 'POST',
           headers,
-          body: JSON.stringify(publishRequest),
+          body: JSON.stringify(PublishRequestToJSON(publishRequest)),
         });
         const text = await resp.text();
         const response = parsePublishResponseText(text);
