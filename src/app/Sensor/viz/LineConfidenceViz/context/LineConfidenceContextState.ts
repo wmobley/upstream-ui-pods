@@ -91,6 +91,8 @@ export interface LineConfidenceContextProps {
   error: Error | null;
   /** IANA timezone of the primary station; chart times are displayed in it. */
   stationTimezone: string;
+  /** Display name of the primary station, used in comparison chart labels. */
+  stationName: string;
   selectedTimeRange: [number, number] | null;
   setSelectedTimeRange: Dispatch<SetStateAction<[number, number] | null>>;
   aggregationInterval: AggregationInterval;

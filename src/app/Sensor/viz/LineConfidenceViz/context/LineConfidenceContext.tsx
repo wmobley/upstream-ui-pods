@@ -118,6 +118,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   // against the station fetch in LineConfidenceViz via the shared query key.)
   const { station } = useStationDetail(campaignId, stationId);
   const stationTimezone = station?.timezone ?? 'UTC';
+  const stationName = station?.name ?? `Station ${stationId}`;
   const [selectedTimeRange, setSelectedTimeRange] = useState<
     [number, number] | null
   >(null);
@@ -343,6 +344,7 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     isLoading,
     error,
     stationTimezone,
+    stationName,
     selectedTimeRange,
     setSelectedTimeRange,
     aggregationInterval,

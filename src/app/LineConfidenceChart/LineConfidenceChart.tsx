@@ -17,6 +17,8 @@ export interface AdditionalSensor {
     campaignId: string;
     stationId: string;
     units?: string;
+    label?: string;
+    stationName?: string;
   };
   aggregatedData: AggregatedMeasurement[] | null;
   allPoints: MeasurementItem[] | null;
@@ -57,6 +59,8 @@ export interface LineConfidenceChartProps {
   selectedSensorId: string;
   campaignId: string;
   stationId: string;
+  sensorLabel?: string;
+  stationName?: string;
 }
 
 const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
@@ -92,6 +96,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   selectedSensorId: sensorId,
   campaignId,
   stationId,
+  sensorLabel,
+  stationName,
 }) => {
   // View domain state (for external sync)
   const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(null);
@@ -190,6 +196,8 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
         selectedSensorId={sensorId}
         campaignId={campaignId}
         stationId={stationId}
+        sensorLabel={sensorLabel}
+        stationName={stationName}
         aggregationInterval={aggregationInterval}
         aggregationValue={aggregationValue}
         noteTimestamps={noteTimestamps}

@@ -33,6 +33,8 @@ interface UPlotChartProps {
   selectedSensorId: string;
   campaignId: string;
   stationId: string;
+  sensorLabel?: string;
+  stationName?: string;
   aggregationInterval: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month';
   aggregationValue: number;
   noteTimestamps: number[];
@@ -99,6 +101,8 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
   selectedSensorId,
   campaignId,
   stationId,
+  sensorLabel,
+  stationName,
   aggregationInterval,
   aggregationValue,
   noteTimestamps = [],
@@ -218,6 +222,13 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
     () => additionalSensors.map((s) => s.info.units),
     [additionalSensors]
   );
+  const additionalSensorDetails = React.useMemo(
+    () => additionalSensors.map((s) => ({
+      label: s.info.label,
+      stationName: s.info.stationName,
+    })),
+    [additionalSensors]
+  );
   const secondaryUnitLabel = React.useMemo(
     () => additionalSensorUnits.find((u) => u != null && u !== yAxisTitle),
     [additionalSensorUnits, yAxisTitle]
@@ -233,7 +244,10 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
       renderDataPoints,
       timeFormatter: legendTimeFormatter,
       primaryUnits: yAxisTitle,
+      primarySensorLabel: sensorLabel,
+      primaryStationName: stationName,
       additionalSensorUnits,
+      additionalSensorDetails,
     });
   }, [
     uplotData,
@@ -245,6 +259,9 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
     legendTimeFormatter,
     yAxisTitle,
     additionalSensorUnits,
+    sensorLabel,
+    stationName,
+    additionalSensorDetails,
   ]);
 
   // Initialize uPlot. Re-runs (destroying and recreating the instance) when

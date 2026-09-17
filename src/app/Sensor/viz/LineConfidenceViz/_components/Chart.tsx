@@ -24,6 +24,7 @@ export const Chart = () => {
     maxValueChart,
     minValueChart,
     stationTimezone,
+    stationName,
   } = useLineConfidence();
 
   // Convert the SensorData structure from context to AdditionalSensor for LineConfidenceChart
@@ -130,6 +131,8 @@ export const Chart = () => {
             selectedSensorId={sensorId}
             campaignId={campaignId}
             stationId={stationId}
+            sensorLabel={data?.alias || data?.variablename || `Sensor ${sensorId}`}
+            stationName={stationName}
           />
         </div>
       )}

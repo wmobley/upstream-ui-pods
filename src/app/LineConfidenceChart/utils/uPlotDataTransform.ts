@@ -188,9 +188,28 @@ export interface UPlotSeriesOptions {
   timeFormatter: (ms: number) => string;
   /** Primary sensor's unit of measurement, e.g. "degC". */
   primaryUnits?: string;
+  /** Primary sensor display metadata for legend labels. */
+  primarySensorLabel?: string;
+  primaryStationName?: string;
   /** Each additional (comparison) sensor's unit, aligned by index with data.additional. */
   additionalSensorUnits?: (string | undefined)[];
+  /** Additional sensor display metadata aligned by index with data.additional. */
+  additionalSensorDetails?: Array<{
+    label?: string;
+    stationName?: string;
+  }>;
 }
+
+const formatSensorSeriesLabel = (
+  sensorLabel: string | undefined,
+  stationName: string | undefined,
+  seriesLabel: string,
+): string => {
+  const sensorDescription = [sensorLabel, stationName]
+    .filter(Boolean)
+    .join(' — ');
+  return sensorDescription ? `${sensorDescription} ${seriesLabel}` : seriesLabel;
+};
 
 export function buildSeriesConfig(
   data: UPlotSeriesData,
@@ -204,7 +223,10 @@ export function buildSeriesConfig(
     renderDataPoints,
     timeFormatter,
     primaryUnits,
+    primarySensorLabel,
+    primaryStationName,
     additionalSensorUnits,
+    additionalSensorDetails,
   } = options;
 
   const series: uPlot.Series[] = [];
@@ -221,7 +243,7 @@ export function buildSeriesConfig(
 
   // Series 1: Primary value (line)
   series.push({
-    label: 'Value',
+    label: formatSensorSeriesLabel(primarySensorLabel, primaryStationName, 'Value'),
     scale: 'y',
     stroke: primaryColors.line || colorPalette[0]?.line || '#9a6fb0',
     width: showLine ? 2 : 0,
@@ -237,7 +259,7 @@ export function buildSeriesConfig(
 
   // Series 2: Primary upper bound (hidden, used for band)
   series.push({
-    label: 'Upper Bound',
+    label: formatSensorSeriesLabel(primarySensorLabel, primaryStationName, 'Upper Bound'),
     scale: 'y',
     show: false,
     spanGaps: false,
@@ -247,7 +269,7 @@ export function buildSeriesConfig(
 
   // Series 3: Primary lower bound (hidden, used for band)
   series.push({
-    label: 'Lower Bound',
+    label: formatSensorSeriesLabel(primarySensorLabel, primaryStationName, 'Lower Bound'),
     scale: 'y',
     show: false,
     spanGaps: false,
@@ -263,11 +285,16 @@ export function buildSeriesConfig(
     const palette = colorPalette[sensorIndex + 1] || colorPalette[0];
     const color = palette?.line || '#9a6fb0';
     const units = additionalSensorUnits?.[sensorIndex];
+    const sensorDetails = additionalSensorDetails?.[sensorIndex];
     const scale = units != null && units !== primaryUnits ? 'y2' : 'y';
 
     // Value series
     series.push({
-      label: `Sensor ${sensorIndex + 2} Value`,
+      label: formatSensorSeriesLabel(
+        sensorDetails?.label || `Sensor ${sensorIndex + 2}`,
+        sensorDetails?.stationName,
+        'Value',
+      ),
       scale,
       stroke: color,
       width: showLine ? 2 : 0,
@@ -283,7 +310,11 @@ export function buildSeriesConfig(
 
     // Upper bound (hidden)
     series.push({
-      label: `Sensor ${sensorIndex + 2} Upper Bound`,
+      label: formatSensorSeriesLabel(
+        sensorDetails?.label || `Sensor ${sensorIndex + 2}`,
+        sensorDetails?.stationName,
+        'Upper Bound',
+      ),
       scale,
       show: false,
       spanGaps: false,
@@ -293,7 +324,11 @@ export function buildSeriesConfig(
 
     // Lower bound (hidden)
     series.push({
-      label: `Sensor ${sensorIndex + 2} Lower Bound`,
+      label: formatSensorSeriesLabel(
+        sensorDetails?.label || `Sensor ${sensorIndex + 2}`,
+        sensorDetails?.stationName,
+        'Lower Bound',
+      ),
       scale,
       show: false,
       spanGaps: false,

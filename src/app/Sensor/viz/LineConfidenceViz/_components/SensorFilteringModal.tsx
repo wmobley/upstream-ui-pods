@@ -22,6 +22,12 @@ interface SelectedSensor {
 const getSensorKey = (campaignId: string, stationId: string, sensorId: string) =>
   `${campaignId}-${stationId}-${sensorId}`;
 
+const getSensorLabel = (sensor: Pick<SensorItem, 'alias' | 'variablename' | 'id'>) =>
+  sensor.alias || sensor.variablename || `Sensor ${sensor.id}`;
+
+const compareLabels = (first: string, second: string) =>
+  first.localeCompare(second, undefined, { numeric: true, sensitivity: 'base' });
+
 const SensorFilteringModal = React.memo(() => {
   const {
     campaignId,
@@ -75,10 +81,26 @@ const SensorFilteringModal = React.memo(() => {
     filters,
   });
 
+  const sortedStations = useMemo(
+    () =>
+      [...(stations?.items ?? [])].sort((first, second) =>
+        compareLabels(first.name, second.name),
+      ),
+    [stations?.items],
+  );
+
+  const sortedSensors = useMemo(
+    () =>
+      [...(sensors?.items ?? [])].sort((first, second) =>
+        compareLabels(getSensorLabel(first), getSensorLabel(second)),
+      ),
+    [sensors?.items],
+  );
+
   const handleToggleSensor = (sensor: SensorItem) => {
     const sensorId = sensor.id.toString();
     const sensorKey = getSensorKey(campaignId, selectedStationId, sensorId);
-    const sensorLabel = sensor.alias || sensor.variablename || `Sensor ${sensorId}`;
+    const sensorLabel = getSensorLabel(sensor);
 
     setSelectedSensors((prev) => {
       const next = { ...prev };
@@ -115,13 +137,13 @@ const SensorFilteringModal = React.memo(() => {
       isOpen={addSensorModalOpen}
       onClose={() => setAddSensorModalOpen(false)}
       title="Sensor Filtering"
-      className="max-w-screen-md h-[90vh]"
+      className="flex h-[90vh] max-w-screen-md flex-col"
     >
       <QueryWrapper
         isLoading={stationsLoading || sensorsLoading}
         error={stationsError || sensorsError}
       >
-        <div className="p-4 flex flex-col gap-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-6 p-4">
           <div>
             <label
               htmlFor="comparison-station"
@@ -135,7 +157,7 @@ const SensorFilteringModal = React.memo(() => {
               onChange={(event) => setSelectedStationId(event.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
             >
-              {stations?.items?.map((station: StationItemWithSummary) => (
+              {sortedStations.map((station: StationItemWithSummary) => (
                 <option key={station.id} value={station.id.toString()}>
                   {station.name}
                 </option>
@@ -146,8 +168,8 @@ const SensorFilteringModal = React.memo(() => {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 h-[65vh] overflow-y-auto py-2">
-            {sensors?.items?.map((sensor: SensorItem) => (
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto py-2">
+            {sortedSensors.map((sensor: SensorItem) => (
               <div
                 key={getSensorKey(
                   campaignId,
@@ -174,7 +196,7 @@ const SensorFilteringModal = React.memo(() => {
                     className="m-0"
                   />
                   <span>
-                    {sensor.alias || sensor.variablename || `Sensor ${sensor.id}`}
+                    {getSensorLabel(sensor)}
                   </span>
                 </label>
               </div>
@@ -184,7 +206,7 @@ const SensorFilteringModal = React.memo(() => {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-2 border-t border-gray-200">
+          <div className="flex shrink-0 justify-end gap-3 border-t border-gray-200 pt-2">
             <button
               className="px-4 py-2 rounded font-medium border border-gray-300 hover:bg-gray-100 transition-colors"
               onClick={() => setAddSensorModalOpen(false)}
