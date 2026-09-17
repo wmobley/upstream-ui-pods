@@ -28,6 +28,12 @@ export interface CrosshairClickOptions {
   campaignId: string;
   /** Station ID */
   stationId: string;
+  /** Campaign/station/sensor identity for comparison sensors */
+  additionalSensorInfo?: Array<{
+    campaignId: string;
+    stationId: string;
+    sensorId: string;
+  }>;
   /** Called when a point is clicked */
   onPointSelect?: (data: PointSelectionData) => void;
   /** Called when cursor moves over a point (for tooltips) */
@@ -45,10 +51,14 @@ export function crosshairClickPlugin(opts: CrosshairClickOptions): uPlot.Plugin 
     sensorId,
     campaignId,
     stationId,
+    additionalSensorInfo = [],
+    onPointSelect,
     onPointHover,
   } = opts;
 
   let lastHoverIdx = -1;
+  let pointerDownPosition: { x: number; y: number } | null = null;
+  let cleanupClickListeners: (() => void) | null = null;
 
   // Build combined points array for nearest-neighbor lookup
   const combinedPoints: Array<{ time: number; value: number; id: number; geometry: GeoJSON.Point }> = [];
@@ -100,6 +110,30 @@ export function crosshairClickPlugin(opts: CrosshairClickOptions): uPlot.Plugin 
     return nearest;
   }
 
+  function findNearestMeasurementInPoints(
+    targetTime: number,
+    points: MeasurementItem[] | null,
+  ): { id: number; time: number; value: number; geometry: GeoJSON.Point | null } | null {
+    if (!points || points.length === 0) return null;
+
+    let nearest = points[0];
+    let nearestDelta = Math.abs(nearest.collectiontime.getTime() - targetTime);
+    for (let i = 1; i < points.length; i++) {
+      const delta = Math.abs(points[i].collectiontime.getTime() - targetTime);
+      if (delta < nearestDelta) {
+        nearest = points[i];
+        nearestDelta = delta;
+      }
+    }
+
+    return {
+      id: nearest.id,
+      time: nearest.collectiontime.getTime(),
+      value: nearest.value ?? 0,
+      geometry: nearest.geometry as unknown as GeoJSON.Point | null,
+    };
+  }
+
   // Helper to get stroke color from series (returns string or calls function)
   function getStrokeStyle(s: uPlot.Series, u: uPlot): CanvasRenderingContext2D['strokeStyle'] {
     const stroke = s.stroke;
@@ -114,8 +148,111 @@ export function crosshairClickPlugin(opts: CrosshairClickOptions): uPlot.Plugin 
     return result ?? 0;
   }
 
+  function selectNearestPoint(u: uPlot, e: MouseEvent): void {
+    if (!onPointSelect) return;
+
+    const overRect = u.over.getBoundingClientRect();
+    const cursorX = e.clientX - overRect.left;
+    const cursorY = e.clientY - overRect.top;
+    const { left, top, width, height } = u.bbox;
+
+    if (
+      cursorX < left ||
+      cursorX > left + width ||
+      cursorY < top ||
+      cursorY > top + height
+    ) {
+      return;
+    }
+
+    const targetTime = u.posToVal(cursorX, 'x');
+    const idx = u.valToIdx(targetTime);
+    const timestamp = u.data[0]?.[idx];
+    if (idx < 0 || timestamp == null) return;
+
+    const pointSets: Array<MeasurementItem[] | null> = [allPoints, ...additionalPoints];
+    let selected:
+      | { sensorIndex: number; distance: number }
+      | null = null;
+
+    // Each sensor contributes value, upper-bound, and lower-bound series.
+    // Choose the visible value series closest to the click so comparison
+    // sensors can open notes for their own raw measurements as well.
+    for (let sensorIndex = 0; sensorIndex < pointSets.length; sensorIndex++) {
+      const seriesIndex = 1 + sensorIndex * 3;
+      const valueSeries = u.series[seriesIndex];
+      const value = u.data[seriesIndex]?.[idx];
+      if (!valueSeries || valueSeries.show === false || value == null) continue;
+
+      const y = safeValToPos(u, value, valueSeries.scale);
+      const distance = Math.abs(y - cursorY);
+      if (!selected || distance < selected.distance) {
+        selected = { sensorIndex, distance };
+      }
+    }
+
+    // Match the old SVG chart's point-sized click target instead of opening a
+    // note popover for arbitrary clicks in the plot area.
+    if (!selected || selected.distance > 16) return;
+
+    const rawPoint = findNearestMeasurementInPoints(
+      timestamp,
+      pointSets[selected.sensorIndex],
+    );
+    if (!rawPoint) return;
+
+    const identity =
+      selected.sensorIndex === 0
+        ? { campaignId, stationId, sensorId }
+        : additionalSensorInfo[selected.sensorIndex - 1];
+    if (!identity) return;
+
+    const rootRect = u.root.getBoundingClientRect();
+    onPointSelect({
+      measurementId: rawPoint.id,
+      timestamp: new Date(rawPoint.time),
+      value: rawPoint.value,
+      campaignId: identity.campaignId,
+      stationId: identity.stationId,
+      sensorId: identity.sensorId,
+      bucketContext: null,
+      geometry: rawPoint.geometry,
+      x: e.clientX - rootRect.left,
+      y: e.clientY - rootRect.top,
+    });
+  }
+
   return {
     hooks: {
+      ready: (u: uPlot) => {
+        const handlePointerDown = (e: MouseEvent) => {
+          pointerDownPosition = { x: e.clientX, y: e.clientY };
+        };
+        const handleClick = (e: MouseEvent) => {
+          if (
+            pointerDownPosition &&
+            (Math.abs(e.clientX - pointerDownPosition.x) > 3 ||
+              Math.abs(e.clientY - pointerDownPosition.y) > 3)
+          ) {
+            pointerDownPosition = null;
+            return;
+          }
+          pointerDownPosition = null;
+          selectNearestPoint(u, e);
+        };
+
+        u.over.addEventListener('mousedown', handlePointerDown);
+        u.over.addEventListener('click', handleClick);
+
+        cleanupClickListeners = () => {
+          u.over.removeEventListener('mousedown', handlePointerDown);
+          u.over.removeEventListener('click', handleClick);
+        };
+      },
+      destroy: () => {
+        cleanupClickListeners?.();
+        cleanupClickListeners = null;
+      },
       draw: (u: uPlot) => {
         if (!u.ctx || u.cursor.left == null || u.cursor.top == null) return;
 

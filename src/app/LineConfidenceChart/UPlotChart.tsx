@@ -379,6 +379,11 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
         crosshairClickPlugin({
           allPoints,
           additionalPoints: additionalSensors.map((s) => s.allPoints ?? null),
+          additionalSensorInfo: additionalSensors.map((s) => ({
+            campaignId: s.info.campaignId,
+            stationId: s.info.stationId,
+            sensorId: s.info.id,
+          })),
           sensorId: selectedSensorId,
           campaignId,
           stationId,
