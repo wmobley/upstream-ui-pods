@@ -38,6 +38,9 @@ export interface CrosshairClickOptions {
   onPointSelect?: (data: PointSelectionData) => void;
   /** Called when cursor moves over a point (for tooltips) */
   onPointHover?: (data: PointSelectionData | null) => void;
+  /** Allow note-selection clicks anywhere in the plot, choosing the nearest time. */
+  allowAnyPointSelection?: boolean;
+  allowAnyPointSelectionRef?: { current: boolean };
 }
 
 /**
@@ -54,6 +57,8 @@ export function crosshairClickPlugin(opts: CrosshairClickOptions): uPlot.Plugin 
     additionalSensorInfo = [],
     onPointSelect,
     onPointHover,
+    allowAnyPointSelection = false,
+    allowAnyPointSelectionRef,
   } = opts;
 
   let lastHoverIdx = -1;
@@ -195,7 +200,8 @@ export function crosshairClickPlugin(opts: CrosshairClickOptions): uPlot.Plugin 
 
     // Match the old SVG chart's point-sized click target instead of opening a
     // note popover for arbitrary clicks in the plot area.
-    if (!selected || selected.distance > 16) return;
+    const canSelectAnyPoint = allowAnyPointSelectionRef?.current ?? allowAnyPointSelection;
+    if (!selected || (!canSelectAnyPoint && selected.distance > 16)) return;
 
     const rawPoint = findNearestMeasurementInPoints(
       timestamp,

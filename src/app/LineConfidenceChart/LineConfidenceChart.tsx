@@ -268,6 +268,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             aggregationInterval={aggregationInterval}
             aggregationValue={aggregationValue}
             noteTimestamps={noteTimestamps}
+            allowAnyPointSelection={isSelectingPoint}
             onYBrush={() => {
               // Could add y-domain callback if needed
             }}

@@ -38,6 +38,7 @@ interface UPlotChartProps {
   aggregationInterval: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month';
   aggregationValue: number;
   noteTimestamps: number[];
+  allowAnyPointSelection?: boolean;
   onYBrush?: (domain: [number, number]) => void;
   onPointSelect?: (payload: PointSelectionData) => void;
   viewDomain?: [number, number] | null;
@@ -106,6 +107,7 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
   aggregationInterval,
   aggregationValue,
   noteTimestamps = [],
+  allowAnyPointSelection = false,
   onYBrush,
   onPointSelect,
   viewDomain,
@@ -116,6 +118,7 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const uplotRef = React.useRef<uPlot | null>(null);
+  const allowAnyPointSelectionRef = React.useRef(allowAnyPointSelection);
   const [dimensions, setDimensions] = React.useState({ width: width || 800, height: height || 500 });
   const [isInitialized, setIsInitialized] = React.useState(false);
   // Guards the setScale hook against firing onViewDomainChange/onBrush for
@@ -123,6 +126,10 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
   // this, our own u.setScale calls feed back into viewDomain/selectedTimeRange
   // state, which re-triggers the same effect and loops forever.
   const isProgrammaticScaleUpdate = React.useRef(false);
+
+  React.useEffect(() => {
+    allowAnyPointSelectionRef.current = allowAnyPointSelection;
+  }, [allowAnyPointSelection]);
 
   // Resize observer. Only tracks width — the container's own CSS height used
   // to be pinned to this observed value, but uPlot renders a legend table
@@ -387,6 +394,7 @@ export const UPlotChart: React.FC<UPlotChartProps> = ({
           sensorId: selectedSensorId,
           campaignId,
           stationId,
+          allowAnyPointSelectionRef,
           onPointSelect,
           onPointHover: () => {}, // Could add tooltip later
         }),
