@@ -37,7 +37,7 @@ const HeatMapViz = ({
   const stationIdNum = parseInt(stationId);
   const sensorIdNum = parseInt(sensorId);
   const noteQueryKey = selectedMeasurementId
-    ? ['notes', 'measurement', campaignIdNum, stationIdNum, selectedMeasurementId]
+    ? ['notes', 'measurement', campaignIdNum, stationIdNum, sensorIdNum, selectedMeasurementId]
     : [];
   const { data: notesData, isLoading: notesLoading } = useMeasurementNotes(
     campaignIdNum, stationIdNum, sensorIdNum, selectedMeasurementId ?? 0

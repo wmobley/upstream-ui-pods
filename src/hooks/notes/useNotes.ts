@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import useConfiguration from '../api/useConfiguration';
-import { pointToWkt, type ListNotesResponse } from './types';
+import {
+  pointToWkt,
+  type ListMeasurementNotesResponse,
+  type ListNotesResponse,
+} from './types';
 
 function notesUrl(basePath: string, path: string): string {
   return `${basePath.replace(/\/+$/, '')}/api/v1${path}`;
@@ -97,6 +101,29 @@ export function useSensorNotes(campaignId: number, stationId: number, sensorId: 
   });
 }
 
+export function useMeasurementNotesBySensor(
+  campaignId: number,
+  stationId: number,
+  sensorId: number,
+) {
+  const config = useConfiguration();
+  const apiFetch = useNotesFetch();
+  return useQuery<ListMeasurementNotesResponse>({
+    queryKey: ['notes', 'measurement-by-sensor', campaignId, stationId, sensorId],
+    queryFn: async () => {
+      const res = await apiFetch(
+        notesUrl(
+          config.basePath ?? '',
+          `/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}/measurement-notes`,
+        ),
+      );
+      if (!res.ok) throw new Error('Failed to fetch sensor measurement notes');
+      return res.json();
+    },
+    enabled: Boolean(config.basePath),
+  });
+}
+
 export function useCreateSensorNote(campaignId: number, stationId: number, sensorId: number) {
   const queryClient = useQueryClient();
   const apiFetch = useNotesFetch();
@@ -124,7 +151,7 @@ export function useMeasurementNotes(
   const config = useConfiguration();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
-    queryKey: ['notes', 'measurement', campaignId, stationId, measurementId],
+    queryKey: ['notes', 'measurement', campaignId, stationId, sensorId, measurementId],
     queryFn: async () => {
       const res = await apiFetch(
         notesUrl(
@@ -205,13 +232,21 @@ export function useCreateMeasurementNote(
       return res.json();
     },
     onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['notes', 'measurement', campaignId, stationId, measurementId],
-      }),
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['notes', 'measurement', campaignId, stationId, sensorId, measurementId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['notes', 'station', campaignId, stationId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['notes', 'measurement-by-sensor', campaignId, stationId, sensorId],
+        }),
+      ]),
   });
 }
 
-export function useUpdateNote(queryKey: unknown[]) {
+export function useUpdateNote(queryKey: unknown[], additionalQueryKeys: unknown[][] = []) {
   const queryClient = useQueryClient();
   const apiFetch = useNotesFetch();
   const config = useConfiguration();
@@ -239,11 +274,16 @@ export function useUpdateNote(queryKey: unknown[]) {
       if (!res.ok) throw new Error('Failed to update note');
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey }),
+      ...additionalQueryKeys.map((additionalQueryKey) =>
+        queryClient.invalidateQueries({ queryKey: additionalQueryKey }),
+      ),
+    ]),
   });
 }
 
-export function useDeleteNote(queryKey: unknown[]) {
+export function useDeleteNote(queryKey: unknown[], additionalQueryKeys: unknown[][] = []) {
   const queryClient = useQueryClient();
   const apiFetch = useNotesFetch();
   const config = useConfiguration();
@@ -254,6 +294,11 @@ export function useDeleteNote(queryKey: unknown[]) {
       });
       if (!res.ok && res.status !== 204) throw new Error('Failed to delete note');
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey }),
+      ...additionalQueryKeys.map((additionalQueryKey) =>
+        queryClient.invalidateQueries({ queryKey: additionalQueryKey }),
+      ),
+    ]),
   });
 }

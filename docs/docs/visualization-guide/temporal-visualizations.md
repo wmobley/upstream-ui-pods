@@ -70,7 +70,7 @@ Wider bands indicate more variability; narrower bands indicate more consistent r
 
 ## Notes on temporal charts
 
-You can attach notes to specific measurements. Notes appear as markers on the chart and can be viewed by clicking on them.
+You can attach notes to specific measurements. Open the **Chart point notes** panel beside the chart to see existing notes ordered by measurement time. Select a chart point to enable the **Add a note** form for that measurement. Notes with associated measurements are also marked on the chart.
 
 ## Exporting
 

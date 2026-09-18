@@ -3,8 +3,13 @@ import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 import MeasurementNoteCallout, {
   SelectedPointPayload,
 } from './components/MeasurementNoteCallout';
+import MeasurementNotesPanel from './components/MeasurementNotesPanel';
 import { defaultChartStyles, defaultFormatters } from './utils/chartUtils';
-import { useSensorNotes } from '../../hooks/notes/useNotes';
+import {
+  useCreateMeasurementNote,
+  useMeasurementNotesBySensor,
+} from '../../hooks/notes/useNotes';
+import { useAuth } from '../../contexts/AuthContextState';
 import { useLineConfidence } from 'src/app/Sensor/viz/LineConfidenceViz/context/LineConfidenceContextState';
 import { UPlotChart } from './UPlotChart';
 import { PointSelectionData } from './plugins/crosshairClick';
@@ -104,41 +109,38 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // The measurement currently selected for viewing/adding a note, if any
   const [selectedPoint, setSelectedPoint] = React.useState<SelectedPointPayload | null>(null);
+  const [notesOpen, setNotesOpen] = React.useState(true);
 
   // Get aggregation settings from context
-  const { aggregationInterval, aggregationValue } = useLineConfidence();
+  const { aggregationInterval, aggregationValue, stationTimezone } = useLineConfidence();
+  const { username } = useAuth();
 
-  // Fetch notes for this sensor to find timestamps with notes
+  // Fetch measurement-scoped notes for this sensor for both the panel and
+  // the chart's note markers.
   const campaignIdNum = parseInt(campaignId, 10);
   const stationIdNum = parseInt(stationId, 10);
   const sensorIdNum = parseInt(sensorId, 10);
-  const { data: sensorNotes } = useSensorNotes(
+  const {
+    data: measurementNotesResponse,
+    isLoading: notesLoading,
+    isError: notesError,
+  } = useMeasurementNotesBySensor(
     campaignIdNum,
     stationIdNum,
     sensorIdNum,
   );
 
-  // Extract measurement IDs that have measurement-scoped notes
-  const noteMeasurementIds = React.useMemo(() => {
-    if (!sensorNotes?.items) return new Set<number>();
-    return new Set(
-      sensorNotes.items
-        .filter((note: { scope: string; measurement_id: number | null }) => note.scope === 'measurement' && note.measurement_id != null)
-        .map((note: { measurement_id: number | null }) => note.measurement_id!),
-    );
-  }, [sensorNotes?.items]);
+  const measurementNotes = React.useMemo(
+    () => measurementNotesResponse?.items ?? [],
+    [measurementNotesResponse],
+  );
 
-  // Find timestamps for measurements that have notes by matching with allPoints (which have IDs)
-  const noteTimestamps = React.useMemo(() => {
-    if (!allPoints || noteMeasurementIds.size === 0) return [];
-    const timestamps: number[] = [];
-    allPoints.forEach((item) => {
-      if (noteMeasurementIds.has(item.id)) {
-        timestamps.push(item.collectiontime.getTime());
-      }
-    });
-    return timestamps;
-  }, [allPoints, noteMeasurementIds]);
+  // The API returns the measurement timestamp alongside each note, so markers remain
+  // available even when the chart's current point window does not include the note.
+  const noteTimestamps = React.useMemo(
+    () => measurementNotes.map((note) => new Date(note.measurement_timestamp).getTime()),
+    [measurementNotes],
+  );
 
   // Handle point selection from uPlot chart
   const handlePointSelect = React.useCallback(
@@ -159,6 +161,24 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
     []
   );
 
+  const selectedCampaignId = parseInt(selectedPoint?.campaignId ?? campaignId, 10);
+  const selectedStationId = parseInt(selectedPoint?.stationId ?? stationId, 10);
+  const selectedSensorId = parseInt(selectedPoint?.sensorId ?? sensorId, 10);
+  const createMeasurementNote = useCreateMeasurementNote(
+    selectedCampaignId,
+    selectedStationId,
+    selectedSensorId,
+    selectedPoint?.measurementId ?? 0,
+  );
+
+  const handlePanelAdd = React.useCallback(
+    (content: string, location?: GeoJSON.Point | null) => {
+      if (!selectedPoint?.measurementId) return;
+      createMeasurementNote.mutate({ content, location });
+    },
+    [createMeasurementNote, selectedPoint?.measurementId],
+  );
+
   // Quick validation checks
   if (data.length === 0) {
     return (
@@ -169,48 +189,79 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center relative w-full h-full">
-      <UPlotChart
-        data={data}
-        allPoints={allPoints}
-        loading={loading}
-        width={width}
-        height={height}
-        margin={margin}
-        showAreaOverview={showAreaOverview}
-        showLineOverview={showLineOverview}
-        pointRadius={pointRadius}
-        colors={colors}
-        xAxisTitle={xAxisTitle}
-        yAxisTitle={yAxisTitle}
-        xFormatter={xFormatter}
-        xFormatterOverview={xFormatterOverview}
-        yFormatter={yFormatter}
-        onBrush={onBrush}
-        gapThresholdMinutes={gapThresholdMinutes}
-        maxValue={maxValue}
-        minValue={minValue}
-        additionalSensors={additionalSensors}
-        colorPalette={colorPalette}
-        renderDataPoints={renderDataPoints}
-        selectedSensorId={sensorId}
-        campaignId={campaignId}
-        stationId={stationId}
-        sensorLabel={sensorLabel}
-        stationName={stationName}
-        aggregationInterval={aggregationInterval}
-        aggregationValue={aggregationValue}
-        noteTimestamps={noteTimestamps}
-        onYBrush={() => {
-          // Could add y-domain callback if needed
-        }}
-        onPointSelect={handlePointSelect}
-        viewDomain={viewDomain}
-        onViewDomainChange={setViewDomain}
-      />
+    <div className="relative flex h-full w-full flex-col items-stretch justify-center">
+      {!notesOpen && (
+        <div className="mb-3 flex w-full justify-end">
+          <button
+            type="button"
+            onClick={() => setNotesOpen(true)}
+            className="rounded border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            aria-expanded={false}
+          >
+            Show chart point notes{measurementNotes.length > 0 ? ` (${measurementNotes.length})` : ''}
+          </button>
+        </div>
+      )}
 
-      {/* Measurement note callout — opens on click, shows/adds notes at that point */}
-      {selectedPoint && (
+      <div className="flex w-full min-w-0 flex-col items-stretch gap-4 xl:flex-row">
+        <div className="min-w-0 flex-1">
+          <UPlotChart
+            data={data}
+            allPoints={allPoints}
+            loading={loading}
+            width={width}
+            height={height}
+            margin={margin}
+            showAreaOverview={showAreaOverview}
+            showLineOverview={showLineOverview}
+            pointRadius={pointRadius}
+            colors={colors}
+            xAxisTitle={xAxisTitle}
+            yAxisTitle={yAxisTitle}
+            xFormatter={xFormatter}
+            xFormatterOverview={xFormatterOverview}
+            yFormatter={yFormatter}
+            onBrush={onBrush}
+            gapThresholdMinutes={gapThresholdMinutes}
+            maxValue={maxValue}
+            minValue={minValue}
+            additionalSensors={additionalSensors}
+            colorPalette={colorPalette}
+            renderDataPoints={renderDataPoints}
+            selectedSensorId={sensorId}
+            campaignId={campaignId}
+            stationId={stationId}
+            sensorLabel={sensorLabel}
+            stationName={stationName}
+            aggregationInterval={aggregationInterval}
+            aggregationValue={aggregationValue}
+            noteTimestamps={noteTimestamps}
+            onYBrush={() => {
+              // Could add y-domain callback if needed
+            }}
+            onPointSelect={handlePointSelect}
+            viewDomain={viewDomain}
+            onViewDomainChange={setViewDomain}
+          />
+        </div>
+
+        {notesOpen && (
+          <MeasurementNotesPanel
+            notes={measurementNotes}
+            isLoading={notesLoading}
+            isError={notesError}
+            stationTimezone={stationTimezone}
+            selectedPoint={selectedPoint}
+            canWrite={Boolean(username)}
+            isAdding={createMeasurementNote.isPending}
+            onAdd={handlePanelAdd}
+            onClose={() => setNotesOpen(false)}
+          />
+        )}
+      </div>
+
+      {/* Keep the existing point callout available when the side panel is hidden. */}
+      {!notesOpen && selectedPoint && (
         <MeasurementNoteCallout point={selectedPoint} onClose={() => setSelectedPoint(null)} />
       )}
     </div>

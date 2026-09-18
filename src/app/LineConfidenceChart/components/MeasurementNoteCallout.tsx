@@ -52,16 +52,26 @@ const MeasurementNoteCallout: React.FC<MeasurementNoteCalloutProps> = ({
     'measurement',
     campaignIdNum,
     stationIdNum,
+    sensorIdNum,
     point.measurementId,
   ];
+  const sensorNotesQueryKey = ['notes', 'station', campaignIdNum, stationIdNum];
+  const sensorMeasurementNotesQueryKey = [
+    'notes',
+    'measurement-by-sensor',
+    campaignIdNum,
+    stationIdNum,
+    sensorIdNum,
+  ];
+  const noteListQueryKeys = [sensorNotesQueryKey, sensorMeasurementNotesQueryKey];
   const createNote = useCreateMeasurementNote(
     campaignIdNum,
     stationIdNum,
     sensorIdNum,
     point.measurementId,
   );
-  const deleteNote = useDeleteNote(noteQueryKey);
-  const updateNote = useUpdateNote(noteQueryKey);
+  const deleteNote = useDeleteNote(noteQueryKey, noteListQueryKeys);
+  const updateNote = useUpdateNote(noteQueryKey, noteListQueryKeys);
 
   const basePath = `/campaigns/${campaignIdNum}/stations/${stationIdNum}/sensors/${sensorIdNum}/measurements/${point.measurementId}/notes`;
 

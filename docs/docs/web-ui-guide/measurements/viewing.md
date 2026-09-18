@@ -44,7 +44,7 @@ You can attach notes to individual measurements. Notes can include:
 - Free-text observations
 - Optional location (WKT format, e.g., `POINT(lon lat)`)
 
-Notes are visible in the measurement details panel.
+Notes are visible in the chart point notes panel and the selected measurement details callout.
 
 ## Next steps
 

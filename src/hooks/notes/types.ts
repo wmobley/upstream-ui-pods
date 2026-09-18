@@ -25,3 +25,14 @@ export interface ListNotesResponse {
   items: Note[];
   total: number;
 }
+
+export interface MeasurementNote extends Note {
+  scope: 'measurement';
+  measurement_id: number;
+  measurement_timestamp: string;
+}
+
+export interface ListMeasurementNotesResponse {
+  items: MeasurementNote[];
+  total: number;
+}
