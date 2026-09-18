@@ -109,7 +109,9 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
 
   // The measurement currently selected for viewing/adding a note, if any
   const [selectedPoint, setSelectedPoint] = React.useState<SelectedPointPayload | null>(null);
+  const [notePointSelected, setNotePointSelected] = React.useState(false);
   const [notesOpen, setNotesOpen] = React.useState(true);
+  const [isSelectingPoint, setIsSelectingPoint] = React.useState(false);
 
   // Get aggregation settings from context
   const { aggregationInterval, aggregationValue, stationTimezone } = useLineConfidence();
@@ -157,9 +159,30 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
         bucketContext: pointData.bucketContext,
         geometry: pointData.geometry,
       });
+      if (isSelectingPoint) {
+        setNotePointSelected(true);
+        setIsSelectingPoint(false);
+      }
     },
-    []
+    [isSelectingPoint]
   );
+
+  const handleStartPointSelection = React.useCallback(() => {
+    setSelectedPoint(null);
+    setNotePointSelected(false);
+    setIsSelectingPoint(true);
+  }, []);
+
+  const handleCancelPointSelection = React.useCallback(() => {
+    setIsSelectingPoint(false);
+    setNotePointSelected(false);
+  }, []);
+
+  const handleCloseNotes = React.useCallback(() => {
+    setIsSelectingPoint(false);
+    setNotePointSelected(false);
+    setNotesOpen(false);
+  }, []);
 
   const selectedCampaignId = parseInt(selectedPoint?.campaignId ?? campaignId, 10);
   const selectedStationId = parseInt(selectedPoint?.stationId ?? stationId, 10);
@@ -200,6 +223,15 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
           >
             Show chart point notes{measurementNotes.length > 0 ? ` (${measurementNotes.length})` : ''}
           </button>
+        </div>
+      )}
+
+      {isSelectingPoint && (
+        <div
+          role="status"
+          className="mb-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800"
+        >
+          Click any point on the chart to choose the measurement for your note.
         </div>
       )}
 
@@ -251,11 +283,14 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
             isLoading={notesLoading}
             isError={notesError}
             stationTimezone={stationTimezone}
-            selectedPoint={selectedPoint}
+            selectedPoint={notePointSelected ? selectedPoint : null}
+            isSelectingPoint={isSelectingPoint}
             canWrite={Boolean(username)}
             isAdding={createMeasurementNote.isPending}
             onAdd={handlePanelAdd}
-            onClose={() => setNotesOpen(false)}
+            onStartSelection={handleStartPointSelection}
+            onCancelSelection={handleCancelPointSelection}
+            onClose={handleCloseNotes}
           />
         )}
       </div>

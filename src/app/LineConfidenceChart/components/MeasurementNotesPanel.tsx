@@ -10,9 +10,12 @@ interface MeasurementNotesPanelProps {
   isError: boolean;
   stationTimezone: string;
   selectedPoint: SelectedPointPayload | null;
+  isSelectingPoint: boolean;
   canWrite: boolean;
   isAdding: boolean;
   onAdd: (content: string, location?: GeoJSON.Point | null) => void;
+  onStartSelection: () => void;
+  onCancelSelection: () => void;
   onClose: () => void;
 }
 
@@ -22,9 +25,12 @@ const MeasurementNotesPanel: React.FC<MeasurementNotesPanelProps> = ({
   isError,
   stationTimezone,
   selectedPoint,
+  isSelectingPoint,
   canWrite,
   isAdding,
   onAdd,
+  onStartSelection,
+  onCancelSelection,
   onClose,
 }) => {
   const sortedNotes = React.useMemo(
@@ -98,10 +104,27 @@ const MeasurementNotesPanel: React.FC<MeasurementNotesPanelProps> = ({
         </h3>
         {!canWrite ? (
           <p className="mt-2 text-sm text-gray-500">You do not have permission to add notes.</p>
+        ) : isSelectingPoint ? (
+          <div className="mt-2 space-y-2">
+            <p className="text-sm text-blue-700">
+              Click any point on the chart to choose its measurement time.
+            </p>
+            <button
+              type="button"
+              onClick={onCancelSelection}
+              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              Cancel
+            </button>
+          </div>
         ) : !selectedPoint || selectedPoint.measurementId <= 0 ? (
-          <p className="mt-2 text-sm text-gray-500">
-            Select a point on the chart to attach a note to that measurement.
-          </p>
+          <button
+            type="button"
+            onClick={onStartSelection}
+            className="mt-3 rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            Add note
+          </button>
         ) : (
           <>
             <p className="mt-2 text-xs text-gray-600">
@@ -110,6 +133,13 @@ const MeasurementNotesPanel: React.FC<MeasurementNotesPanelProps> = ({
                 {formatTimeInZone(selectedPoint.timestamp, stationTimezone || 'UTC')}
               </span>
             </p>
+            <button
+              type="button"
+              onClick={onStartSelection}
+              className="mt-2 rounded border border-blue-300 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              Choose another point
+            </button>
             <AddNoteForm
               onSubmit={onAdd}
               isLoading={isAdding}
