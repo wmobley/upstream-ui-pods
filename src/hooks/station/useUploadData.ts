@@ -247,36 +247,77 @@ async function postUploadChunk(
 // so chunk size stays predictable regardless of how many columns a CSV has.
 export const TARGET_CHUNK_BYTES = 1_000_000; // ~1MB of CSV data per chunk
 
-const splitCSVIntoChunks = async (file: File): Promise<Blob[]> => {
-  const text = await file.text();
-  const lines = text.split('\n');
-  const header = lines[0];
-  const dataLines = lines.slice(1).filter((line) => line.length > 0);
-  const chunks: Blob[] = [];
-  const encoder = new TextEncoder();
+/**
+ * Read CSV lines without materializing the whole file in browser memory.
+ * This intentionally preserves the existing line-oriented CSV behavior while
+ * keeping the pending data bounded to the browser stream chunk size.
+ */
+async function* readCSVLines(file: File): AsyncGenerator<string> {
+  const reader = file.stream().pipeThrough(new TextDecoderStream()).getReader();
+  let pending = '';
 
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const lines = `${pending}${value}`.split('\n');
+      pending = lines.pop() ?? '';
+      for (const line of lines) {
+        yield line;
+      }
+    }
+
+    if (pending.length > 0) {
+      yield pending;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/** Yield bounded CSV blobs, each retaining the source header for validation. */
+async function* readCSVChunks(file: File): AsyncGenerator<Blob> {
+  const lines = readCSVLines(file);
+  const headerResult = await lines.next();
+  if (headerResult.done || headerResult.value === undefined) return;
+
+  const header = headerResult.value;
+  const encoder = new TextEncoder();
   let currentLines: string[] = [];
   let currentBytes = 0;
 
   const flush = () => {
-    if (currentLines.length === 0) return;
+    if (currentLines.length === 0) return null;
     const chunkContent = [header, ...currentLines].join('\n');
-    chunks.push(new Blob([chunkContent], { type: 'text/csv' }));
     currentLines = [];
     currentBytes = 0;
+    return new Blob([chunkContent], { type: 'text/csv' });
   };
 
-  for (const line of dataLines) {
+  for await (const line of lines) {
+    if (line.length === 0) continue;
+
     const lineBytes = encoder.encode(line).length + 1; // +1 for the joining newline
     if (currentLines.length > 0 && currentBytes + lineBytes > TARGET_CHUNK_BYTES) {
-      flush();
+      const chunk = flush();
+      if (chunk) yield chunk;
     }
     currentLines.push(line);
     currentBytes += lineBytes;
   }
-  flush();
 
-  return chunks;
+  const finalChunk = flush();
+  if (finalChunk) yield finalChunk;
+}
+
+const countCSVChunks = async (file: File): Promise<number> => {
+  let count = 0;
+  for await (const chunk of readCSVChunks(file)) {
+    void chunk;
+    count += 1;
+  }
+  return count;
 };
 
 // Create an empty blob for when we don't have a file
@@ -341,9 +382,9 @@ export const useUploadData = () => {
       // All chunks share one upload_session_id; only the last chunk is marked
       // finalize_upload=true so post-processing runs exactly once server-side.
       if (measurementFile) {
-        let chunks: Blob[];
+        let totalChunks: number;
         try {
-          chunks = await splitCSVIntoChunks(measurementFile);
+          totalChunks = await countCSVChunks(measurementFile);
         } catch {
           logUploadDiagnostic(
             'upload_preflight_failed',
@@ -357,18 +398,32 @@ export const useUploadData = () => {
           );
           throw new Error('Could not read the measurement file.');
         }
+        if (totalChunks === 0) {
+          logUploadDiagnostic(
+            'upload_preflight_failed',
+            {
+              campaign_id: campaignId,
+              station_id: stationId,
+              upload_session_id: uploadSessionId,
+              failure: 'measurement_file_has_no_data_rows',
+            },
+            'warn',
+          );
+          throw new Error('The measurement file contains no data rows.');
+        }
         logUploadDiagnostic('upload_chunks_prepared', {
           campaign_id: campaignId,
           station_id: stationId,
           upload_session_id: uploadSessionId,
-          total_chunks: chunks.length,
+          total_chunks: totalChunks,
           measurement_bytes: measurementFile.size,
         });
 
-        for (let i = 0; i < chunks.length; i++) {
+        let i = 0;
+        for await (const chunk of readCSVChunks(measurementFile)) {
           onProgress?.({
             currentChunk: i,
-            totalChunks: chunks.length,
+            totalChunks,
             status: 'uploading',
           });
 
@@ -378,10 +433,10 @@ export const useUploadData = () => {
               stationId,
               uploadSessionId,
               chunkIndex: i,
-              totalChunks: chunks.length,
-              finalize: i === chunks.length - 1,
+              totalChunks,
+              finalize: i === totalChunks - 1,
               sensorFile: (sensorFile as Blob) || createEmptyBlob(),
-              measurementFile: chunks[i],
+              measurementFile: chunk,
             });
 
             warnings.push(...extractRowWarnings(result));
@@ -398,17 +453,19 @@ export const useUploadData = () => {
             const message = await describeApiError(error);
             onProgress?.({
               currentChunk: i,
-              totalChunks: chunks.length,
+              totalChunks,
               status: 'error',
               error: message,
             });
             throw new Error(message);
           }
+
+          i += 1;
         }
 
         onProgress?.({
-          currentChunk: chunks.length,
-          totalChunks: chunks.length,
+          currentChunk: totalChunks,
+          totalChunks,
           status: 'complete',
           warnings,
         });
