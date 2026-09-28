@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '../../common/Modal/Modal';
-import { useUploadData } from '../../../hooks/station/useUploadData';
+import {
+  logUploadDiagnostic,
+  useUploadData,
+} from '../../../hooks/station/useUploadData';
 
 interface UploadDataModalProps {
   isOpen: boolean;
@@ -110,7 +113,32 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   };
 
   const handleUpload = async () => {
-    if (!sensorFile && !measurementFile) return;
+    if (!sensorFile && !measurementFile) {
+      logUploadDiagnostic(
+        'upload_ui_submit_skipped',
+        {
+          campaign_id: Number(campaignId),
+          station_id: Number(stationId),
+          reason: 'no_file_selected',
+        },
+        'warn',
+      );
+      return;
+    }
+
+    if (validationErrors.length > 0) {
+      logUploadDiagnostic(
+        'upload_ui_submit_skipped',
+        {
+          campaign_id: Number(campaignId),
+          station_id: Number(stationId),
+          reason: 'validation_failed',
+          validation_error_count: validationErrors.length,
+        },
+        'warn',
+      );
+      return;
+    }
 
     setProgress((prev) => ({ ...prev, status: 'uploading', currentChunk: 0 }));
 
@@ -147,7 +175,15 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
       setMeasurementHeaders([]);
       setMeasurementPreviewRows([]);
     } catch (error) {
-      console.error('Error uploading files:', error);
+      logUploadDiagnostic(
+        'upload_ui_mutation_failed',
+        {
+          campaign_id: Number(campaignId),
+          station_id: Number(stationId),
+          failure: 'upload_mutation_rejected',
+        },
+        'warn',
+      );
       setProgress((prev) => ({
         ...prev,
         status: 'error',

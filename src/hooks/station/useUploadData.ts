@@ -59,6 +59,47 @@ interface ChunkUploadOptions {
   measurementFile: Blob;
 }
 
+type UploadDiagnosticValue = string | number | boolean | null | undefined;
+
+const CKAN_DIAGNOSTIC_STATUSES = [
+  'scheduled',
+  'completed',
+  'authorization_failed',
+  'retryable_failed',
+  'missing_tapis_token',
+  'ckan_disabled',
+  'already_finalized',
+  'skipped_incomplete_upload',
+  'not_finalized',
+] as const;
+
+export const logUploadDiagnostic = (
+  event: string,
+  fields: Record<string, UploadDiagnosticValue> = {},
+  level: 'info' | 'warn' = 'info',
+) => {
+  const payload = { event, ...fields };
+  if (level === 'warn') {
+    console.warn('[upload]', payload);
+  } else {
+    console.info('[upload]', payload);
+  }
+};
+
+const diagnosticStatus = (value: unknown) =>
+  typeof value === 'string' &&
+  CKAN_DIAGNOSTIC_STATUSES.includes(
+    value as (typeof CKAN_DIAGNOSTIC_STATUSES)[number],
+  )
+    ? value
+    : 'unknown';
+
+const finalizedDiagnosticState = (value: unknown) =>
+  value === true ? 'true' : value === false ? 'false' : 'missing';
+
+const elapsedMilliseconds = (startedAt: number) =>
+  Math.round(performance.now() - startedAt);
+
 const UPLOAD_ENDPOINT = '/api/v1/uploadfile_csv/campaign/{campaign_id}/station/{station_id}/sensor';
 
 /** The upload endpoint returns 200 with a body of per-row problems (bad
@@ -81,6 +122,7 @@ async function postUploadChunk(
 ): Promise<UploadChunkResult> {
   const { campaignId, stationId, uploadSessionId, chunkIndex, totalChunks, finalize, sensorFile, measurementFile } = options;
 
+  const requestId = crypto.randomUUID();
   const formData = new FormData();
   formData.append('upload_file_sensors', sensorFile);
   formData.append('upload_file_measurements', measurementFile);
@@ -88,6 +130,10 @@ async function postUploadChunk(
   formData.append('chunk_index', String(chunkIndex));
   formData.append('total_chunks', String(totalChunks));
   formData.append('finalize_upload', String(finalize));
+  // Keep the correlation id in the existing multipart body so ingress and
+  // the API can correlate a browser request without introducing a CORS
+  // preflight-triggering custom header.
+  formData.append('client_request_id', requestId);
 
   const path = UPLOAD_ENDPOINT
     .replace('{campaign_id}', encodeURIComponent(String(campaignId)))
@@ -100,13 +146,56 @@ async function postUploadChunk(
   delete headers['Content-Type']; // fetch sets the multipart boundary
 
   const basePath = config.basePath?.replace(/\/+$/, '') || '';
-  const response = await fetch(`${basePath}${path}`, {
-    method: 'POST',
-    headers,
-    body: formData,
+  const startedAt = performance.now();
+  logUploadDiagnostic('upload_request_started', {
+    request_id: requestId,
+    upload_session_id: uploadSessionId,
+    chunk_index: chunkIndex,
+    total_chunks: totalChunks,
+    finalize_upload: finalize,
+    sensor_bytes: sensorFile.size,
+    measurement_bytes: measurementFile.size,
   });
 
+  let response: Response;
+  try {
+    response = await fetch(`${basePath}${path}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+  } catch {
+    logUploadDiagnostic(
+      'upload_request_failed',
+      {
+        request_id: requestId,
+        upload_session_id: uploadSessionId,
+        chunk_index: chunkIndex,
+        total_chunks: totalChunks,
+        failure: 'network_or_abort',
+        response_available: false,
+        duration_ms: elapsedMilliseconds(startedAt),
+      },
+      'warn',
+    );
+    throw new Error('Upload request failed before the server returned a response.');
+  }
+
   if (!response.ok) {
+    logUploadDiagnostic(
+      'upload_request_failed',
+      {
+        request_id: requestId,
+        upload_session_id: uploadSessionId,
+        chunk_index: chunkIndex,
+        total_chunks: totalChunks,
+        failure: 'http_error',
+        response_available: true,
+        http_status: response.status,
+        duration_ms: elapsedMilliseconds(startedAt),
+      },
+      'warn',
+    );
     let detail = `HTTP ${response.status}`;
     try {
       const body = await response.json();
@@ -117,7 +206,41 @@ async function postUploadChunk(
     throw new Error(detail);
   }
 
-  return (await response.json()) as UploadChunkResult;
+  let result: UploadChunkResult;
+  try {
+    result = (await response.json()) as UploadChunkResult;
+  } catch {
+    logUploadDiagnostic(
+      'upload_request_failed',
+      {
+        request_id: requestId,
+        upload_session_id: uploadSessionId,
+        chunk_index: chunkIndex,
+        total_chunks: totalChunks,
+        failure: 'invalid_json_response',
+        response_available: true,
+        http_status: response.status,
+        duration_ms: elapsedMilliseconds(startedAt),
+      },
+      'warn',
+    );
+    throw new Error('Upload response was not valid JSON.');
+  }
+
+  logUploadDiagnostic('upload_request_finished', {
+    request_id: requestId,
+    upload_session_id: uploadSessionId,
+    upload_event_id:
+      typeof result.upload_event_id === 'number' ? result.upload_event_id : null,
+    chunk_index: chunkIndex,
+    total_chunks: totalChunks,
+    http_status: response.status,
+    finalized: finalizedDiagnosticState(result.finalized),
+    ckan_sync_status: diagnosticStatus(result.ckan_sync?.status),
+    duration_ms: elapsedMilliseconds(startedAt),
+  });
+
+  return result;
 }
 
 // Target size per uploaded chunk. Byte-based rather than a fixed line count
@@ -171,10 +294,44 @@ export const useUploadData = () => {
       measurementFile,
       onProgress,
     }: UploadDataParams) => {
-      console.log('this is going invalidated', campaignId, stationId);
       if (!sensorFile && !measurementFile) {
+        logUploadDiagnostic(
+          'upload_submit_rejected',
+          {
+            campaign_id: campaignId,
+            station_id: stationId,
+            reason: 'no_file_selected',
+          },
+          'warn',
+        );
         throw new Error('At least one file must be provided');
       }
+
+      let uploadSessionId: string;
+      try {
+        uploadSessionId = crypto.randomUUID();
+      } catch {
+        logUploadDiagnostic(
+          'upload_preflight_failed',
+          {
+            campaign_id: campaignId,
+            station_id: stationId,
+            failure: 'session_id_generation',
+          },
+          'warn',
+        );
+        throw new Error('Could not start the upload session.');
+      }
+
+      logUploadDiagnostic('upload_submit_started', {
+        campaign_id: campaignId,
+        station_id: stationId,
+        upload_session_id: uploadSessionId,
+        sensor_file_selected: Boolean(sensorFile),
+        measurement_file_selected: Boolean(measurementFile),
+        sensor_bytes: sensorFile?.size ?? 0,
+        measurement_bytes: measurementFile?.size ?? 0,
+      });
 
       const warnings: string[] = [];
       const aggregateAudit: UploadAudit = {};
@@ -184,8 +341,29 @@ export const useUploadData = () => {
       // All chunks share one upload_session_id; only the last chunk is marked
       // finalize_upload=true so post-processing runs exactly once server-side.
       if (measurementFile) {
-        const chunks = await splitCSVIntoChunks(measurementFile);
-        const uploadSessionId = crypto.randomUUID();
+        let chunks: Blob[];
+        try {
+          chunks = await splitCSVIntoChunks(measurementFile);
+        } catch {
+          logUploadDiagnostic(
+            'upload_preflight_failed',
+            {
+              campaign_id: campaignId,
+              station_id: stationId,
+              upload_session_id: uploadSessionId,
+              failure: 'measurement_file_read_or_chunking',
+            },
+            'warn',
+          );
+          throw new Error('Could not read the measurement file.');
+        }
+        logUploadDiagnostic('upload_chunks_prepared', {
+          campaign_id: campaignId,
+          station_id: stationId,
+          upload_session_id: uploadSessionId,
+          total_chunks: chunks.length,
+          measurement_bytes: measurementFile.size,
+        });
 
         for (let i = 0; i < chunks.length; i++) {
           onProgress?.({
@@ -244,7 +422,6 @@ export const useUploadData = () => {
           status: 'uploading',
         });
 
-        const uploadSessionId = crypto.randomUUID();
         try {
           const result = await postUploadChunk(config, {
             campaignId,
@@ -279,6 +456,14 @@ export const useUploadData = () => {
         }
       }
 
+      logUploadDiagnostic('upload_submit_finished', {
+        campaign_id: campaignId,
+        station_id: stationId,
+        upload_session_id: uploadSessionId,
+        finalized: finalizedDiagnosticState(finalized),
+        inserted_values: aggregateAudit.measurement_values_inserted ?? 0,
+        warning_count: warnings.length,
+      });
       return { success: true, warnings, audit: aggregateAudit, finalized };
     },
     onSuccess: (_, variables) => {
