@@ -104,9 +104,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   sensorLabel,
   stationName,
 }) => {
-  // View domain state (for external sync)
-  const [viewDomain, setViewDomain] = React.useState<[number, number] | null>(null);
-
+  // The applied time range from context controls both the API query and chart viewport.
   // The measurement currently selected for viewing/adding a note, if any
   const [selectedPoint, setSelectedPoint] = React.useState<SelectedPointPayload | null>(null);
   const [notePointSelected, setNotePointSelected] = React.useState(false);
@@ -114,7 +112,12 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
   const [isSelectingPoint, setIsSelectingPoint] = React.useState(false);
 
   // Get aggregation settings from context
-  const { aggregationInterval, aggregationValue, stationTimezone } = useLineConfidence();
+  const {
+    aggregationInterval,
+    aggregationValue,
+    stationTimezone,
+    selectedTimeRange,
+  } = useLineConfidence();
   const { username } = useAuth();
 
   // Fetch measurement-scoped notes for this sensor for both the panel and
@@ -273,8 +276,7 @@ const LineConfidenceChart: React.FC<LineConfidenceChartProps> = ({
               // Could add y-domain callback if needed
             }}
             onPointSelect={handlePointSelect}
-            viewDomain={viewDomain}
-            onViewDomainChange={setViewDomain}
+            viewDomain={selectedTimeRange}
           />
         </div>
 

@@ -9,7 +9,7 @@ import { AggregatedMeasurement, MeasurementItem } from '@upstream/upstream-api';
 export const Chart = () => {
   // Get the time range from context
   const {
-    setSelectedTimeRange,
+    handleChartBrush,
     aggregatedData,
     aggregatedLoading,
     aggregatedError,
@@ -120,9 +120,7 @@ export const Chart = () => {
             yFormatter={(value: number) => {
               return formatNumber(value);
             }}
-            onBrush={(domain) => {
-              setSelectedTimeRange(domain);
-            }}
+            onBrush={handleChartBrush}
             maxValue={maxValue}
             minValue={minValue}
             additionalSensors={chartAdditionalSensors}

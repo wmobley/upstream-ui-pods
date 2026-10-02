@@ -3,6 +3,7 @@ import {
   AGGREGATION_OPTIONS,
   aggregationOptionValue,
   aggregationSelectionValue,
+  TIME_RANGE_OPTIONS,
 } from '../context/LineConfidenceContextState';
 import { Link } from 'react-router-dom';
 import { AddSensorButton } from './AddSensorButton';
@@ -28,7 +29,21 @@ const Controls = () => {
     setMinFilterValueInput,
     maxFilterValueInput,
     setMaxFilterValueInput,
+    data,
+    timeRangePreset,
+    customStartDateInput,
+    customEndDateInput,
+    timeRangeError,
+    handleTimeRangePresetChange,
+    handleCustomStartDateChange,
+    handleCustomEndDateChange,
+    handleCustomTimeRangeApply,
   } = useLineConfidence();
+
+  const hasLatestMeasurement = Boolean(
+    data?.statistics?.lastMeasurementTime &&
+      Number.isFinite(data.statistics.lastMeasurementTime.getTime()),
+  );
 
   // State for active button styling
   const [activeExport, setActiveExport] = useState<string | null>(null);
@@ -186,7 +201,65 @@ const Controls = () => {
     <div className="border-b pb-4">
       <div className="flex flex-col flex-wrap items-center justify-between gap-4">
         {/* Time Controls Group */}
-        <div className="flex items-center gap-4 p-2 bg-gray-50 rounded border w-full">
+        <div className="flex flex-wrap items-center gap-4 p-2 bg-gray-50 rounded border w-full">
+          <div className="flex items-center gap-2">
+            <label htmlFor="timeRangePreset" className="text-sm font-medium">
+              Time range:
+            </label>
+            <select
+              id="timeRangePreset"
+              value={timeRangePreset}
+              onChange={handleTimeRangePresetChange}
+              className="form-select text-sm border rounded px-2 py-1"
+            >
+              {TIME_RANGE_OPTIONS.map((option) => (
+                <option
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.value !== 'all' && option.value !== 'custom' && !hasLatestMeasurement}
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {timeRangePreset === 'custom' && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <label htmlFor="customStartDate">Start:</label>
+              <input
+                id="customStartDate"
+                type="datetime-local"
+                value={customStartDateInput}
+                onChange={(event) => handleCustomStartDateChange(event.target.value)}
+                className="rounded border px-2 py-1 text-sm"
+                aria-invalid={Boolean(timeRangeError)}
+              />
+              <label htmlFor="customEndDate">End:</label>
+              <input
+                id="customEndDate"
+                type="datetime-local"
+                value={customEndDateInput}
+                onChange={(event) => handleCustomEndDateChange(event.target.value)}
+                className="rounded border px-2 py-1 text-sm"
+                aria-invalid={Boolean(timeRangeError)}
+              />
+              <button
+                type="button"
+                onClick={handleCustomTimeRangeApply}
+                className="rounded border border-primary-600 bg-white px-3 py-1 text-sm text-primary-600 hover:bg-gray-50"
+              >
+                Apply
+              </button>
+              <span className="text-xs text-gray-500">Times use your local timezone.</span>
+              {timeRangeError && (
+                <span role="alert" className="basis-full text-xs text-red-600">
+                  {timeRangeError}
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center">
             <label
               htmlFor="aggregationInterval"

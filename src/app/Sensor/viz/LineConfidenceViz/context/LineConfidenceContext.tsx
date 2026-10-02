@@ -7,9 +7,13 @@ import {
   AggregationInterval,
   AGGREGATION_INTERVALS,
   LineConfidenceContext,
+  formatDateTimeLocal,
+  getTimeRangeForPreset,
   parseAggregationOptionValue,
   SensorData,
   SensorInfo,
+  TimeRangePreset,
+  validateCustomTimeRange,
   useLineConfidence,
 } from './LineConfidenceContextState';
 
@@ -122,6 +126,10 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   const [selectedTimeRange, setSelectedTimeRange] = useState<
     [number, number] | null
   >(null);
+  const [timeRangePreset, setTimeRangePreset] = useState<TimeRangePreset>('all');
+  const [customStartDateInput, setCustomStartDateInput] = useState('');
+  const [customEndDateInput, setCustomEndDateInput] = useState('');
+  const [timeRangeError, setTimeRangeError] = useState<string | null>(null);
   const [aggregationInterval, setAggregationInterval] =
     useState<AggregationInterval>('minute');
   // Window size paired with aggregationInterval; sub-minute options (2s/5s/10s)
@@ -177,10 +185,83 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
   }, [data]);
 
   useEffect(() => {
+    setSelectedTimeRange(null);
+    setTimeRangePreset('all');
+    setCustomStartDateInput('');
+    setCustomEndDateInput('');
+    setTimeRangeError(null);
     setAggregationInterval('minute');
     setAggregationValue(1);
     setHasUserSelectedAggregation(false);
   }, [campaignId, stationId, sensorId]);
+
+  const handleCustomTimeRangeApply = () => {
+    const result = validateCustomTimeRange(
+      customStartDateInput,
+      customEndDateInput,
+    );
+    setTimeRangeError(result.error);
+    if (!result.range) return;
+
+    setTimeRangePreset('custom');
+    setSelectedTimeRange(result.range);
+  };
+
+  const handleTimeRangePresetChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const nextPreset = event.target.value as TimeRangePreset;
+    setTimeRangePreset(nextPreset);
+    setTimeRangeError(null);
+
+    if (nextPreset === 'all') {
+      setSelectedTimeRange(null);
+      return;
+    }
+
+    if (nextPreset === 'custom') {
+      const result = validateCustomTimeRange(
+        customStartDateInput,
+        customEndDateInput,
+      );
+      if (result.range) {
+        setSelectedTimeRange(result.range);
+      } else {
+        setTimeRangeError(result.error);
+      }
+      return;
+    }
+
+    const range = getTimeRangeForPreset(
+      nextPreset,
+      data?.statistics?.lastMeasurementTime,
+    );
+    if (!range) {
+      setTimeRangeError(
+        'This sensor does not have a valid latest measurement time for a relative range.',
+      );
+      return;
+    }
+    setSelectedTimeRange(range);
+  };
+
+  const handleCustomStartDateChange = (value: string) => {
+    setCustomStartDateInput(value);
+    setTimeRangeError(null);
+  };
+
+  const handleCustomEndDateChange = (value: string) => {
+    setCustomEndDateInput(value);
+    setTimeRangeError(null);
+  };
+
+  const handleChartBrush = (domain: [number, number]) => {
+    setTimeRangePreset('custom');
+    setCustomStartDateInput(formatDateTimeLocal(new Date(domain[0])));
+    setCustomEndDateInput(formatDateTimeLocal(new Date(domain[1])));
+    setTimeRangeError(null);
+    setSelectedTimeRange(domain);
+  };
 
   const handleAggregationIntervalChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
@@ -347,6 +428,15 @@ export const LineConfidenceProvider: React.FC<LineConfidenceProviderProps> = ({
     stationName,
     selectedTimeRange,
     setSelectedTimeRange,
+    timeRangePreset,
+    customStartDateInput,
+    customEndDateInput,
+    timeRangeError,
+    handleTimeRangePresetChange,
+    handleCustomStartDateChange,
+    handleCustomEndDateChange,
+    handleCustomTimeRangeApply,
+    handleChartBrush,
     aggregationInterval,
     setAggregationInterval,
     aggregationValue,

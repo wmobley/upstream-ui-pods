@@ -66,6 +66,77 @@ export const parseAggregationOptionValue = (
   );
 };
 
+export type TimeRangePreset = 'all' | 'day' | 'week' | 'month' | 'year' | 'custom';
+
+export interface TimeRangePresetOption {
+  value: TimeRangePreset;
+  label: string;
+}
+
+export const TIME_RANGE_OPTIONS: TimeRangePresetOption[] = [
+  { value: 'all', label: 'All time' },
+  { value: 'day', label: 'Past day' },
+  { value: 'week', label: 'Past week' },
+  { value: 'month', label: 'Past month' },
+  { value: 'year', label: 'Past year' },
+  { value: 'custom', label: 'Custom range' },
+];
+
+const TIME_RANGE_DURATIONS_MS: Record<Exclude<TimeRangePreset, 'all' | 'custom'>, number> = {
+  day: 24 * 60 * 60 * 1000,
+  week: 7 * 24 * 60 * 60 * 1000,
+  month: 30 * 24 * 60 * 60 * 1000,
+  year: 365 * 24 * 60 * 60 * 1000,
+};
+
+/** Resolve a relative preset against the sensor's latest recorded measurement. */
+export const getTimeRangeForPreset = (
+  preset: Exclude<TimeRangePreset, 'all' | 'custom'>,
+  endDate: Date | null | undefined,
+): [number, number] | null => {
+  const endTime = endDate?.getTime();
+  if (endTime === undefined || !Number.isFinite(endTime)) return null;
+
+  return [endTime - TIME_RANGE_DURATIONS_MS[preset], endTime];
+};
+
+/** Parse a browser-local datetime-local value into an absolute Date. */
+export const parseDateTimeLocal = (value: string): Date | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
+};
+
+/** Format an absolute Date for a browser-local datetime-local input. */
+export const formatDateTimeLocal = (date: Date): string => {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+    + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+export const validateCustomTimeRange = (
+  startInput: string,
+  endInput: string,
+): { range: [number, number] | null; error: string | null } => {
+  if (!startInput || !endInput) {
+    return { range: null, error: 'Enter both a start and end time.' };
+  }
+
+  const startDate = parseDateTimeLocal(startInput);
+  const endDate = parseDateTimeLocal(endInput);
+  if (!startDate || !endDate) {
+    return { range: null, error: 'Enter valid start and end times.' };
+  }
+
+  const startTime = startDate.getTime();
+  const endTime = endDate.getTime();
+  if (startTime >= endTime) {
+    return { range: null, error: 'Start time must be before end time.' };
+  }
+
+  return { range: [startTime, endTime], error: null };
+};
+
 export interface SensorInfo {
   key: string;
   id: string;
@@ -95,6 +166,15 @@ export interface LineConfidenceContextProps {
   stationName: string;
   selectedTimeRange: [number, number] | null;
   setSelectedTimeRange: Dispatch<SetStateAction<[number, number] | null>>;
+  timeRangePreset: TimeRangePreset;
+  customStartDateInput: string;
+  customEndDateInput: string;
+  timeRangeError: string | null;
+  handleTimeRangePresetChange: (event: ChangeEvent<HTMLSelectElement>) => void;
+  handleCustomStartDateChange: (value: string) => void;
+  handleCustomEndDateChange: (value: string) => void;
+  handleCustomTimeRangeApply: () => void;
+  handleChartBrush: (domain: [number, number]) => void;
   aggregationInterval: AggregationInterval;
   setAggregationInterval: Dispatch<SetStateAction<AggregationInterval>>;
   /** Window size paired with aggregationInterval (e.g., 5 for 5-second buckets). */

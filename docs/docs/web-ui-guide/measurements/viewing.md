@@ -25,7 +25,9 @@ Measurements are displayed in several ways on the station dashboard:
 
 You can filter the displayed measurements by:
 
-- **Time range** — use the brush/zoom controls on temporal charts
+- **Time range** — choose **All time**, **Past day**, **Past week**, **Past month**, or **Past year** from the time-range selector above the chart. Relative ranges are measured back from the sensor's latest recorded measurement, which also works for historical datasets.
+- **Custom time range** — choose **Custom range**, enter a start and end datetime, then select **Apply**. Custom datetimes use your browser's local timezone.
+- **Chart brush** — drag across the chart or overview to select a range directly; the selected range is also reflected in the time-range controls.
 - **Value range** — filter by measurement value thresholds
 - **Sensor selection** — choose which sensors to display
 
