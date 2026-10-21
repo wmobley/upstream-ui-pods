@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Configuration } from '@upstream/upstream-api';
-import useConfiguration from './useConfiguration';
+import useConfiguration, { useApiReadiness } from './useConfiguration';
 
 export type UserRoleValue = 'READ' | 'USER' | 'ADMIN' | 'APPROVEDADMIN';
 
@@ -49,10 +49,11 @@ const handleError = async (response: Response) => {
 
 export const useUserRoles = (options?: UseUserRolesOptions) => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const resolvedBasePath = options?.basePath ?? config.basePath;
   return useQuery<UserRoleRecord[], Error>({
     queryKey: ['user-roles', resolvedBasePath],
-    enabled: (options?.enabled ?? true) && Boolean(resolvedBasePath),
+    enabled: (options?.enabled ?? true) && apiReady && Boolean(resolvedBasePath),
     queryFn: async () => {
       const headers = await buildHeaders(config);
       if (!resolvedBasePath) {

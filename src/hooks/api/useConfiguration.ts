@@ -3,7 +3,16 @@ import { useInstance } from '../../contexts/InstanceContext';
 import { getTapisHeaders } from '../../utils/tapisAuth';
 
 const useConfiguration = () => {
-  const { selectedInstance, discoveryEnabled } = useInstance();
+  const { selectedInstance, discoveryEnabled, apiReady } = useInstance();
+
+  if (!apiReady) {
+    return new Configuration({
+      basePath: '',
+      fetchApi: async () => {
+        throw new Error('Project API is not ready.');
+      },
+    });
+  }
 
   // --- Mode 1: An instance is selected (from discovery or fixed config) ---
   // Always target its API directly once known, even if the Tapis token is
@@ -78,6 +87,24 @@ const useConfiguration = () => {
   }
 
   return new Configuration({ basePath });
+};
+
+/**
+ * Discovery-mode API calls must wait until a project instance has been
+ * selected. An empty Configuration basePath is not a disabled client: the
+ * generated client treats it as a relative URL and sends requests to the UI
+ * origin instead.
+ */
+export const useApiReadiness = () => {
+  return { apiReady: useInstance().apiReady };
+};
+
+/** Guard for raw-fetch mutations that do not use the generated client's fetchApi. */
+export const requireApiBasePath = (config: Configuration): string => {
+  if (!config.basePath) {
+    throw new Error('Project API is not ready.');
+  }
+  return config.basePath;
 };
 
 export default useConfiguration;

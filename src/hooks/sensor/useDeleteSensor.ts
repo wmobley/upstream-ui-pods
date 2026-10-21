@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { requireApiBasePath } from '../api/useConfiguration';
 
 interface DeleteSensorParams {
   campaignId: string;
@@ -13,6 +13,7 @@ export const useDeleteSensor = () => {
 
   return useMutation<void, Error, DeleteSensorParams>({
     mutationFn: async ({ campaignId, stationId, sensorId }) => {
+      requireApiBasePath(config);
       // Direct HTTP call to the new endpoint we implemented:
       // DELETE /api/v1/campaigns/{campaign_id}/stations/{station_id}/sensors/{sensor_id}
       const url = `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}`;

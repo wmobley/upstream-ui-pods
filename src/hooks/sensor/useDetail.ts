@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { GetSensorResponse, GetSensorResponseFromJSON } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 export const useDetail = (
   campaignId: string,
@@ -8,9 +8,11 @@ export const useDetail = (
   sensorId: string,
 ) => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
 
   return useQuery<GetSensorResponse>({
     queryKey: ['sensor', campaignId, stationId, sensorId],
+    enabled: apiReady,
     queryFn: async () => {
       const url = `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/sensors/${sensorId}`;
       const headers: HeadersInit = {

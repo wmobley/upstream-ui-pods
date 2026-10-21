@@ -3,7 +3,7 @@ import {
   ListMeasurementsResponsePagination,
   MeasurementsApi,
 } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 interface UseDetailReturn {
   data: ListMeasurementsResponsePagination | null;
@@ -23,6 +23,7 @@ export const useList = (
   endDate: Date | null | undefined = undefined,
 ): UseDetailReturn => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const measurementsApi = new MeasurementsApi(config);
   const startDateKey = startDate?.toISOString() ?? null;
   const endDateKey = endDate?.toISOString() ?? null;
@@ -61,6 +62,7 @@ export const useList = (
       // Keep previous points visible during a start/end date refetch instead
       // of resetting to undefined (see useListConfidenceValues.ts for why).
       placeholderData: keepPreviousData,
+      enabled: apiReady,
     });
 
   return { data: data ?? null, isLoading, error: error as Error | null };

@@ -4,7 +4,7 @@ import {
   GetMeasurementsWithConfidenceIntervalsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsConfidenceIntervalsGetRequest,
   MeasurementsApi,
 } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 interface UseDetailReturn {
   data: AggregatedMeasurement[] | null;
@@ -24,6 +24,7 @@ export const useListConfidenceValues = (
   endDate?: Date,
 ): UseDetailReturn => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const measurementsApi = new MeasurementsApi(config);
 
   const startDateKey = startDate?.toISOString() ?? null;
@@ -65,6 +66,7 @@ export const useListConfidenceValues = (
     // refetch unmounts UPlotChart, which re-establishes its own initial
     // auto-range on the fresh instance and can cascade into a refetch loop.
     placeholderData: keepPreviousData,
+    enabled: apiReady,
   });
 
   return { data: data ?? null, isLoading, error: error as Error | null };

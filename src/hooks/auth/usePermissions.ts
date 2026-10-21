@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 interface PermissionCheckResult {
   canDelete: boolean;
@@ -14,10 +14,18 @@ export const useCanDeleteInCampaign = (campaignId: string): PermissionCheckResul
   const [canDelete, setCanDelete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkPermissions = async () => {
       try {
+        if (!apiReady || !config.basePath) {
+          setCanDelete(false);
+          return;
+        }
+
         // Use the dedicated permissions endpoint
         const token = config.accessToken ? await config.accessToken() : '';
         if (!token) {
@@ -36,24 +44,32 @@ export const useCanDeleteInCampaign = (campaignId: string): PermissionCheckResul
 
         if (response.ok) {
           const permissionsData = await response.json();
-          setCanDelete(permissionsData.permissions?.can_delete || false);
+          if (!cancelled) {
+            setCanDelete(permissionsData.permissions?.can_delete || false);
+          }
         } else {
-          setCanDelete(false);
+          if (!cancelled) setCanDelete(false);
         }
       } catch (error) {
         console.error('Error checking campaign permissions:', error);
-        setCanDelete(false);
+        if (!cancelled) setCanDelete(false);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
-    if (campaignId) {
+    if (campaignId && apiReady) {
+      setIsLoading(true);
       checkPermissions();
     } else {
+      setCanDelete(false);
       setIsLoading(false);
     }
-  }, [campaignId, config]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaignId, config, apiReady]);
 
   return { canDelete, isLoading };
 };

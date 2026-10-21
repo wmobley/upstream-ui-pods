@@ -15,7 +15,7 @@ export const useCreate = (campaignId: string) => {
       ...(config.headers as Record<string, string> | undefined),
       'X-TAPIS-TOKEN': tapisToken,
     };
-    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken, fetchApi: config.fetchApi });
   }
 
   const stationsApi = new StationsApi(apiConfig);

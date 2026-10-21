@@ -3,7 +3,7 @@ import {
   ListMeasurementsResponsePagination,
   MeasurementsApi,
 } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 interface UseDetailReturn {
   data: ListMeasurementsResponsePagination | null;
@@ -23,6 +23,7 @@ export const useListFilterDate = (
   maxMeasurementValue: number | undefined = undefined,
 ): UseDetailReturn => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const measurementsApi = new MeasurementsApi(config);
 
   const { data, isLoading, error } = useQuery({
@@ -38,6 +39,7 @@ export const useListFilterDate = (
       minMeasurementValue,
       maxMeasurementValue,
     ],
+    enabled: apiReady,
     queryFn: async () => {
         const response =
         await measurementsApi.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(

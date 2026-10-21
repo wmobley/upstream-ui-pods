@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 export interface CkanOrganization {
   name: string;
@@ -10,9 +10,11 @@ export interface CkanOrganization {
 
 export const useOrganizations = () => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
 
   const query = useQuery<CkanOrganization[], Error>({
     queryKey: ['ckan-organizations'],
+    enabled: apiReady,
     queryFn: async () => {
       const url = `${config.basePath}/api/v1/ckan/organizations`;
       const headers: HeadersInit = {

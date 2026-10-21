@@ -10,7 +10,7 @@ import {
   getAppropriateResolution,
 } from '../../utils/dataProcessing';
 import { MeasurementsApi } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 export interface ProcessedMeasurementsResult {
   downsampledData: ProcessedDataPoint[];
@@ -31,6 +31,7 @@ export function useProcessedMeasurements(
   maxMeasurementValue?: number,
 ): ProcessedMeasurementsResult {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const measurementsApi = new MeasurementsApi(config);
 
   const {
@@ -48,6 +49,7 @@ export function useProcessedMeasurements(
       minMeasurementValue,
       maxMeasurementValue,
     ],
+    enabled: apiReady,
     queryFn: async () => {
       const response =
         await measurementsApi.getSensorMeasurementsApiV1CampaignsCampaignIdStationsStationIdSensorsSensorIdMeasurementsGet(

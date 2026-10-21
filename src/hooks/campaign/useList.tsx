@@ -4,7 +4,7 @@ import {
   ListCampaignsApiV1CampaignsGetRequest,
   ListCampaignsResponseItem,
 } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 interface UseListReturn {
   data: ListCampaignsResponseItem[];
@@ -19,10 +19,12 @@ interface UseListProps {
 
 export const useList = ({ filters }: UseListProps): UseListReturn => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const campaignsApi = new CampaignsApi(config);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['campaigns', filters],
+    enabled: apiReady,
     queryFn: async () => {
       const response =
         await campaignsApi.listCampaignsApiV1CampaignsGet(filters);

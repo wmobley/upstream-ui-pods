@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { SensorVariablesApi } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 interface UseVariablesReturn {
   variables: string[];
@@ -10,6 +10,7 @@ interface UseVariablesReturn {
 
 export const useList = (): UseVariablesReturn => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const sensorVariablesApi = new SensorVariablesApi(config);
 
   const {
@@ -18,6 +19,7 @@ export const useList = (): UseVariablesReturn => {
     error,
   } = useQuery({
     queryKey: ['sensorVariables'],
+    enabled: apiReady,
     queryFn: async () => {
       const response =
         await sensorVariablesApi.listSensorVariablesApiV1SensorVariablesGet();

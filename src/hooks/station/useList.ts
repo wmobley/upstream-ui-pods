@@ -4,7 +4,7 @@ import {
   ListStationsResponsePagination,
   StationsApi,
 } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 interface UseListProps {
   filters: ListStationsApiV1CampaignsCampaignIdStationsGetRequest;
@@ -12,10 +12,12 @@ interface UseListProps {
 
 export const useList = ({ filters }: UseListProps) => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const stationsApi = new StationsApi(config);
 
   return useQuery<ListStationsResponsePagination>({
     queryKey: ['stations', filters],
+    enabled: apiReady,
     queryFn: async () => {
       const response =
         await stationsApi.listStationsApiV1CampaignsCampaignIdStationsGet(

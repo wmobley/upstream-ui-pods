@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { GetCampaignResponse } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 export const useDetail = (campaignId: string) => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   // use raw fetch with config for headers; no need to instantiate generated client here
 
   const {
@@ -12,6 +13,7 @@ export const useDetail = (campaignId: string) => {
     error,
   } = useQuery<GetCampaignResponse, Error>({
     queryKey: ['campaign', campaignId],
+    enabled: apiReady,
     queryFn: async () => {
       // Use the generated client to build headers/auth, but fetch raw JSON to
       // ensure we capture snake_case fields like is_published/published_at.

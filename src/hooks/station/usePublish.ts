@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PublishRequest, PublishRequestToJSON, Configuration } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { requireApiBasePath } from '../api/useConfiguration';
 import {
   appendPublishRequestId,
   createPublishRequestId,
@@ -36,13 +36,14 @@ export const usePublish = () => {
       ...(config.headers as Record<string, string> | undefined),
       'X-TAPIS-TOKEN': tapisToken,
     };
-    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken, fetchApi: config.fetchApi });
   }
 
   const queryClient = useQueryClient();
 
   return useMutation<PublishDebugResponse, Error, PublishStationRequest>({
     mutationFn: async ({ campaignId, stationId, cascade = false, force = false }: PublishStationRequest) => {
+      requireApiBasePath(config);
       const publishRequest: PublishRequest = {
         cascade,
         force,
@@ -176,13 +177,14 @@ export const useUnpublish = () => {
       ...(config.headers as Record<string, string> | undefined),
       'X-TAPIS-TOKEN': tapisToken,
     };
-    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken, fetchApi: config.fetchApi });
   }
 
   const queryClient = useQueryClient();
 
   return useMutation<PublishDebugResponse, Error, UnpublishStationRequest>({
     mutationFn: async ({ campaignId, stationId }: UnpublishStationRequest) => {
+      requireApiBasePath(config);
       const requestId = createPublishRequestId('station', [campaignId, stationId, 'unpublish']);
       const url = appendPublishRequestId(
         `${apiConfig.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}/unpublish`,

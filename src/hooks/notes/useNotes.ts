@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { requireApiBasePath, useApiReadiness } from '../api/useConfiguration';
 import {
   pointToWkt,
   type ListMeasurementNotesResponse,
@@ -13,6 +13,7 @@ function notesUrl(basePath: string, path: string): string {
 function useNotesFetch() {
   const config = useConfiguration();
   return async (url: string, options: RequestInit = {}): Promise<Response> => {
+    requireApiBasePath(config);
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(config.headers as Record<string, string> | undefined ?? {}),
@@ -23,6 +24,7 @@ function useNotesFetch() {
 
 export function useCampaignNotes(campaignId: number) {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
     queryKey: ['notes', 'campaign', campaignId],
@@ -31,7 +33,7 @@ export function useCampaignNotes(campaignId: number) {
       if (!res.ok) throw new Error('Failed to fetch campaign notes');
       return res.json();
     },
-    enabled: Boolean(config.basePath),
+    enabled: apiReady,
   });
 }
 
@@ -39,6 +41,7 @@ export function useCampaignNotes(campaignId: number) {
  * plotting pins on the campaign coverage map. */
 export function useCampaignNoteLocations(campaignId: number) {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
     queryKey: ['notes', 'campaign', campaignId, 'locations'],
@@ -47,12 +50,13 @@ export function useCampaignNoteLocations(campaignId: number) {
       if (!res.ok) throw new Error('Failed to fetch campaign note locations');
       return res.json();
     },
-    enabled: Boolean(config.basePath),
+    enabled: apiReady,
   });
 }
 
 export function useStationNotes(campaignId: number, stationId: number) {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
     queryKey: ['notes', 'station', campaignId, stationId],
@@ -63,7 +67,7 @@ export function useStationNotes(campaignId: number, stationId: number) {
       if (!res.ok) throw new Error('Failed to fetch station notes');
       return res.json();
     },
-    enabled: Boolean(config.basePath),
+    enabled: apiReady,
   });
 }
 
@@ -71,6 +75,7 @@ export function useStationNotes(campaignId: number, stationId: number) {
  * has its own location — for plotting pins on the station coverage map. */
 export function useStationNoteLocations(campaignId: number, stationId: number) {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
     queryKey: ['notes', 'station', campaignId, stationId, 'locations'],
@@ -81,12 +86,13 @@ export function useStationNoteLocations(campaignId: number, stationId: number) {
       if (!res.ok) throw new Error('Failed to fetch station note locations');
       return res.json();
     },
-    enabled: Boolean(config.basePath),
+    enabled: apiReady,
   });
 }
 
 export function useSensorNotes(campaignId: number, stationId: number, sensorId: number) {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
     queryKey: ['notes', 'sensor', campaignId, stationId, sensorId],
@@ -97,7 +103,7 @@ export function useSensorNotes(campaignId: number, stationId: number, sensorId: 
       if (!res.ok) throw new Error('Failed to fetch sensor notes');
       return res.json();
     },
-    enabled: Boolean(config.basePath),
+    enabled: apiReady,
   });
 }
 
@@ -107,6 +113,7 @@ export function useMeasurementNotesBySensor(
   sensorId: number,
 ) {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const apiFetch = useNotesFetch();
   return useQuery<ListMeasurementNotesResponse>({
     queryKey: ['notes', 'measurement-by-sensor', campaignId, stationId, sensorId],
@@ -120,7 +127,7 @@ export function useMeasurementNotesBySensor(
       if (!res.ok) throw new Error('Failed to fetch sensor measurement notes');
       return res.json();
     },
-    enabled: Boolean(config.basePath),
+    enabled: apiReady,
   });
 }
 
@@ -149,6 +156,7 @@ export function useMeasurementNotes(
   measurementId: number
 ) {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const apiFetch = useNotesFetch();
   return useQuery<ListNotesResponse>({
     queryKey: ['notes', 'measurement', campaignId, stationId, sensorId, measurementId],
@@ -162,7 +170,7 @@ export function useMeasurementNotes(
       if (!res.ok) throw new Error('Failed to fetch measurement notes');
       return res.json();
     },
-    enabled: Boolean(config.basePath) && measurementId > 0,
+    enabled: apiReady && measurementId > 0,
   });
 }
 

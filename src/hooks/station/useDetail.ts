@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { GetStationResponse } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 
 export const useDetail = (campaignId: string, stationId: string) => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
 
   const {
     data: station,
@@ -11,6 +12,7 @@ export const useDetail = (campaignId: string, stationId: string) => {
     error,
   } = useQuery<GetStationResponse>({
     queryKey: ['station', campaignId, stationId],
+    enabled: apiReady,
     queryFn: async () => {
       // Use raw fetch to ensure we capture snake_case fields like is_published/published_at
       const url = `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}`;

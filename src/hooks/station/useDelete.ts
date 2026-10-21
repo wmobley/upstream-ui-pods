@@ -16,7 +16,7 @@ export const useDelete = (campaignId: string) => {
     };
     delete headers['Authorization'];
     delete headers['authorization'];
-    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken });
+    apiConfig = new Configuration({ basePath: config.basePath, headers, accessToken: config.accessToken, fetchApi: config.fetchApi });
   }
 
   const stationsApi = new StationsApi(apiConfig);

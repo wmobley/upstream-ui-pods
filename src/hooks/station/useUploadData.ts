@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Configuration } from '@upstream/upstream-api';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 import { describeApiError } from '../../utils/apiError';
 
 interface UploadDataParams {
@@ -325,6 +325,7 @@ const createEmptyBlob = () => new Blob([''], { type: 'text/csv' });
 
 export const useUploadData = () => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -335,6 +336,10 @@ export const useUploadData = () => {
       measurementFile,
       onProgress,
     }: UploadDataParams) => {
+      if (!apiReady || !config.basePath) {
+        throw new Error('Please wait for the project connection to finish loading.');
+      }
+
       if (!sensorFile && !measurementFile) {
         logUploadDiagnostic(
           'upload_submit_rejected',

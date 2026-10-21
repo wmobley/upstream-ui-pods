@@ -28,6 +28,7 @@ interface InstanceContextType {
   error: string | null;
   reload: () => void;
   discoveryEnabled: boolean;
+  apiReady: boolean;
 }
 
 const InstanceContext = createContext<InstanceContextType | undefined>(undefined);
@@ -176,6 +177,9 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A persisted selection is only a hint until discovery validates it. This
+  // prevents project hooks from using a stale API during the discovery window.
+  const [instanceResolved, setInstanceResolved] = useState(false);
   const fetchedRef = useRef(false);
   const prevStackIdRef = useRef<string | null>(null);
 
@@ -186,6 +190,7 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
   // selection change and incorrectly snap the selection back to it.
   const setSelectedInstance = useCallback((instance: ProjectInstance) => {
     setSelectedInstanceState(instance);
+    setInstanceResolved(true);
     persistInstance(instance);
     if (discoveryEnabled) {
       // When switching projects, navigate to the campaign list (home) instead of
@@ -242,6 +247,7 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (!tapisToken) return;
 
     setIsLoading(true);
+    setInstanceResolved(false);
     setError(null);
     try {
       const list = await fetchInstances(tapisToken);
@@ -280,11 +286,13 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
         persistInstance(auto);
         return auto;
       });
+      setInstanceResolved(true);
     } catch (err) {
       if (err instanceof TapisAuthError) {
         logout();
         return;
       }
+      setInstanceResolved(false);
       setError(err instanceof Error ? err.message : 'Failed to load projects');
     } finally {
       setIsLoading(false);
@@ -296,6 +304,7 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
       setInstances([]);
       setSelectedInstanceState(null);
       persistInstance(null);
+      setInstanceResolved(false);
       fetchedRef.current = false;
       return;
     }
@@ -306,6 +315,7 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
       setInstances([fixedInstance]);
       setSelectedInstanceState(fixedInstance);
       persistInstance(fixedInstance);
+      setInstanceResolved(true);
       return;
     }
 
@@ -326,6 +336,7 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
         error,
         reload: load,
         discoveryEnabled,
+        apiReady: isAuthenticated && instanceResolved && Boolean(selectedInstance?.apiUrl),
       }}
     >
       {children}

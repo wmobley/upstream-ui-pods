@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { requireApiBasePath } from '../api/useConfiguration';
 
 interface DeleteStationParams {
   campaignId: string;
@@ -12,6 +12,7 @@ export const useDeleteStation = () => {
 
   return useMutation<void, Error, DeleteStationParams>({
     mutationFn: async ({ campaignId, stationId }) => {
+      requireApiBasePath(config);
       // Direct HTTP call to delete individual station:
       // DELETE /api/v1/campaigns/{campaign_id}/stations/{station_id}
       const url = `${config.basePath}/api/v1/campaigns/${campaignId}/stations/${stationId}`;

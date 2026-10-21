@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { requireApiBasePath } from '../api/useConfiguration';
 import { MetadataSchemaItem } from './types';
 
 const buildHeaders = (headers?: HeadersInit) => {
@@ -20,12 +20,12 @@ const buildHeaders = (headers?: HeadersInit) => {
 export const useCreateMetadataSchema = () => {
   const config = useConfiguration();
   const queryClient = useQueryClient();
-  const basePath = config.basePath || '';
   const headers = buildHeaders(config.headers);
 
   return useMutation<MetadataSchemaItem, Error, Omit<MetadataSchemaItem, 'id'>>({
     mutationFn: async (payload) => {
-      const response = await fetch(`${basePath}/api/v1/metadata-schema`, {
+      const readyBasePath = requireApiBasePath(config);
+      const response = await fetch(`${readyBasePath}/api/v1/metadata-schema`, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
@@ -45,12 +45,12 @@ export const useCreateMetadataSchema = () => {
 export const useUpdateMetadataSchema = () => {
   const config = useConfiguration();
   const queryClient = useQueryClient();
-  const basePath = config.basePath || '';
   const headers = buildHeaders(config.headers);
 
   return useMutation<MetadataSchemaItem, Error, { id: number; patch: Partial<MetadataSchemaItem> }>({
     mutationFn: async ({ id, patch }) => {
-      const response = await fetch(`${basePath}/api/v1/metadata-schema/${id}`, {
+      const readyBasePath = requireApiBasePath(config);
+      const response = await fetch(`${readyBasePath}/api/v1/metadata-schema/${id}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify(patch),
@@ -70,12 +70,12 @@ export const useUpdateMetadataSchema = () => {
 export const useDeleteMetadataSchema = () => {
   const config = useConfiguration();
   const queryClient = useQueryClient();
-  const basePath = config.basePath || '';
   const headers = buildHeaders(config.headers);
 
   return useMutation<void, Error, number>({
     mutationFn: async (id) => {
-      const response = await fetch(`${basePath}/api/v1/metadata-schema/${id}`, {
+      const readyBasePath = requireApiBasePath(config);
+      const response = await fetch(`${readyBasePath}/api/v1/metadata-schema/${id}`, {
         method: 'DELETE',
         headers,
       });

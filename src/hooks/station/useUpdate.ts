@@ -30,6 +30,7 @@ export const useUpdate = () => {
       basePath: config.basePath,
       headers,
       accessToken: config.accessToken,
+      fetchApi: config.fetchApi,
     });
   }
 

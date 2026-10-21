@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import useConfiguration from '../api/useConfiguration';
+import useConfiguration, { useApiReadiness } from '../api/useConfiguration';
 import { MetadataSchemaListResponse, MetadataSchemaScope } from './types';
 
 type UseMetadataSchemaListOptions = {
@@ -18,11 +18,13 @@ const buildHeaders = (headers?: HeadersInit) => {
 
 export const useMetadataSchemaList = ({ scope, activeOnly = true }: UseMetadataSchemaListOptions = {}) => {
   const config = useConfiguration();
+  const { apiReady } = useApiReadiness();
   const basePath = config.basePath || '';
   const headers = buildHeaders(config.headers);
 
   return useQuery<MetadataSchemaListResponse, Error>({
     queryKey: ['metadata-schema', scope ?? 'all', activeOnly],
+    enabled: apiReady,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (scope) params.set('scope', scope);
