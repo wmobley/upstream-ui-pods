@@ -26,3 +26,4 @@ dist-ssr
 # MkDocs build artifacts
 docs/site/
 docs/.venv/
+.env
